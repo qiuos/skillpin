@@ -18,7 +18,7 @@ npm test
 npm run build
 ```
 
-Use `npm run test:e2e` when browser behavior changes, and `npm run pack && npm run verify-package` when CLI packaging changes. The CI workflow at `.github/workflows/ci.yml` runs quality checks on Ubuntu, macOS, and Windows.
+Use `npm run test:e2e` when browser behavior changes, and `npm run pack && npm run verify-package` when CLI packaging changes. The CI workflow at `.github/workflows/ci.yml` runs both quality checks and Playwright browser E2E on Ubuntu, macOS, and Windows; see `p10-cross-platform-acceptance-contract.md`.
 
 ## Tests
 

@@ -24,6 +24,7 @@ This directory records the repository's current P0 frontend conventions, grounde
 | [P7 Source Management Foundation](./source-management-foundation.md) | Typed source state, onboarding, directory browser, health UI, and guarded removal | P7 documented |
 | [P8 Skills Workbench Foundation](./skills-workbench-foundation.md) | Catalog state, virtual three-column workbench, safe Markdown, and copy behavior | P8 documented |
 | [P9 Project Change Workflow Foundation](./project-change-workflow-foundation.md) | Explicit staged selections, review, confirmation, and project recovery UI | P9 documented |
+| [P10 Cross-Platform Acceptance Contract](../backend/p10-cross-platform-acceptance-contract.md) | Three-OS browser acceptance and safe session/Markdown regression coverage | P10 contract |
 
 ---
 

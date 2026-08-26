@@ -27,6 +27,7 @@ This directory contains guidelines for backend development. Fill in each file wi
 | [P7 Protected Source Management Contract](./source-management-api-contract.md) | Session-owned source CRUD, scanning, directory metadata browsing, and guarded removal API | P7 contract |
 | [P8 Read-Only Catalog Workbench Contract](./catalog-workbench-api-contract.md) | Session catalog list/detail protected API and content-exposure boundary | P8 contract |
 | [P9 Project Change Workflow Contract](./project-change-workflow-api-contract.md) | Protected project snapshot, plan, and transactional apply API boundary | P9 contract |
+| [P10 Cross-Platform Acceptance Contract](./p10-cross-platform-acceptance-contract.md) | Three-OS integration acceptance, browser E2E matrix, and native-only evidence | P10 contract |
 
 ---
 

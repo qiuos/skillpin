@@ -18,7 +18,7 @@ npm run build
 npm run test:e2e
 ```
 
-The browser test runs in Chromium on CI; the general quality workflow validates builds and tests on Ubuntu, macOS, and Windows.
+Chromium browser E2E and the general quality workflow both run on Ubuntu, macOS, and Windows; see `../backend/p10-cross-platform-acceptance-contract.md` for the P10 evidence contract.
 
 ## Styling
 
