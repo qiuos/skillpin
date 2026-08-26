@@ -1,0 +1,4 @@
+{"file": ".trellis/spec/backend/p11-build-install-delivery-contract.md", "reason": "Build, pack, verify, and delivery contract for formal releases"}
+{"file": ".trellis/spec/backend/quality-guidelines.md", "reason": "Release quality gates and backend conventions"}
+{"file": ".trellis/spec/frontend/quality-guidelines.md", "reason": "Frontend quality gates included in monorepo release checks"}
+{"file": ".trellis/tasks/08-27-release-0-1-2-version/prd.md", "reason": "Locked 0.1.2 release requirements and acceptance criteria"}

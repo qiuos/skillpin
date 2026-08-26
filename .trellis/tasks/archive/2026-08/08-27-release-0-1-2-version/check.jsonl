@@ -1,0 +1,4 @@
+{"file": ".trellis/spec/backend/p11-build-install-delivery-contract.md", "reason": "Verify pack/verify/smoke and release asset naming"}
+{"file": ".trellis/spec/backend/quality-guidelines.md", "reason": "Quality gate expectations for release"}
+{"file": ".trellis/spec/frontend/quality-guidelines.md", "reason": "Frontend checks still green at release"}
+{"file": ".trellis/tasks/08-27-release-0-1-2-version/prd.md", "reason": "Acceptance criteria for 0.1.2"}
