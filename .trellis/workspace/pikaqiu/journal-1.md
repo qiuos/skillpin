@@ -187,3 +187,38 @@ Completed P3 source configuration and catalog scanning, including source CRUD, d
 ### Next Steps
 
 - None - task complete
+
+
+## Session 6: 完成 SkillPin P4 项目检查与变更事务
+
+**Date**: 2026-08-26
+**Task**: 完成 SkillPin P4 项目检查与变更事务
+**Branch**: `main`
+
+### Summary
+
+实现 @skillpin/core Node-only 项目状态快照、变更规划校验、进程内锁与幂等缓存，以及具备回滚诊断的多链接事务；新增 P4 契约文档并完成全量测试、类型检查、lint、格式检查和构建验证。
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `64fba01` | (see git log) |
+| `af9bf94` | (see git log) |
+| `7b46487` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete

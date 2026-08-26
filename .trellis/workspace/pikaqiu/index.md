@@ -8,7 +8,7 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-1.md`
-- **Total Sessions**: 5
+- **Total Sessions**: 6
 - **Last Active**: 2026-08-26
 <!-- @@@/auto:current-status -->
 
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-1.md` | ~189 | Active |
+| `journal-1.md` | ~224 | Active |
 <!-- @@@/auto:active-documents -->
 
 ---
@@ -29,6 +29,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 6 | 2026-08-26 | 完成 SkillPin P4 项目检查与变更事务 | `64fba01`, `af9bf94`, `7b46487` | `main` |
 | 5 | 2026-08-26 | Implement SkillPin P3 source catalog scanning | `c5ea9c1`, `3e6ed66`, `e8a5d4b` | `main` |
 | 4 | 2026-08-26 | Implement SkillPin P2 persistence foundation | `804fd62`, `e1b99f6`, `8de3fda` | `main` |
 | 3 | 2026-08-26 | Bootstrap Trellis workflow and SkillPin guidelines | `78b5c0e`, `7b3c24b` | `main` |
