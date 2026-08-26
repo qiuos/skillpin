@@ -39,3 +39,41 @@
 ### Next Steps
 
 - None - task complete
+
+
+## Session 2: SkillPin P1 platform link validation
+
+**Date**: 2026-08-26
+**Task**: SkillPin P1 platform link validation
+**Branch**: `main`
+
+### Summary
+
+Implemented and verified cross-platform managed directory links, Windows Junction fallback, path fingerprints, and reversible link transactions; archived P1.
+
+### Main Changes
+
+- Added Node-backed PlatformLinkAdapter modules for verified directory symlinks and controlled Windows Junction fallback.
+- Added normalized target fingerprints and a reversible add/remove/replace file-transaction prototype.
+- Added platform and transaction regression tests, then documented the executable safety contract.
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `3ffbdc9` | (see git log) |
+| `970e3da` | (see git log) |
+
+### Testing
+
+- [OK] npm test — 28 tests passed
+- [OK] npm run typecheck, npm run lint, npm run format:check, and npm run build passed
+- [OK] npm run test:e2e — Chromium application-shell test passed
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
