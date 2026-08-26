@@ -256,3 +256,37 @@ Implemented and verified the protected loopback CLI/session runtime: command par
 ### Next Steps
 
 - None - task complete
+
+
+## Session 8: Implement SkillPin P6 Web foundation
+
+**Date**: 2026-08-26
+**Task**: Implement SkillPin P6 Web foundation
+**Branch**: `main`
+
+### Summary
+
+Implemented the protected local-session React shell with browser-safe API/bootstrap and WebSocket handling, reconnect/read-only lifecycle, theme persistence, accessible shared controls, non-dashboard routes, unit and Playwright coverage, and the frontend session contract.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `e884a87` | (see git log) |
+| `5c45867` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete

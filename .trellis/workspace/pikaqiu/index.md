@@ -8,7 +8,7 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-1.md`
-- **Total Sessions**: 7
+- **Total Sessions**: 8
 - **Last Active**: 2026-08-26
 <!-- @@@/auto:current-status -->
 
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-1.md` | ~258 | Active |
+| `journal-1.md` | ~292 | Active |
 <!-- @@@/auto:active-documents -->
 
 ---
@@ -29,6 +29,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 8 | 2026-08-26 | Implement SkillPin P6 Web foundation | `e884a87`, `5c45867` | `main` |
 | 7 | 2026-08-26 | Implement SkillPin P5 local session runtime | `a45aea6`, `7330a4c` | `main` |
 | 6 | 2026-08-26 | 完成 SkillPin P4 项目检查与变更事务 | `64fba01`, `af9bf94`, `7b46487` | `main` |
 | 5 | 2026-08-26 | Implement SkillPin P3 source catalog scanning | `c5ea9c1`, `3e6ed66`, `e8a5d4b` | `main` |
