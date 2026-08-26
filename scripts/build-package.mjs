@@ -12,13 +12,22 @@ const artifactsDirectory = path.join(rootDirectory, "artifacts");
 await rm(artifactsDirectory, { recursive: true, force: true });
 await mkdir(artifactsDirectory, { recursive: true });
 
+const npmPackArguments = [
+  "pack",
+  "--workspace=@skillpin/cli",
+  `--pack-destination=${artifactsDirectory}`,
+];
+
+const npmCliPath = process.env.npm_execpath;
+if (process.platform === "win32" && npmCliPath === undefined) {
+  throw new Error("Windows package build requires npm_execpath from npm run.");
+}
+
 execFileSync(
-  process.platform === "win32" ? "npm.cmd" : "npm",
-  [
-    "pack",
-    "--workspace=@skillpin/cli",
-    `--pack-destination=${artifactsDirectory}`,
-  ],
+  process.platform === "win32" ? process.execPath : "npm",
+  process.platform === "win32"
+    ? [npmCliPath, ...npmPackArguments]
+    : npmPackArguments,
   { cwd: rootDirectory, stdio: "inherit" },
 );
 

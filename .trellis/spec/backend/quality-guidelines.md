@@ -18,7 +18,7 @@ npm test
 npm run build
 ```
 
-`npm run lint` first builds `@skillpin/core`. This is intentional: CLI imports core public subpaths whose package exports resolve to `packages/core/dist/`; lint must be reproducible in a fresh clone rather than depending on a developer's stale generated output. `.gitattributes` normalizes detected text files to LF so Prettier checks produce the same result on Windows, macOS, and Linux.
+`npm run lint` first builds `@skillpin/core`. This is intentional: CLI imports core public subpaths whose package exports resolve to `packages/core/dist/`; lint must be reproducible in a fresh clone rather than depending on a developer's stale generated output. `.gitattributes` normalizes detected text files to LF so Prettier checks produce the same result on Windows, macOS, and Linux. Package helper scripts must not execute `npm.cmd` with `execFileSync` on Windows; invoke Node with the `npm_execpath` CLI script instead. `npm run test:e2e` must bootstrap `@skillpin/core` before launching Vite/Playwright, because Vite resolves the core package exports through `dist/` in a clean checkout.
 
 Use `npm run test:e2e` when browser behavior changes, and `npm run pack && npm run verify-package` when CLI packaging changes. The CI workflow at `.github/workflows/ci.yml` runs both quality checks and Playwright browser E2E on Ubuntu, macOS, and Windows; see `p10-cross-platform-acceptance-contract.md`.
 

@@ -16,7 +16,7 @@
     "typecheck": "npm run build --workspace=@skillpin/core && npm run typecheck --workspace=@skillpin/cli && npm run typecheck --workspace=@skillpin/web",
     "test": "vitest run --config vitest.workspace.ts",
     "test:watch": "vitest --config vitest.workspace.ts",
-    "test:e2e": "playwright test",
+    "test:e2e": "npm run build --workspace=@skillpin/core && playwright test",
     "lint": "npm run build --workspace=@skillpin/core && eslint .",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
