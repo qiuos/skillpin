@@ -1,0 +1,83 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Build and publish GitHub Release
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Validate release tag and package version
+        id: release
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          node --input-type=module <<'NODE'
+          import { appendFile, readFile } from "node:fs/promises";
+
+          const tag = process.env.RELEASE_TAG;
+          const manifest = JSON.parse(await readFile("package.json", "utf8"));
+          const stableTag = /^v(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)$/;
+
+          if (!stableTag.test(tag)) {
+            throw new Error(
+              `Release tag must be stable SemVer in v<major>.<minor>.<patch> form; received ${tag}.`,
+            );
+          }
+          if (manifest.version !== tag.slice(1)) {
+            throw new Error(
+              `Release tag ${tag} does not match package.json version ${manifest.version}.`,
+            );
+          }
+
+          await appendFile(
+            process.env.GITHUB_OUTPUT,
+            `version=${manifest.version}\nasset=artifacts/skillpin-${manifest.version}.tgz\n`,
+          );
+          NODE
+
+      - run: npm ci
+      - run: npm run format:check
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run pack
+      - run: npm run verify-package
+      - run: npm run test:package
+
+      - name: Verify release asset
+        id: asset
+        env:
+          RELEASE_ASSET: ${{ steps.release.outputs.asset }}
+        run: |
+          test -f "$RELEASE_ASSET"
+          archive_count="$(find artifacts -maxdepth 1 -type f -name '*.tgz' | wc -l | tr -d ' ')"
+          test "$archive_count" = "1"
+          printf 'path=%s\n' "$RELEASE_ASSET" >> "$GITHUB_OUTPUT"
+
+      - name: Create or update GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_ASSET: ${{ steps.asset.outputs.path }}
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          if gh release view "$RELEASE_TAG" > /dev/null 2>&1; then
+            gh release upload "$RELEASE_TAG" "$RELEASE_ASSET" --clobber
+          else
+            gh release create "$RELEASE_TAG" "$RELEASE_ASSET" \
+              --title "SkillPin $RELEASE_TAG" \
+              --generate-notes
+          fi

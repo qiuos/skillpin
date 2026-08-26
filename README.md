@@ -10,6 +10,7 @@ SkillPin is a local-only command-line application for managing skill sources in 
 See the delivery guides:
 
 - [Installation](docs/installation.md)
+- [Releasing](docs/releasing.md)
 - [Usage](docs/usage.md)
 - [Troubleshooting](docs/troubleshooting.md)
 - [Third-party notices and dependency inventory](THIRD_PARTY_NOTICES.md)

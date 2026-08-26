@@ -13,6 +13,7 @@ const requiredDocuments = [
   "package/README.md",
   "package/THIRD_PARTY_NOTICES.md",
   "package/docs/installation.md",
+  "package/docs/releasing.md",
   "package/docs/troubleshooting.md",
   "package/docs/usage.md",
 ];
