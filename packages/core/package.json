@@ -9,6 +9,14 @@
     ".": {
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
+    },
+    "./platform": {
+      "types": "./dist/platform/index.d.ts",
+      "import": "./dist/platform/index.js"
+    },
+    "./changes": {
+      "types": "./dist/changes/index.d.ts",
+      "import": "./dist/changes/index.js"
     }
   },
   "files": [
