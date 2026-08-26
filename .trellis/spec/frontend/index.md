@@ -22,6 +22,7 @@ This directory records the repository's current P0 frontend conventions, grounde
 | [Type Safety](./type-safety.md) | Type patterns, validation | Baseline documented |
 | [Local Session Application Foundation](./local-session-app-foundation.md) | Browser-safe P5 session client, connection state, themes, and application chrome | P6 documented |
 | [P7 Source Management Foundation](./source-management-foundation.md) | Typed source state, onboarding, directory browser, health UI, and guarded removal | P7 documented |
+| [P8 Skills Workbench Foundation](./skills-workbench-foundation.md) | Catalog state, virtual three-column workbench, safe Markdown, and copy behavior | P8 documented |
 
 ---
 

@@ -25,6 +25,7 @@ This directory contains guidelines for backend development. Fill in each file wi
 | [P4 Project Change Transaction Contract](./project-change-transaction-contract.md) | Project inspection, change planning, locks, transactions, and residue diagnostics | P4 contract |
 | [P5 Local Session, HTTP, and WebSocket Contract](./local-session-api-contract.md) | CLI arguments, loopback local service, credentials, WebSocket lifecycle, and graceful shutdown | P5 contract |
 | [P7 Protected Source Management Contract](./source-management-api-contract.md) | Session-owned source CRUD, scanning, directory metadata browsing, and guarded removal API | P7 contract |
+| [P8 Read-Only Catalog Workbench Contract](./catalog-workbench-api-contract.md) | Session catalog list/detail protected API and content-exposure boundary | P8 contract |
 
 ---
 
