@@ -183,11 +183,7 @@ export function Dialog({
               <p id={descriptionId}>{description}</p>
             )}
           </div>
-          <Button
-            aria-label="关闭对话框"
-            onClick={onClose}
-            variant="tertiary"
-          >
+          <Button aria-label="关闭对话框" onClick={onClose} variant="tertiary">
             ×
           </Button>
         </div>

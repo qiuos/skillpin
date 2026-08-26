@@ -131,9 +131,7 @@ export function SkillsWorkbenchPage() {
       .catch((reason: unknown) => {
         if (!cancelled)
           setProjectError(
-            reason instanceof Error
-              ? reason.message
-              : "无法检查项目。",
+            reason instanceof Error ? reason.message : "无法检查项目。",
           );
       });
     return () => {
@@ -181,9 +179,7 @@ export function SkillsWorkbenchPage() {
       .catch((reason: unknown) => {
         if (!cancelled)
           setDetailError(
-            reason instanceof Error
-              ? reason.message
-              : "无法加载该技能。",
+            reason instanceof Error ? reason.message : "无法加载该技能。",
           );
       });
     return () => {
@@ -259,9 +255,7 @@ export function SkillsWorkbenchPage() {
         setReviewOpen(false);
       })
       .catch((reason: unknown) => {
-        setProjectError(
-          projectErrorMessage(reason, "无法应用变更。"),
-        );
+        setProjectError(projectErrorMessage(reason, "无法应用变更。"));
         void client
           .project()
           .then((snapshot) => setProject(snapshot))
@@ -271,12 +265,7 @@ export function SkillsWorkbenchPage() {
   };
 
   if (isLoading && groups.length === 0) {
-    return (
-      <EmptyState
-        body="正在读取会话本地技能目录…"
-        title="正在加载技能"
-      />
-    );
+    return <EmptyState body="正在读取会话本地技能目录…" title="正在加载技能" />;
   }
   if (error !== null && groups.length === 0) {
     return <EmptyState body={error.message} title="无法加载技能" />;
@@ -345,9 +334,7 @@ export function SkillsWorkbenchPage() {
                   >
                     <strong>{group.linkName}</strong>
                     <span>{group.candidates[0]?.summary}</span>
-                    <small>
-                      {group.candidates.length} 个候选
-                    </small>
+                    <small>{group.candidates.length} 个候选</small>
                   </button>
                 );
               })}
@@ -457,9 +444,7 @@ export function SkillsWorkbenchPage() {
                   复制源路径
                 </Button>
                 <Button
-                  onClick={() =>
-                    copy("已复制技能路径", detail.skillDirectory)
-                  }
+                  onClick={() => copy("已复制技能路径", detail.skillDirectory)}
                   variant="tertiary"
                 >
                   复制技能路径
@@ -497,15 +482,12 @@ export function SkillsWorkbenchPage() {
       )}
       {project?.recoveryDiagnostics.length ? (
         <p className="form-message form-message--error" role="alert">
-          需要手动恢复检查：共{" "}
-          {project.recoveryDiagnostics.length} 个事务产物。
+          需要手动恢复检查：共 {project.recoveryDiagnostics.length} 个事务产物。
         </p>
       ) : null}
       {Object.keys(staged).length === 0 ? null : (
         <div className="change-bar" role="status">
-          <span>
-            已暂存 {Object.keys(staged).length} 项项目变更
-          </span>
+          <span>已暂存 {Object.keys(staged).length} 项项目变更</span>
           <Button onClick={reviewChanges}>审查变更</Button>
         </div>
       )}
@@ -521,9 +503,7 @@ export function SkillsWorkbenchPage() {
               {plan.blockers.map((blocker) => blocker.message).join(" ")}
             </p>
           ) : (
-            <p>
-              将对本项目应用 {plan?.changes.length ?? 0} 项变更。
-            </p>
+            <p>将对本项目应用 {plan?.changes.length ?? 0} 项变更。</p>
           )}
           <ul>
             {plan?.changes.map((change) => (

@@ -87,8 +87,7 @@ function AppShell() {
     void shutdown();
   }, [closeEndDialog, shutdown]);
   const status = connectionCopy(connection);
-  const projectPath =
-    session?.projectDirectory ?? "正在连接安全的本地项目…";
+  const projectPath = session?.projectDirectory ?? "正在连接安全的本地项目…";
   const hasSources = sources.length > 0;
   const sourceDialogOpen = editingSource !== undefined;
 

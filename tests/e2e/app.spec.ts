@@ -438,11 +438,7 @@ test("browses searchable catalog candidates and safely renders an explicit skill
   await expect(page.getByText("Safe local Markdown content.")).toBeVisible();
   await page.getByLabel("搜索技能").fill("local project");
   await expect(page.getByRole("button", { name: /review/i })).toBeVisible();
-  await expect(
-    page.getByText(
-      /先显式暂存候选，再变更项目链接/,
-    ),
-  ).toBeVisible();
+  await expect(page.getByText(/先显式暂存候选，再变更项目链接/)).toBeVisible();
 });
 
 test("does not execute untrusted Markdown from a skill detail", async ({
@@ -506,14 +502,16 @@ test("stages a candidate, reviews the server plan, and confirms apply separately
   const review = page.getByRole("dialog", { name: "审查项目变更" });
   await expect(review).toBeVisible();
   await expect(review.getByText("add: review")).toBeVisible();
-  await expect(
-    page.getByRole("dialog", { name: "确认项目变更" }),
-  ).toHaveCount(0);
+  await expect(page.getByRole("dialog", { name: "确认项目变更" })).toHaveCount(
+    0,
+  );
   await review.getByRole("button", { name: "应用变更" }).click();
 
   const confirm = page.getByRole("dialog", { name: "确认项目变更" });
   await expect(confirm).toBeVisible();
-  await expect(confirm.getByText(/将 1 项已审查变更应用到当前项目/)).toBeVisible();
+  await expect(
+    confirm.getByText(/将 1 项已审查变更应用到当前项目/),
+  ).toBeVisible();
   await confirm.getByRole("button", { name: "应用", exact: true }).click();
 
   await expect(confirm).toHaveCount(0);

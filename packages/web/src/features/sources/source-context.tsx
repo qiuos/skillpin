@@ -78,8 +78,7 @@ export function SourceProvider({ children }: PropsWithChildren) {
     if (isReadOnly) {
       throw new LocalApiClientError({
         code: "SESSION_READ_ONLY",
-        message:
-          "更改技能源前请先重新连接安全的本地会话。",
+        message: "更改技能源前请先重新连接安全的本地会话。",
         recoveryAction: "retry",
         retryable: true,
       });
