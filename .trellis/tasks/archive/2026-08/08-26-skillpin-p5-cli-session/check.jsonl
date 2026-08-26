@@ -1,0 +1,5 @@
+{"file": ".trellis/spec/backend/error-handling.md", "reason": "Verify safe classified CLI/API failures"}
+{"file": ".trellis/spec/backend/logging-guidelines.md", "reason": "Verify secrets and content are not logged"}
+{"file": ".trellis/spec/backend/quality-guidelines.md", "reason": "P5 tests and quality gates"}
+{"file": ".trellis/spec/backend/project-change-transaction-contract.md", "reason": "Verify no regression to P4 mutation safety"}
+{"file": ".trellis/tasks/08-26-skillpin-p5-cli-session/research/p5-server-session-map.md", "reason": "Review P5 architecture, risks, and validation map"}

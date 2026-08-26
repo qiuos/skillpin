@@ -1,0 +1,7 @@
+{"file": ".trellis/spec/backend/directory-structure.md", "reason": "P5 CLI/server module ownership and package boundaries"}
+{"file": ".trellis/spec/backend/error-handling.md", "reason": "Stable CLI/API errors and serialization boundary"}
+{"file": ".trellis/spec/backend/logging-guidelines.md", "reason": "Token-safe local diagnostic logging rules"}
+{"file": ".trellis/spec/backend/quality-guidelines.md", "reason": "P5 runtime code/testing quality gates"}
+{"file": ".trellis/spec/backend/project-change-transaction-contract.md", "reason": "Safe P4 project service integration and shutdown constraints"}
+{"file": ".trellis/spec/guides/cross-layer-thinking-guide.md", "reason": "Core/CLI/API/web boundary analysis"}
+{"file": ".trellis/tasks/08-26-skillpin-p5-cli-session/research/p5-server-session-map.md", "reason": "Repository evidence and P5 implementation map"}
