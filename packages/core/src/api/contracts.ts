@@ -138,7 +138,8 @@ export interface LocalApiSuccess<T> {
 export interface LocalApiError {
   readonly code: string;
   readonly message: string;
-  readonly recoveryAction: "open-session" | "retry" | "review-state";
+  readonly recoveryAction:
+    "manual-recovery" | "open-session" | "retry" | "review-state";
   readonly retryable: boolean;
 }
 
@@ -156,4 +157,66 @@ export interface LocalSessionEvent {
   readonly sessionId: string;
   readonly type: string;
   readonly version: typeof LOCAL_API_VERSION;
+}
+
+/** P9 project state kept browser-safe; it contains no filesystem authority. */
+export interface LocalProjectLink {
+  readonly linkName: string;
+  readonly sourceState: "available" | "disabled" | "unconfigured" | null;
+  readonly state:
+    | "dangling-link"
+    | "managed"
+    | "manifest-mismatch"
+    | "missing"
+    | "unknown-directory"
+    | "unknown-file"
+    | "unknown-link"
+    | "unknown-other";
+}
+
+export interface LocalProjectSnapshot {
+  readonly links: readonly LocalProjectLink[];
+  readonly manifestRevision: number;
+  readonly recoveryDiagnostics: readonly {
+    readonly kind: "backup" | "temporary";
+    readonly path: string;
+  }[];
+}
+
+export interface LocalProjectSelectionInput {
+  readonly candidateId: string | null;
+  readonly linkName: string;
+}
+
+export interface LocalProjectPlanChange {
+  readonly candidateId: string | null;
+  readonly kind: "add" | "remove" | "replace";
+  readonly linkName: string;
+}
+
+export interface LocalProjectPlanBlocker {
+  readonly code:
+    | "DUPLICATE_SELECTION"
+    | "INVALID_CANDIDATE"
+    | "MANAGED_STATE_MISMATCH"
+    | "UNKNOWN_OCCUPIED";
+  readonly linkName: string;
+  readonly message: string;
+}
+
+export interface LocalProjectPlanResponse {
+  readonly baseRevision: number;
+  readonly blockers: readonly LocalProjectPlanBlocker[];
+  readonly changes: readonly LocalProjectPlanChange[];
+}
+
+export interface LocalProjectApplyInput {
+  readonly baseRevision: number;
+  readonly requestId: string;
+  readonly selections: readonly LocalProjectSelectionInput[];
+}
+
+export interface LocalProjectApplyResponse {
+  readonly idempotent: boolean;
+  readonly snapshot: LocalProjectSnapshot;
 }

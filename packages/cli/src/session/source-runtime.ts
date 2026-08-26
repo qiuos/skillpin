@@ -22,6 +22,8 @@ import {
   err,
   ok,
 } from "@skillpin/core";
+import type { ProjectSelection } from "@skillpin/core/changes";
+
 import {
   CatalogIndex,
   getDirectoryBrowserEntrypoints,
@@ -159,6 +161,54 @@ export class SourceRuntime {
       skillDirectory: candidate.skillDirectory,
       skillFilePath: candidate.skillFilePath,
     });
+  }
+
+  public async projectSelections(
+    selections: readonly {
+      readonly candidateId: string | null;
+      readonly linkName: string;
+    }[],
+  ): Promise<Result<readonly ProjectSelection[], CoreError>> {
+    const ready = await this.initialize();
+    if (!ready.ok) {
+      return ready;
+    }
+    const candidates = this.#catalog
+      .snapshot(this.#sources)
+      .groups.flatMap((group) => group.candidates);
+    const resolved: ProjectSelection[] = [];
+    for (const selection of selections) {
+      const candidate =
+        selection.candidateId === null
+          ? undefined
+          : candidates.find((entry) => entry.id === selection.candidateId);
+      if (selection.candidateId === null) {
+        resolved.push({ candidate: null, linkName: selection.linkName });
+        continue;
+      }
+      if (candidate === undefined) {
+        return err(
+          new CoreError(
+            "The selected skill candidate is no longer available.",
+            "CATALOG_CANDIDATE_NOT_FOUND",
+            { candidateId: selection.candidateId },
+            false,
+            "review-state",
+          ),
+        );
+      }
+      resolved.push({
+        candidate: {
+          id: candidate.id,
+          linkName: candidate.linkName,
+          skillRelativePath: candidate.relativePath,
+          sourceId: candidate.sourceId,
+          targetPath: candidate.skillDirectory,
+        },
+        linkName: selection.linkName,
+      });
+    }
+    return ok(resolved);
   }
 
   public async validatePath(

@@ -25,6 +25,7 @@ import {
 } from "../security/session-token.js";
 import { LocalHttpServer } from "../server/http-server.js";
 import { createCatalogRoutes } from "../server/routes/catalog-routes.js";
+import { createProjectRoutes } from "../server/routes/project-routes.js";
 import { createSourceRoutes } from "../server/routes/source-routes.js";
 import { SessionRegistry } from "./session-registry.js";
 import { SourceRuntime } from "./source-runtime.js";
@@ -39,6 +40,7 @@ export type SessionCloseReason = "api" | "explicit" | "signal" | "timeout";
 export interface LocalSessionRuntime {
   readonly projectDirectory: string;
   readonly projectFingerprint: string;
+  readonly projectServices: ProjectServices;
   readonly sessionId: string;
   readonly sourceRuntime: SourceRuntime;
   close(reason: SessionCloseReason): Promise<void>;
@@ -134,7 +136,11 @@ export class ManagedSession implements LocalSessionRuntime {
     };
     this.#server = new LocalHttpServer({
       heartbeatIntervalMs: this.#heartbeatIntervalMs,
-      additionalRoutes: [...createSourceRoutes(), ...createCatalogRoutes()],
+      additionalRoutes: [
+        ...createSourceRoutes(),
+        ...createCatalogRoutes(),
+        ...createProjectRoutes(),
+      ],
       heartbeatTimeoutMs: this.#heartbeatTimeoutMs,
       session: this,
     });
