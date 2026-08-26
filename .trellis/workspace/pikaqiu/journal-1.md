@@ -395,3 +395,38 @@ Implemented protected local project snapshot, plan, and transactional apply APIs
 ### Next Steps
 
 - None - task complete
+
+
+## Session 12: P11 build and install delivery
+
+**Date**: 2026-08-26
+**Task**: P11 build and install delivery
+**Branch**: `main`
+
+### Summary
+
+Delivered the bundled private npm CLI, protected production static assets, package verification, hermetic tarball and immutable Git installation smoke coverage, CI coverage, delivery documentation, and the P11 backend contract. All P11 checks passed; native Windows Junction fallback remains deferred for manual P10 validation.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `dc8df98` | (see git log) |
+| `97b8aa0` | (see git log) |
+| `2ce9c96` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete

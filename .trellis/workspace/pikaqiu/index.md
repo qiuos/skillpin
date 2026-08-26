@@ -8,7 +8,7 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-1.md`
-- **Total Sessions**: 11
+- **Total Sessions**: 12
 - **Last Active**: 2026-08-26
 <!-- @@@/auto:current-status -->
 
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-1.md` | ~397 | Active |
+| `journal-1.md` | ~432 | Active |
 <!-- @@@/auto:active-documents -->
 
 ---
@@ -29,6 +29,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 12 | 2026-08-26 | P11 build and install delivery | `dc8df98`, `97b8aa0`, `2ce9c96` | `main` |
 | 11 | 2026-08-26 | Complete P9 project change workflow | `9be97be`, `4f24fc1`, `caeef64` | `main` |
 | 10 | 2026-08-26 | P8 skills workbench | `5162785`, `20de7bf`, `555626d` | `main` |
 | 9 | 2026-08-26 | Implement P7 source management | `17dc472`, `4ecd2de`, `0f6c26f` | `main` |
