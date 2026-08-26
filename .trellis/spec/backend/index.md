@@ -22,6 +22,7 @@ This directory contains guidelines for backend development. Fill in each file wi
 | [Platform Link and Transaction Contract](./platform-link-contract.md) | Safe Node directory-link and transaction APIs | P1 contract |
 | [P2 JSON Persistence Contract](./persistence-contract.md) | Versioned JSON schemas, repositories, and atomic replacement | P2 contract |
 | [P3 Source Configuration and Catalog Contract](./source-catalog-contract.md) | Node-only sources, scanning, parsing, grouping, and search | P3 contract |
+| [P4 Project Change Transaction Contract](./project-change-transaction-contract.md) | Project inspection, change planning, locks, transactions, and residue diagnostics | P4 contract |
 
 ---
 
