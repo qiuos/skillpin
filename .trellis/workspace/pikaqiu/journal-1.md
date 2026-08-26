@@ -290,3 +290,38 @@ Implemented the protected local-session React shell with browser-safe API/bootst
 ### Next Steps
 
 - None - task complete
+
+
+## Session 9: Implement P7 source management
+
+**Date**: 2026-08-26
+**Task**: Implement P7 source management
+**Branch**: `main`
+
+### Summary
+
+Added authenticated source CRUD, safe directory browsing, scan health, first-run onboarding, guarded source removal, P7 contracts, and full test coverage.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `17dc472` | (see git log) |
+| `4ecd2de` | (see git log) |
+| `0f6c26f` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
