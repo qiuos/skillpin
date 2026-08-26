@@ -496,3 +496,36 @@ Replaced the default README with a Simplified Chinese entrypoint, added the Engl
 ### Next Steps
 
 - None - task complete
+
+
+## Session 15: 发布 SkillPin 0.1.0
+
+**Date**: 2026-08-26
+**Task**: 发布 SkillPin 0.1.0
+**Branch**: `main`
+
+### Summary
+
+已推送 main 与 v0.1.0 标签；GitHub Release 工作流完成全部校验并上传 skillpin-0.1.0.tgz。
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `8e3ded5` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete

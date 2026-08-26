@@ -8,7 +8,7 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-1.md`
-- **Total Sessions**: 14
+- **Total Sessions**: 15
 - **Last Active**: 2026-08-26
 <!-- @@@/auto:current-status -->
 
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-1.md` | ~498 | Active |
+| `journal-1.md` | ~531 | Active |
 <!-- @@@/auto:active-documents -->
 
 ---
@@ -29,6 +29,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 15 | 2026-08-26 | 发布 SkillPin 0.1.0 | `8e3ded5` | `main` |
 | 14 | 2026-08-26 | Make the README Chinese by default | `663fc53` | `main` |
 | 13 | 2026-08-26 | Automate GitHub release delivery | `37cf272` | `main` |
 | 12 | 2026-08-26 | P11 build and install delivery | `dc8df98`, `97b8aa0`, `2ce9c96` | `main` |
