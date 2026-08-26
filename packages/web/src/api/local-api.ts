@@ -8,6 +8,11 @@ import {
   type LocalCatalogResponse,
   type LocalDirectoryBrowserEntrypoint,
   type LocalDirectoryListing,
+  type LocalProjectApplyInput,
+  type LocalProjectApplyResponse,
+  type LocalProjectPlanResponse,
+  type LocalProjectSelectionInput,
+  type LocalProjectSnapshot,
   type LocalSessionEvent,
   type LocalSessionInfo,
   type LocalSourceInput,
@@ -61,7 +66,7 @@ function isLocalApiError(value: unknown): value is LocalApiError {
     typeof (value as { code?: unknown }).code === "string" &&
     typeof (value as { message?: unknown }).message === "string" &&
     typeof (value as { retryable?: unknown }).retryable === "boolean" &&
-    ["open-session", "retry", "review-state"].includes(
+    ["manual-recovery", "open-session", "retry", "review-state"].includes(
       String((value as { recoveryAction?: unknown }).recoveryAction),
     )
   );
@@ -193,6 +198,95 @@ function isCatalogCandidateDetail(
   );
 }
 
+function isProjectLink(value: unknown): boolean {
+  if (typeof value !== "object" || value === null) return false;
+  const link = value as Record<string, unknown>;
+  return (
+    typeof link.linkName === "string" &&
+    (link.sourceState === null ||
+      ["available", "disabled", "unconfigured"].includes(
+        String(link.sourceState),
+      )) &&
+    [
+      "dangling-link",
+      "managed",
+      "manifest-mismatch",
+      "missing",
+      "unknown-directory",
+      "unknown-file",
+      "unknown-link",
+      "unknown-other",
+    ].includes(String(link.state))
+  );
+}
+
+function isProjectRecoveryDiagnostic(value: unknown): boolean {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    ["backup", "temporary"].includes(
+      String((value as Record<string, unknown>).kind),
+    ) &&
+    typeof (value as Record<string, unknown>).path === "string"
+  );
+}
+
+function isProjectSnapshot(value: unknown): value is LocalProjectSnapshot {
+  if (typeof value !== "object" || value === null) return false;
+  const record = value as Record<string, unknown>;
+  return (
+    typeof record.manifestRevision === "number" &&
+    Array.isArray(record.links) &&
+    record.links.every(isProjectLink) &&
+    Array.isArray(record.recoveryDiagnostics) &&
+    record.recoveryDiagnostics.every(isProjectRecoveryDiagnostic)
+  );
+}
+
+function isProjectPlan(value: unknown): value is LocalProjectPlanResponse {
+  if (typeof value !== "object" || value === null) return false;
+  const record = value as Record<string, unknown>;
+  return (
+    typeof record.baseRevision === "number" &&
+    Array.isArray(record.blockers) &&
+    record.blockers.every(
+      (blocker) =>
+        typeof blocker === "object" &&
+        blocker !== null &&
+        [
+          "DUPLICATE_SELECTION",
+          "INVALID_CANDIDATE",
+          "MANAGED_STATE_MISMATCH",
+          "UNKNOWN_OCCUPIED",
+        ].includes(String((blocker as Record<string, unknown>).code)) &&
+        typeof (blocker as Record<string, unknown>).linkName === "string" &&
+        typeof (blocker as Record<string, unknown>).message === "string",
+    ) &&
+    Array.isArray(record.changes) &&
+    record.changes.every(
+      (change) =>
+        typeof change === "object" &&
+        change !== null &&
+        ((change as Record<string, unknown>).candidateId === null ||
+          typeof (change as Record<string, unknown>).candidateId ===
+            "string") &&
+        ["add", "remove", "replace"].includes(
+          String((change as Record<string, unknown>).kind),
+        ) &&
+        typeof (change as Record<string, unknown>).linkName === "string",
+    )
+  );
+}
+
+function isProjectApply(value: unknown): value is LocalProjectApplyResponse {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    typeof (value as Record<string, unknown>).idempotent === "boolean" &&
+    isProjectSnapshot((value as Record<string, unknown>).snapshot)
+  );
+}
+
 function isPathValidation(value: unknown): value is LocalSourcePathValidation {
   return (
     typeof value === "object" &&
@@ -311,6 +405,44 @@ export class LocalApiClient {
     await this.#request<{ status: string }>("/api/session/shutdown", {
       method: "POST",
     });
+  }
+
+  public async project(): Promise<LocalProjectSnapshot> {
+    const response = await this.#request<LocalProjectSnapshot>("/api/project", {
+      method: "GET",
+    });
+    if (!isProjectSnapshot(response)) throw invalidResponse();
+    return response;
+  }
+
+  public async projectPlan(
+    selections: readonly LocalProjectSelectionInput[],
+  ): Promise<LocalProjectPlanResponse> {
+    const response = await this.#request<LocalProjectPlanResponse>(
+      "/api/project/plan",
+      {
+        body: JSON.stringify({ selections }),
+        headers: { "Content-Type": "application/json" },
+        method: "POST",
+      },
+    );
+    if (!isProjectPlan(response)) throw invalidResponse();
+    return response;
+  }
+
+  public async applyProjectChanges(
+    input: LocalProjectApplyInput,
+  ): Promise<LocalProjectApplyResponse> {
+    const response = await this.#request<LocalProjectApplyResponse>(
+      "/api/project/apply",
+      {
+        body: JSON.stringify(input),
+        headers: { "Content-Type": "application/json" },
+        method: "POST",
+      },
+    );
+    if (!isProjectApply(response)) throw invalidResponse();
+    return response;
   }
 
   public async catalog(query = ""): Promise<LocalCatalogResponse> {

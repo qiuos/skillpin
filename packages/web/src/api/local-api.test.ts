@@ -352,3 +352,117 @@ describe("P8 catalog operations", () => {
     }
   });
 });
+
+describe("P9 project operations", () => {
+  const snapshot = {
+    links: [
+      {
+        linkName: "review",
+        sourceState: "available" as const,
+        state: "managed" as const,
+      },
+    ],
+    manifestRevision: 2,
+    recoveryDiagnostics: [
+      { kind: "temporary" as const, path: ".review.skillpin-tmp-request" },
+    ],
+  };
+
+  it("uses authenticated project snapshot, plan, and apply requests", async () => {
+    const selections = [{ candidateId: "candidate / id", linkName: "review" }];
+    const plan = {
+      baseRevision: 2,
+      blockers: [],
+      changes: [
+        {
+          candidateId: "candidate / id",
+          kind: "replace" as const,
+          linkName: "review",
+        },
+      ],
+    };
+    const fetchImpl = vi
+      .fn<typeof fetch>()
+      .mockResolvedValueOnce(
+        jsonResponse({
+          version: 1,
+          data: {
+            credential: "secret-token",
+            credentialExpiresAt: "2026-08-26T00:00:00.000Z",
+            session,
+          },
+        }),
+      )
+      .mockResolvedValueOnce(jsonResponse({ version: 1, data: snapshot }))
+      .mockResolvedValueOnce(jsonResponse({ version: 1, data: plan }))
+      .mockResolvedValueOnce(
+        jsonResponse({
+          version: 1,
+          data: { idempotent: false, snapshot },
+        }),
+      );
+    const client = new LocalApiClient({ fetchImpl });
+
+    await client.bootstrap();
+    await expect(client.project()).resolves.toEqual(snapshot);
+    await expect(client.projectPlan(selections)).resolves.toEqual(plan);
+    await expect(
+      client.applyProjectChanges({
+        baseRevision: plan.baseRevision,
+        requestId: "p9-request",
+        selections,
+      }),
+    ).resolves.toEqual({ idempotent: false, snapshot });
+
+    expect(fetchImpl.mock.calls.slice(1).map(([path]) => path)).toEqual([
+      "/api/project",
+      "/api/project/plan",
+      "/api/project/apply",
+    ]);
+    expect(JSON.parse(String(fetchImpl.mock.calls[2]?.[1]?.body))).toEqual({
+      selections,
+    });
+    expect(JSON.parse(String(fetchImpl.mock.calls[3]?.[1]?.body))).toEqual({
+      baseRevision: 2,
+      requestId: "p9-request",
+      selections,
+    });
+    for (const [, request] of fetchImpl.mock.calls.slice(1)) {
+      expect((request?.headers as Headers).get("Authorization")).toBe(
+        "Bearer secret-token",
+      );
+    }
+  });
+
+  it("rejects malformed project payloads", async () => {
+    const client = new LocalApiClient({
+      fetchImpl: vi
+        .fn<typeof fetch>()
+        .mockResolvedValueOnce(
+          jsonResponse({
+            version: 1,
+            data: {
+              credential: "secret-token",
+              credentialExpiresAt: "2026-08-26T00:00:00.000Z",
+              session,
+            },
+          }),
+        )
+        .mockResolvedValueOnce(
+          jsonResponse({
+            version: 1,
+            data: {
+              links: [{ linkName: "review", state: "not-a-project-state" }],
+              manifestRevision: 0,
+              recoveryDiagnostics: [],
+            },
+          }),
+        ),
+    });
+
+    await client.bootstrap();
+    await expect(client.project()).rejects.toMatchObject({
+      code: "LOCAL_API_INVALID_RESPONSE",
+    });
+  });
+});

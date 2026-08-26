@@ -86,6 +86,42 @@ async function installProtectedLocalApi(
         if (url.pathname === "/api/session/shutdown" && method === "POST") {
           return reply({ status: "closed" });
         }
+        if (url.pathname === "/api/project" && method === "GET") {
+          return reply({
+            links: [],
+            manifestRevision: 0,
+            recoveryDiagnostics: [],
+          });
+        }
+        if (url.pathname === "/api/project/plan" && method === "POST") {
+          return reply({
+            baseRevision: 0,
+            blockers: [],
+            changes: [
+              {
+                candidateId: "catalog-candidate",
+                kind: "add",
+                linkName: "review",
+              },
+            ],
+          });
+        }
+        if (url.pathname === "/api/project/apply" && method === "POST") {
+          return reply({
+            idempotent: false,
+            snapshot: {
+              links: [
+                {
+                  linkName: "review",
+                  sourceState: "available",
+                  state: "managed",
+                },
+              ],
+              manifestRevision: 1,
+              recoveryDiagnostics: [],
+            },
+          });
+        }
         if (url.pathname === "/api/catalog" && method === "GET") {
           const source = sources[0]?.source ?? {
             displayName: "Personal",
@@ -362,6 +398,37 @@ test("browses searchable catalog candidates and safely renders an explicit skill
   await page.getByLabel("Search skills").fill("local project");
   await expect(page.getByRole("button", { name: /review/i })).toBeVisible();
   await expect(
-    page.getByText(/does not select or change project links/i),
+    page.getByText(
+      /stage a candidate explicitly before it can change project links/i,
+    ),
   ).toBeVisible();
+});
+
+test("stages a candidate, reviews the server plan, and confirms apply separately", async ({
+  page,
+}) => {
+  await installProtectedLocalApi(page, [
+    source("source-catalog", "Personal", "/Users/example/skills"),
+  ]);
+  await page.goto("/skills");
+
+  await page.getByRole("button", { name: "Stage for project" }).click();
+  await expect(page.getByText("1 staged project change")).toBeVisible();
+  await page.getByRole("button", { name: "Review changes" }).click();
+
+  const review = page.getByRole("dialog", { name: "Review project changes" });
+  await expect(review).toBeVisible();
+  await expect(review.getByText("add: review")).toBeVisible();
+  await expect(
+    page.getByRole("dialog", { name: "Confirm project changes" }),
+  ).toHaveCount(0);
+  await review.getByRole("button", { name: "Apply changes" }).click();
+
+  const confirm = page.getByRole("dialog", { name: "Confirm project changes" });
+  await expect(confirm).toBeVisible();
+  await expect(confirm.getByText(/Apply 1 reviewed change/i)).toBeVisible();
+  await confirm.getByRole("button", { name: "Apply", exact: true }).click();
+
+  await expect(confirm).toHaveCount(0);
+  await expect(page.getByText("1 staged project change")).toHaveCount(0);
 });

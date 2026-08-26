@@ -8,14 +8,20 @@ import remarkGfm from "remark-gfm";
 import type {
   LocalCatalogCandidate,
   LocalCatalogCandidateDetail,
+  LocalProjectPlanResponse,
+  LocalProjectSelectionInput,
+  LocalProjectSnapshot,
 } from "@skillpin/core";
 
 import {
   Badge,
   Button,
+  Dialog,
   EmptyState,
   TextInput,
 } from "../../components/controls.js";
+import { LocalApiClientError } from "../../api/local-api.js";
+import { useLocalApiClient } from "../session/session-context.js";
 import { useCatalog } from "./catalog-context.js";
 
 function safeHref(href: string | undefined): string | undefined {
@@ -65,7 +71,21 @@ async function copyText(value: string): Promise<void> {
   await navigator.clipboard.writeText(value);
 }
 
+function projectErrorMessage(reason: unknown, fallback: string): string {
+  if (!(reason instanceof LocalApiClientError)) {
+    return reason instanceof Error ? reason.message : fallback;
+  }
+  if (reason.recoveryAction === "manual-recovery") {
+    return `${reason.message} Manual recovery review is required before another apply.`;
+  }
+  if (reason.recoveryAction === "retry") {
+    return `${reason.message} Review the latest project state, then try again.`;
+  }
+  return reason.message;
+}
+
 export function SkillsWorkbenchPage() {
+  const client = useLocalApiClient();
   const { error, groups, isLoading, loadCandidate, search } = useCatalog();
   const [query, setQuery] = useState("");
   const [selectedGroupKey, setSelectedGroupKey] = useState<string | null>(null);
@@ -77,6 +97,13 @@ export function SkillsWorkbenchPage() {
   );
   const [detailError, setDetailError] = useState<string | null>(null);
   const [copied, setCopied] = useState<string | null>(null);
+  const [project, setProject] = useState<LocalProjectSnapshot | null>(null);
+  const [staged, setStaged] = useState<Record<string, string | null>>({});
+  const [plan, setPlan] = useState<LocalProjectPlanResponse | null>(null);
+  const [projectError, setProjectError] = useState<string | null>(null);
+  const [reviewOpen, setReviewOpen] = useState(false);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [applying, setApplying] = useState(false);
   const listRef = useRef<HTMLDivElement>(null);
   const rowVirtualizer = useVirtualizer({
     count: groups.length,
@@ -90,6 +117,29 @@ export function SkillsWorkbenchPage() {
     const timer = window.setTimeout(() => void search(query), 160);
     return () => window.clearTimeout(timer);
   }, [query, search]);
+
+  useEffect(() => {
+    let cancelled = false;
+    void client
+      .project()
+      .then((snapshot) => {
+        if (!cancelled) {
+          setProject(snapshot);
+          setProjectError(null);
+        }
+      })
+      .catch((reason: unknown) => {
+        if (!cancelled)
+          setProjectError(
+            reason instanceof Error
+              ? reason.message
+              : "Unable to inspect project.",
+          );
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [client]);
 
   const selectedGroup = useMemo(
     () =>
@@ -148,6 +198,76 @@ export function SkillsWorkbenchPage() {
         window.setTimeout(() => setCopied(null), 1600);
       })
       .catch(() => setCopied("Copy unavailable"));
+  };
+
+  const selections = (): readonly LocalProjectSelectionInput[] =>
+    Object.entries(staged).map(([linkName, candidateId]) => ({
+      candidateId,
+      linkName,
+    }));
+
+  const stageCandidate = (candidate: LocalCatalogCandidate) => {
+    setStaged((current) => ({
+      ...current,
+      [candidate.linkName]: candidate.id,
+    }));
+    setPlan(null);
+  };
+
+  const stageRemoval = (linkName: string) => {
+    setStaged((current) => ({ ...current, [linkName]: null }));
+    setPlan(null);
+  };
+
+  const unstage = (linkName: string) => {
+    setStaged((current) => {
+      const remaining = { ...current };
+      delete remaining[linkName];
+      return remaining;
+    });
+    setPlan(null);
+  };
+
+  const reviewChanges = () => {
+    setProjectError(null);
+    void client
+      .projectPlan(selections())
+      .then((next) => {
+        setPlan(next);
+        setReviewOpen(true);
+      })
+      .catch((reason: unknown) =>
+        setProjectError(projectErrorMessage(reason, "Unable to plan changes.")),
+      );
+  };
+
+  const applyChanges = () => {
+    if (plan === null) return;
+    setApplying(true);
+    setProjectError(null);
+    void client
+      .applyProjectChanges({
+        baseRevision: plan.baseRevision,
+        requestId: crypto.randomUUID(),
+        selections: selections(),
+      })
+      .then((result) => {
+        setProject(result.snapshot);
+        setStaged({});
+        setPlan(null);
+        setConfirmOpen(false);
+        setReviewOpen(false);
+      })
+      .catch((reason: unknown) => {
+        setProjectError(
+          projectErrorMessage(reason, "Unable to apply changes."),
+        );
+        void client
+          .project()
+          .then((snapshot) => setProject(snapshot))
+          .catch(() => undefined);
+      })
+      .finally(() => setApplying(false));
   };
 
   if (isLoading && groups.length === 0) {
@@ -244,7 +364,8 @@ export function SkillsWorkbenchPage() {
           </div>
           <h2>{selectedGroup?.linkName}</h2>
           <p className="muted-copy">
-            Compare local sources. This does not select or change project links.
+            Compare local sources. Stage a candidate explicitly before it can
+            change project links.
           </p>
           <div className="candidate-list" role="list">
             {selectedGroup?.candidates.map((candidate) => (
@@ -260,9 +381,55 @@ export function SkillsWorkbenchPage() {
                 {candidate.parseWarning === null ? null : (
                   <Badge tone="warning">Parser note</Badge>
                 )}
+                {staged[candidate.linkName] === candidate.id ? (
+                  <Badge tone="success">Staged</Badge>
+                ) : null}
               </button>
             ))}
           </div>
+          {selectedCandidate === null ? null : (
+            <div className="candidate-actions">
+              <Button
+                onClick={() =>
+                  staged[selectedCandidate.linkName] === selectedCandidate.id
+                    ? unstage(selectedCandidate.linkName)
+                    : stageCandidate(selectedCandidate)
+                }
+                variant="secondary"
+              >
+                {staged[selectedCandidate.linkName] === selectedCandidate.id
+                  ? "Unstage project change"
+                  : "Stage for project"}
+              </Button>
+            </div>
+          )}
+          {project?.links.some((link) => link.state === "managed") ? (
+            <div className="project-links">
+              <p className="skills-pane__heading">Current project links</p>
+              {project.links
+                .filter((link) => link.state === "managed")
+                .map((link) => (
+                  <div className="project-link-row" key={link.linkName}>
+                    <span>{link.linkName}</span>
+                    {Object.hasOwn(staged, link.linkName) ? (
+                      <Button
+                        onClick={() => unstage(link.linkName)}
+                        variant="tertiary"
+                      >
+                        Unstage
+                      </Button>
+                    ) : (
+                      <Button
+                        onClick={() => stageRemoval(link.linkName)}
+                        variant="tertiary"
+                      >
+                        Stage removal
+                      </Button>
+                    )}
+                  </div>
+                ))}
+            </div>
+          ) : null}
         </section>
         <section
           className="skills-pane skills-pane--detail"
@@ -325,6 +492,82 @@ export function SkillsWorkbenchPage() {
           )}
         </section>
       </div>
+      {projectError === null ? null : (
+        <p className="form-message form-message--error" role="alert">
+          {projectError}
+        </p>
+      )}
+      {project?.recoveryDiagnostics.length ? (
+        <p className="form-message form-message--error" role="alert">
+          Manual recovery review is required for{" "}
+          {project.recoveryDiagnostics.length} transaction artifact(s).
+        </p>
+      ) : null}
+      {Object.keys(staged).length === 0 ? null : (
+        <div className="change-bar" role="status">
+          <span>
+            {Object.keys(staged).length} staged project change
+            {Object.keys(staged).length === 1 ? "" : "s"}
+          </span>
+          <Button onClick={reviewChanges}>Review changes</Button>
+        </div>
+      )}
+      <Dialog
+        description="Review the server-computed project plan before any filesystem change occurs."
+        onClose={() => setReviewOpen(false)}
+        open={reviewOpen}
+        title="Review project changes"
+      >
+        <div className="project-review">
+          {plan?.blockers.length ? (
+            <p className="form-message form-message--error">
+              {plan.blockers.map((blocker) => blocker.message).join(" ")}
+            </p>
+          ) : (
+            <p>
+              {plan?.changes.length ?? 0} change(s) will be applied to this
+              project.
+            </p>
+          )}
+          <ul>
+            {plan?.changes.map((change) => (
+              <li key={change.linkName}>
+                {change.kind}: {change.linkName}
+              </li>
+            ))}
+          </ul>
+          <div className="dialog__actions">
+            <Button onClick={() => setReviewOpen(false)} variant="secondary">
+              Keep editing
+            </Button>
+            <Button
+              disabled={plan === null || plan.blockers.length > 0}
+              onClick={() => setConfirmOpen(true)}
+            >
+              Apply changes
+            </Button>
+          </div>
+        </div>
+      </Dialog>
+      <Dialog
+        description={`Apply ${plan?.changes.length ?? 0} reviewed change(s) to the active project. This uses SkillPin's transactional link workflow.`}
+        onClose={() => setConfirmOpen(false)}
+        open={confirmOpen}
+        title="Confirm project changes"
+      >
+        <div className="dialog__actions">
+          <Button
+            disabled={applying}
+            onClick={() => setConfirmOpen(false)}
+            variant="secondary"
+          >
+            Cancel
+          </Button>
+          <Button disabled={applying} onClick={applyChanges}>
+            {applying ? "Applying…" : "Apply"}
+          </Button>
+        </div>
+      </Dialog>
     </section>
   );
 }

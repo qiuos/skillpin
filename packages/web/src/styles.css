@@ -981,3 +981,54 @@ p {
     height: 300px;
   }
 }
+
+.change-bar {
+  position: sticky;
+  bottom: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: min(720px, calc(100% - 32px));
+  margin: 0 auto;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  background: var(--panel);
+  box-shadow: 0 12px 34px rgba(0, 0, 0, 0.18);
+}
+.project-review {
+  padding: 0 22px 22px;
+}
+.project-review ul {
+  padding-left: 20px;
+  color: var(--text-secondary);
+}
+@media (max-width: 600px) {
+  .change-bar {
+    align-items: stretch;
+    flex-direction: column;
+  }
+}
+
+.candidate-actions {
+  margin-top: 14px;
+}
+.project-links {
+  display: grid;
+  gap: 7px;
+  margin-top: 22px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border-subtle);
+}
+.project-links .skills-pane__heading {
+  margin: 0 0 2px;
+}
+.project-link-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  color: var(--text-secondary);
+  font-size: 13px;
+}
