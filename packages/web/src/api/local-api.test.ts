@@ -275,3 +275,80 @@ describe("LocalApiClient", () => {
     });
   });
 });
+
+describe("P8 catalog operations", () => {
+  it("uses authenticated, versioned catalog listing and explicit candidate detail paths", async () => {
+    const candidate = {
+      contentFingerprint: "fingerprint",
+      displayName: "Review skill",
+      id: "candidate / id",
+      linkName: "review",
+      parseWarning: null,
+      relativePath: "review",
+      source: {
+        displayName: "Personal",
+        enabled: true,
+        id: "source",
+        path: "/tmp/source",
+      },
+      summary: "Review local changes.",
+    };
+    const fetchImpl = vi
+      .fn<typeof fetch>()
+      .mockResolvedValueOnce(
+        jsonResponse({
+          version: 1,
+          data: {
+            credential: "secret-token",
+            credentialExpiresAt: "2026-08-26T00:00:00.000Z",
+            session,
+          },
+        }),
+      )
+      .mockResolvedValueOnce(
+        jsonResponse({
+          version: 1,
+          data: {
+            groups: [
+              {
+                candidates: [candidate],
+                conflictKey: "review",
+                linkName: "review",
+                matchingCandidateIds: [candidate.id],
+              },
+            ],
+            query: "local review",
+          },
+        }),
+      )
+      .mockResolvedValueOnce(
+        jsonResponse({
+          version: 1,
+          data: {
+            ...candidate,
+            markdownBody: "# Review",
+            skillDirectory: "/tmp/source/review",
+            skillFilePath: "/tmp/source/review/SKILL.md",
+          },
+        }),
+      );
+    const client = new LocalApiClient({ fetchImpl });
+
+    await client.bootstrap();
+    await expect(client.catalog("local review")).resolves.toMatchObject({
+      groups: [expect.objectContaining({ linkName: "review" })],
+    });
+    await expect(client.catalogCandidate(candidate.id)).resolves.toMatchObject({
+      markdownBody: "# Review",
+    });
+    expect(fetchImpl.mock.calls.slice(1).map(([path]) => path)).toEqual([
+      "/api/catalog?query=local%20review",
+      "/api/catalog/candidates/candidate%20%2F%20id",
+    ]);
+    for (const [, request] of fetchImpl.mock.calls.slice(1)) {
+      expect((request?.headers as Headers).get("Authorization")).toBe(
+        "Bearer secret-token",
+      );
+    }
+  });
+});

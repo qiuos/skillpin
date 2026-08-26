@@ -86,6 +86,59 @@ async function installProtectedLocalApi(
         if (url.pathname === "/api/session/shutdown" && method === "POST") {
           return reply({ status: "closed" });
         }
+        if (url.pathname === "/api/catalog" && method === "GET") {
+          const source = sources[0]?.source ?? {
+            displayName: "Personal",
+            enabled: true,
+            id: "source-catalog",
+            path: "/Users/example/skills",
+          };
+          const candidate = {
+            contentFingerprint: "catalog-fingerprint",
+            displayName: "Review skill",
+            id: "catalog-candidate",
+            linkName: "review",
+            parseWarning: null,
+            relativePath: "review",
+            source,
+            summary: "Review a local project.",
+          };
+          return reply({
+            groups: [
+              {
+                candidates: [candidate],
+                conflictKey: "review",
+                linkName: "review",
+                matchingCandidateIds: [candidate.id],
+              },
+            ],
+            query: url.searchParams.get("query") ?? "",
+          });
+        }
+        if (
+          url.pathname === "/api/catalog/candidates/catalog-candidate" &&
+          method === "GET"
+        ) {
+          const source = sources[0]?.source ?? {
+            displayName: "Personal",
+            enabled: true,
+            id: "source-catalog",
+            path: "/Users/example/skills",
+          };
+          return reply({
+            contentFingerprint: "catalog-fingerprint",
+            displayName: "Review skill",
+            id: "catalog-candidate",
+            linkName: "review",
+            markdownBody: "# Review\n\nSafe local Markdown content.",
+            parseWarning: null,
+            relativePath: "review",
+            skillDirectory: `${source.path}/review`,
+            skillFilePath: `${source.path}/review/SKILL.md`,
+            source,
+            summary: "Review a local project.",
+          });
+        }
         if (url.pathname === "/api/sources" && method === "GET") {
           return reply({ sources });
         }
@@ -288,4 +341,27 @@ test("persists theme choice and returns focus after closing session panels", asy
   await expect(end).toBeFocused();
   await page.reload();
   await expect(page.locator("html")).toHaveAttribute("data-theme", "light");
+});
+
+test("browses searchable catalog candidates and safely renders an explicit skill detail", async ({
+  page,
+}) => {
+  await installProtectedLocalApi(page, [
+    source("source-catalog", "Personal", "/Users/example/skills"),
+  ]);
+  await page.goto("/skills");
+
+  await expect(
+    page.getByRole("heading", { exact: true, name: "Skills" }),
+  ).toBeVisible();
+  await expect(page.getByRole("button", { name: /review/i })).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "Review skill" }),
+  ).toBeVisible();
+  await expect(page.getByText("Safe local Markdown content.")).toBeVisible();
+  await page.getByLabel("Search skills").fill("local project");
+  await expect(page.getByRole("button", { name: /review/i })).toBeVisible();
+  await expect(
+    page.getByText(/does not select or change project links/i),
+  ).toBeVisible();
 });

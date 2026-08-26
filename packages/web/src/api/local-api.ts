@@ -3,6 +3,9 @@ import {
   type BootstrapSessionResponse,
   type LocalApiError,
   type LocalApiResponse,
+  type LocalCatalogCandidate,
+  type LocalCatalogCandidateDetail,
+  type LocalCatalogResponse,
   type LocalDirectoryBrowserEntrypoint,
   type LocalDirectoryListing,
   type LocalSessionEvent,
@@ -132,6 +135,64 @@ function isSourceListResponse(
   );
 }
 
+function isCatalogCandidate(value: unknown): value is LocalCatalogCandidate {
+  if (typeof value !== "object" || value === null) {
+    return false;
+  }
+  const candidate = value as Record<string, unknown>;
+  const warning = candidate.parseWarning;
+  return (
+    (typeof candidate.contentFingerprint === "string" ||
+      candidate.contentFingerprint === null) &&
+    typeof candidate.displayName === "string" &&
+    typeof candidate.id === "string" &&
+    typeof candidate.linkName === "string" &&
+    typeof candidate.relativePath === "string" &&
+    typeof candidate.summary === "string" &&
+    isLocalSource(candidate.source) &&
+    (warning === null ||
+      (typeof warning === "object" &&
+        warning !== null &&
+        typeof (warning as Record<string, unknown>).code === "string" &&
+        typeof (warning as Record<string, unknown>).message === "string"))
+  );
+}
+
+function isCatalogResponse(value: unknown): value is LocalCatalogResponse {
+  if (typeof value !== "object" || value === null) return false;
+  const response = value as Record<string, unknown>;
+  return (
+    typeof response.query === "string" &&
+    Array.isArray(response.groups) &&
+    response.groups.every((group) => {
+      if (typeof group !== "object" || group === null) return false;
+      const record = group as Record<string, unknown>;
+      return (
+        typeof record.conflictKey === "string" &&
+        typeof record.linkName === "string" &&
+        Array.isArray(record.matchingCandidateIds) &&
+        record.matchingCandidateIds.every((id) => typeof id === "string") &&
+        Array.isArray(record.candidates) &&
+        record.candidates.every(isCatalogCandidate)
+      );
+    })
+  );
+}
+
+function isCatalogCandidateDetail(
+  value: unknown,
+): value is LocalCatalogCandidateDetail {
+  return (
+    isCatalogCandidate(value) &&
+    typeof (value as unknown as Record<string, unknown>).markdownBody ===
+      "string" &&
+    typeof (value as unknown as Record<string, unknown>).skillDirectory ===
+      "string" &&
+    typeof (value as unknown as Record<string, unknown>).skillFilePath ===
+      "string"
+  );
+}
+
 function isPathValidation(value: unknown): value is LocalSourcePathValidation {
   return (
     typeof value === "object" &&
@@ -250,6 +311,26 @@ export class LocalApiClient {
     await this.#request<{ status: string }>("/api/session/shutdown", {
       method: "POST",
     });
+  }
+
+  public async catalog(query = ""): Promise<LocalCatalogResponse> {
+    const response = await this.#request<LocalCatalogResponse>(
+      `/api/catalog?query=${encodeURIComponent(query)}`,
+      { method: "GET" },
+    );
+    if (!isCatalogResponse(response)) throw invalidResponse();
+    return response;
+  }
+
+  public async catalogCandidate(
+    candidateId: string,
+  ): Promise<LocalCatalogCandidateDetail> {
+    const response = await this.#request<LocalCatalogCandidateDetail>(
+      `/api/catalog/candidates/${encodeURIComponent(candidateId)}`,
+      { method: "GET" },
+    );
+    if (!isCatalogCandidateDetail(response)) throw invalidResponse();
+    return response;
   }
 
   public async sources(): Promise<LocalSourceListResponse> {

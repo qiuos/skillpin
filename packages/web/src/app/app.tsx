@@ -7,9 +7,10 @@ import {
   Button,
   Dialog,
   Drawer,
-  EmptyState,
   Tooltip,
 } from "../components/controls.js";
+import { SkillsWorkbenchPage } from "../features/catalog/skills-workbench-page.js";
+import { CatalogProvider } from "../features/catalog/catalog-context.js";
 import { OnboardingPage } from "../features/onboarding/onboarding-page.js";
 import { useSession } from "../features/session/session-context.js";
 import {
@@ -117,10 +118,7 @@ function AppShell() {
       onEditSource={setEditingSource}
     />
   ) : (
-    <EmptyState
-      body="The skill workbench is the next milestone. Your configured sources are ready for it."
-      title="Skills workbench is coming next"
-    />
+    <SkillsWorkbenchPage />
   );
 
   return (
@@ -280,7 +278,9 @@ function AppShell() {
 export function App() {
   return (
     <SourceProvider>
-      <AppShell />
+      <CatalogProvider>
+        <AppShell />
+      </CatalogProvider>
     </SourceProvider>
   );
 }
