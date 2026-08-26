@@ -430,3 +430,36 @@ Delivered the bundled private npm CLI, protected production static assets, packa
 ### Next Steps
 
 - None - task complete
+
+
+## Session 13: Automate GitHub release delivery
+
+**Date**: 2026-08-26
+**Task**: Automate GitHub release delivery
+**Branch**: `main`
+
+### Summary
+
+Added a tag-triggered GitHub Release workflow, documented patch-default formal releases, required the release guide in packaged artifacts, and recorded the P11 release contract.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `37cf272` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
