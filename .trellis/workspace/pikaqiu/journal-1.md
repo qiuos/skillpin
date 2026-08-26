@@ -77,3 +77,43 @@ Implemented and verified cross-platform managed directory links, Windows Junctio
 ### Next Steps
 
 - None - task complete
+
+
+## Session 3: Bootstrap Trellis workflow and SkillPin guidelines
+
+**Date**: 2026-08-26
+**Task**: Bootstrap Trellis workflow and SkillPin guidelines
+**Branch**: `main`
+
+### Summary
+
+Initialized the Trellis workflow in SkillPin, documented evidence-backed backend and frontend development guidelines, and verified formatting, linting, type checks, unit/platform tests, browser E2E, and package validation.
+
+### Main Changes
+
+- Added the Trellis workflow, task scripts, agent/skill configuration, and repository instructions for supported AI tooling.
+- Documented evidence-backed backend and frontend conventions, including package boundaries, errors, filesystem-adjacent persistence, hooks, state, type safety, accessibility, and quality checks.
+- Recorded the completed Bootstrap Guidelines task and preserved the existing P1 platform-link contract as the Node-specific reference.
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `78b5c0e` | chore: initialize Trellis workflow |
+| `7b3c24b` | docs: bootstrap SkillPin development guidelines |
+
+### Testing
+
+- [OK] `npm run format:check` plus an explicit Prettier check for the changed Trellis Markdown files
+- [OK] `npm run lint` and `npm run typecheck`
+- [OK] `npm test` — 4 test files and 28 tests passed
+- [OK] `npm run test:e2e` — Chromium application-shell test passed
+- [OK] `npm run verify-package`
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
