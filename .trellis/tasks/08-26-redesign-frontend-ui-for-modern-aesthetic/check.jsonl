@@ -1,0 +1,7 @@
+{"file": ".trellis/spec/frontend/quality-guidelines.md", "reason": "Typecheck, a11y, and Playwright quality gates"}
+{"file": ".trellis/spec/frontend/component-guidelines.md", "reason": "Semantic HTML, focus, and accessible names must survive restyle"}
+{"file": ".trellis/spec/frontend/local-session-app-foundation.md", "reason": "Session chrome and theme contract verification"}
+{"file": ".trellis/spec/frontend/source-management-foundation.md", "reason": "Source flows match foundation"}
+{"file": ".trellis/spec/frontend/skills-workbench-foundation.md", "reason": "Workbench layout contract verification"}
+{"file": ".trellis/spec/frontend/project-change-workflow-foundation.md", "reason": "Staged dialog contract verification"}
+{"file": ".trellis/tasks/08-26-redesign-frontend-ui-for-modern-aesthetic/prd.md", "reason": "Verification against locked Vercel/Stripe visual requirements"}

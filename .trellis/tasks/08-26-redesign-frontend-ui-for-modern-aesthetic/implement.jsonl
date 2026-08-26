@@ -1,0 +1,7 @@
+{"file": ".trellis/spec/frontend/quality-guidelines.md", "reason": "Styling, a11y, and quality rules for packages/web"}
+{"file": ".trellis/spec/frontend/component-guidelines.md", "reason": "Component/a11y patterns to preserve while restyling"}
+{"file": ".trellis/spec/frontend/local-session-app-foundation.md", "reason": "Shell, session chrome, theme contract"}
+{"file": ".trellis/spec/frontend/source-management-foundation.md", "reason": "Onboarding/source list/dialog/browser UX contract"}
+{"file": ".trellis/spec/frontend/skills-workbench-foundation.md", "reason": "Workbench layout and catalog UX contract"}
+{"file": ".trellis/spec/frontend/project-change-workflow-foundation.md", "reason": "Staged selection, review, apply UI contract"}
+{"file": ".trellis/tasks/08-26-redesign-frontend-ui-for-modern-aesthetic/prd.md", "reason": "Locked Vercel/Stripe visual requirements & acceptance criteria"}
