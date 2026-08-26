@@ -44,7 +44,7 @@ Do not use the Linux-specific `--with-deps` option in the cross-platform job.
 
 | Condition | Required outcome |
 |---|---|
-| A root quality command fails | Fix the regression; do not mark the acceptance item complete. |
+| A root quality command fails | Fix the regression; do not mark the acceptance item complete. `npm run lint` must bootstrap `@skillpin/core` so exported core subpaths resolve in a fresh CI checkout; repository text files must declare LF checkout policy in `.gitattributes`. |
 | A browser test passes only on one OS | Treat the result as incomplete; retain the full OS matrix. |
 | Playwright installation fails on macOS/Windows | Use the portable Chromium installer command; do not add `--with-deps` globally. |
 | Windows cannot create directory symlinks | Verify the eligible Junction fallback natively and record the actual manifest link type. |

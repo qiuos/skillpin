@@ -27,6 +27,10 @@ P10 validates the completed P0–P9 product as an integrated whole. The tests be
 | AC-19 | `packages/core/src/persistence/persistence.test.ts`; `packages/core/src/project/project-p4.test.ts` | Local unit passed | Preserve a corrupt config/manifest fixture and confirm original-byte retention. |
 | AC-20 | `tests/integration/session-lifecycle.test.ts` — simulated SIGTERM and active apply close | Local integration passed | Send Ctrl+C to an idle session and to an apply operation on each OS. |
 
+## CI Discovery: Fresh-Checkout Lint Bootstrap
+
+The first remote P10 CI run on August 26, 2026 reproduced two fresh-checkout quality defects. Ubuntu and macOS failed `npm run lint` before type-checking because `eslint-plugin-import` resolved CLI imports of `@skillpin/core/*` through the core package exports, but a fresh checkout had no `packages/core/dist/` output yet. The root `npm run lint` command now builds `@skillpin/core` before invoking ESLint, making the documented lint entrypoint self-contained. Windows failed `npm run format:check` because checkout line-ending conversion had no repository policy; `.gitattributes` now normalizes detected text to LF on all platforms. Both corrections must be rerun through the full three-OS CI matrix.
+
 ## CI Evidence
 
 `.github/workflows/ci.yml` runs `quality` and `browser-e2e` on `ubuntu-latest`, `macos-latest`, and `windows-latest`. The browser job installs Chromium with Playwright's cross-platform browser installer and executes the Playwright suite. This makes the full browser core flow a required three-platform CI result rather than an Ubuntu-only signal.

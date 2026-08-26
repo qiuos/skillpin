@@ -17,7 +17,7 @@
     "test": "vitest run --config vitest.workspace.ts",
     "test:watch": "vitest --config vitest.workspace.ts",
     "test:e2e": "playwright test",
-    "lint": "eslint .",
+    "lint": "npm run build --workspace=@skillpin/core && eslint .",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "pack": "npm run build && node scripts/build-package.mjs",
