@@ -20,6 +20,7 @@ This directory records the repository's current P0 frontend conventions, grounde
 | [State Management](./state-management.md) | Local state, global state, server state | Baseline documented |
 | [Quality Guidelines](./quality-guidelines.md) | Code standards, forbidden patterns | Baseline documented |
 | [Type Safety](./type-safety.md) | Type patterns, validation | Baseline documented |
+| [Local Session Application Foundation](./local-session-app-foundation.md) | Browser-safe P5 session client, connection state, themes, and application chrome | P6 documented |
 
 ---
 
