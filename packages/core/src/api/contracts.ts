@@ -59,6 +59,41 @@ export interface LocalSourceListResponse {
   readonly sources: readonly LocalSourceSummary[];
 }
 
+/** Read-only candidate metadata suitable for the P8 catalog browser. */
+export interface LocalCatalogCandidate {
+  readonly contentFingerprint: string | null;
+  readonly displayName: string;
+  readonly id: string;
+  readonly linkName: string;
+  readonly parseWarning: {
+    readonly code: string;
+    readonly message: string;
+  } | null;
+  readonly relativePath: string;
+  readonly source: LocalSkillSource;
+  readonly summary: string;
+}
+
+export interface LocalCatalogGroup {
+  readonly candidates: readonly LocalCatalogCandidate[];
+  readonly conflictKey: string;
+  readonly linkName: string;
+  readonly matchingCandidateIds: readonly string[];
+}
+
+/** Search results from the current session-local catalog; never persisted. */
+export interface LocalCatalogResponse {
+  readonly groups: readonly LocalCatalogGroup[];
+  readonly query: string;
+}
+
+/** Explicitly requested SKILL.md detail; source content is never sent in list rows. */
+export interface LocalCatalogCandidateDetail extends LocalCatalogCandidate {
+  readonly markdownBody: string;
+  readonly skillDirectory: string;
+  readonly skillFilePath: string;
+}
+
 export interface LocalSourceInput {
   readonly displayName: string;
   readonly enabled?: boolean;

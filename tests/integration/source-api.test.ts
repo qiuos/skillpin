@@ -276,3 +276,65 @@ describe("P7 source management API", () => {
     );
   });
 });
+
+describe("P8 catalog API", () => {
+  it("returns searchable metadata separately from explicitly requested Skill.md detail", async () => {
+    const project = await temporaryDirectory("skillpin-p8-project-");
+    const configDirectory = await temporaryDirectory("skillpin-p8-config-");
+    const sourceRoot = await temporaryDirectory("skillpin-p8-source-");
+    const skillDirectory = path.join(sourceRoot, "review");
+    await mkdir(skillDirectory);
+    await writeFile(
+      path.join(skillDirectory, "SKILL.md"),
+      "---\nname: Review skill\ndescription: Review a local project.\n---\n# Review\n\nNever expose this in list results.\n",
+      "utf8",
+    );
+    const session = await startSession(
+      project,
+      path.join(configDirectory, "config.json"),
+    );
+    const credential = await credentialFor(session);
+    const created = await requestLocal(session.address, "/api/sources", {
+      body: JSON.stringify({
+        displayName: "Personal",
+        enabled: true,
+        path: sourceRoot,
+      }),
+      headers: headers(session, credential),
+      method: "POST",
+    });
+    expect(created.status).toBe(201);
+
+    const rejected = await requestLocal(session.address, "/api/catalog", {
+      headers: { Origin: session.address },
+    });
+    expect(rejected.status).toBe(401);
+    const listing = await requestLocal(
+      session.address,
+      "/api/catalog?query=local%20project",
+      { headers: headers(session, credential) },
+    );
+    expect(listing.status).toBe(200);
+    expect(listing.body).not.toContain("Never expose this in list results.");
+    const candidate = data<{
+      groups: { candidates: { id: string; source: { path: string } }[] }[];
+    }>(listing.body).groups[0]?.candidates[0];
+    expect(candidate).toBeDefined();
+    expect(candidate?.source.path).toBe(await realpath(sourceRoot));
+
+    const detail = await requestLocal(
+      session.address,
+      `/api/catalog/candidates/${encodeURIComponent(candidate?.id ?? "")}`,
+      { headers: headers(session, credential) },
+    );
+    expect(detail.status).toBe(200);
+    expect(
+      data<{ markdownBody: string; skillFilePath: string }>(detail.body),
+    ).toMatchObject({
+      markdownBody: expect.stringContaining(
+        "Never expose this in list results.",
+      ),
+      skillFilePath: path.join(await realpath(skillDirectory), "SKILL.md"),
+    });
+  });
+});

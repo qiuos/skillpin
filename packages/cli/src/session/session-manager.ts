@@ -24,6 +24,7 @@ import {
   type ExpiringToken,
 } from "../security/session-token.js";
 import { LocalHttpServer } from "../server/http-server.js";
+import { createCatalogRoutes } from "../server/routes/catalog-routes.js";
 import { createSourceRoutes } from "../server/routes/source-routes.js";
 import { SessionRegistry } from "./session-registry.js";
 import { SourceRuntime } from "./source-runtime.js";
@@ -133,7 +134,7 @@ export class ManagedSession implements LocalSessionRuntime {
     };
     this.#server = new LocalHttpServer({
       heartbeatIntervalMs: this.#heartbeatIntervalMs,
-      additionalRoutes: createSourceRoutes(),
+      additionalRoutes: [...createSourceRoutes(), ...createCatalogRoutes()],
       heartbeatTimeoutMs: this.#heartbeatTimeoutMs,
       session: this,
     });

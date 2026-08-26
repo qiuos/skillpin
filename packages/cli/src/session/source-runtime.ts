@@ -1,5 +1,9 @@
 import {
   type LocalApiError,
+  type LocalCatalogCandidate,
+  type LocalCatalogCandidateDetail,
+  type LocalCatalogGroup,
+  type LocalCatalogResponse,
   type LocalDirectoryBrowserEntrypoint,
   type LocalDirectoryListing,
   type LocalSkillSource,
@@ -25,6 +29,8 @@ import {
   resolveReadableSourceDirectory,
   SkillScanner,
   SkillSourceService,
+  searchCatalog,
+  type ScannedSkillCandidate,
   type SourceScan,
 } from "@skillpin/core/catalog";
 import {
@@ -106,6 +112,53 @@ export class SourceRuntime {
       return ready;
     }
     return ok({ sources: this.#sources.map((source) => this.summary(source)) });
+  }
+
+  public async catalog(
+    query: string,
+  ): Promise<Result<LocalCatalogResponse, CoreError>> {
+    const ready = await this.initialize();
+    if (!ready.ok) {
+      return ready;
+    }
+    const snapshot = this.#catalog.snapshot(this.#sources);
+    return ok({
+      groups: searchCatalog(snapshot, query).map(
+        ({ group, matchingCandidateIds }) =>
+          this.localCatalogGroup(group, matchingCandidateIds),
+      ),
+      query,
+    });
+  }
+
+  public async catalogCandidate(
+    candidateId: string,
+  ): Promise<Result<LocalCatalogCandidateDetail, CoreError>> {
+    const ready = await this.initialize();
+    if (!ready.ok) {
+      return ready;
+    }
+    const candidate = this.#catalog
+      .snapshot(this.#sources)
+      .groups.flatMap((group) => group.candidates)
+      .find((entry) => entry.id === candidateId);
+    if (candidate === undefined) {
+      return err(
+        new CoreError(
+          "The requested skill candidate is no longer available.",
+          "CATALOG_CANDIDATE_NOT_FOUND",
+          { candidateId },
+          false,
+          "review-state",
+        ),
+      );
+    }
+    return ok({
+      ...this.localCatalogCandidate(candidate),
+      markdownBody: candidate.markdownBody,
+      skillDirectory: candidate.skillDirectory,
+      skillFilePath: candidate.skillFilePath,
+    });
   }
 
   public async validatePath(
@@ -233,6 +286,49 @@ export class SourceRuntime {
 
   private async rescanSource(source: SkillSource): Promise<void> {
     await this.#catalog.rescan(source, this.#scanner);
+  }
+
+  private localCatalogGroup(
+    group: {
+      readonly candidates: readonly ScannedSkillCandidate[];
+      readonly conflictKey: string;
+      readonly linkName: string;
+    },
+    matchingCandidateIds: readonly string[],
+  ): LocalCatalogGroup {
+    return {
+      candidates: group.candidates.map((candidate) =>
+        this.localCatalogCandidate(candidate),
+      ),
+      conflictKey: group.conflictKey,
+      linkName: group.linkName,
+      matchingCandidateIds,
+    };
+  }
+
+  private localCatalogCandidate(
+    candidate: ScannedSkillCandidate,
+  ): LocalCatalogCandidate {
+    const source = this.#sources.find(
+      (entry) => entry.id === candidate.sourceId,
+    );
+    return {
+      contentFingerprint: candidate.contentFingerprint,
+      displayName: candidate.displayName,
+      id: candidate.id,
+      linkName: candidate.linkName,
+      parseWarning: candidate.parseWarning,
+      relativePath: candidate.relativePath,
+      source: localSource(
+        source ?? {
+          displayName: candidate.sourceId,
+          enabled: true,
+          id: candidate.sourceId,
+          path: "",
+        },
+      ),
+      summary: candidate.summary,
+    };
   }
 
   private async projectImpact(

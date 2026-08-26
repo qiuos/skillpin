@@ -26,6 +26,7 @@ export type CoreErrorCode =
   | "SOURCE_NOT_FOUND"
   | "SOURCE_UNREADABLE"
   | "DIRECTORY_UNREADABLE"
+  | "CATALOG_CANDIDATE_NOT_FOUND"
   | "CHANGESET_INVALID"
   | "PROJECT_APPLY_IN_PROGRESS"
   | "PROJECT_NOT_DIRECTORY"
@@ -35,6 +36,7 @@ export type CoreErrorCode =
 
 export interface CoreErrorDetails {
   readonly backupPath?: string;
+  readonly candidateId?: string;
   readonly fieldPath?: string;
   readonly filePath?: string;
   readonly recoveryPaths?: readonly string[];
