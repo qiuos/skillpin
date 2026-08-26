@@ -75,3 +75,36 @@ Redesigned packages/web visual language to a Vercel-inspired monochrome aestheti
 ### Next Steps
 
 - None - task complete
+
+
+## Session 18: Release SkillPin 0.1.2
+
+**Date**: 2026-08-27
+**Task**: Release SkillPin 0.1.2
+**Branch**: `main`
+
+### Summary
+
+Bumped root package to 0.1.2, ran full release gates, pushed v0.1.2; GitHub Release published skillpin-0.1.2.tgz after UI monochrome redesign.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `59c37aa` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
