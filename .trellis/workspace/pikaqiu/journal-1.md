@@ -325,3 +325,38 @@ Added authenticated source CRUD, safe directory browsing, scan health, first-run
 ### Next Steps
 
 - None - task complete
+
+
+## Session 10: P8 skills workbench
+
+**Date**: 2026-08-26
+**Task**: P8 skills workbench
+**Branch**: `main`
+
+### Summary
+
+Implemented the protected read-only catalog API and the responsive P8 skills workbench, including safe Markdown rendering, virtualized catalog browsing, copy-path controls, and API/integration/E2E coverage. Quality gates passed: lint, typecheck, format check, web build, unit/integration tests, and E2E tests.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `5162785` | (see git log) |
+| `20de7bf` | (see git log) |
+| `555626d` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
