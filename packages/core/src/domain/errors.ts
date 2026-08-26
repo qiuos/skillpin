@@ -6,7 +6,9 @@ export type RecoveryAction =
   | "restore-backup"
   | "retry"
   | "upgrade-skillpin"
-  | "review-state";
+  | "review-state"
+  | "edit-source"
+  | "choose-directory";
 
 export type CoreErrorCode =
   | "ATOMIC_WRITE_FAILED"
@@ -17,13 +19,20 @@ export type CoreErrorCode =
   | "JSON_PARSE_FAILED"
   | "REVISION_CONFLICT"
   | "SCHEMA_MIGRATION_FAILED"
-  | "SCHEMA_VERSION_UNSUPPORTED";
+  | "SCHEMA_VERSION_UNSUPPORTED"
+  | "SOURCE_DUPLICATE"
+  | "SOURCE_INVALID"
+  | "SOURCE_NOT_FOUND"
+  | "SOURCE_UNREADABLE"
+  | "DIRECTORY_UNREADABLE";
 
 export interface CoreErrorDetails {
   readonly backupPath?: string;
   readonly fieldPath?: string;
   readonly filePath?: string;
   readonly recoveryPaths?: readonly string[];
+  readonly sourceId?: string;
+  readonly sourcePath?: string;
   readonly systemCode?: string;
 }
 
