@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 
+import type { LocalSourceInput, LocalSourceSummary } from "@skillpin/core";
+
 import {
   Badge,
   Button,
@@ -8,15 +10,22 @@ import {
   EmptyState,
   Tooltip,
 } from "../components/controls.js";
-import { ThemePicker, useThemePreference } from "./theme.js";
+import { OnboardingPage } from "../features/onboarding/onboarding-page.js";
 import { useSession } from "../features/session/session-context.js";
+import {
+  SourceProvider,
+  useSources,
+} from "../features/sources/source-context.js";
+import { SourceDialog } from "../features/sources/source-dialog.js";
+import { SourceListPage } from "../features/sources/source-list-page.js";
+import { ThemePicker, useThemePreference } from "./theme.js";
 
-const routes = ["/onboarding", "/skills", "/sources"] as const;
-type AppRoute = (typeof routes)[number];
+const workspaceRoutes = ["/skills", "/sources"] as const;
+type AppRoute = "/onboarding" | (typeof workspaceRoutes)[number];
 
 function routeFor(pathname: string): AppRoute {
-  return routes.includes(pathname as AppRoute)
-    ? (pathname as AppRoute)
+  return pathname === "/skills" || pathname === "/sources"
+    ? pathname
     : "/onboarding";
 }
 
@@ -53,53 +62,19 @@ function connectionCopy(
   }
 }
 
-function RouteContent({
-  route,
-  readOnly,
-}: {
-  readonly route: AppRoute;
-  readonly readOnly: boolean;
-}) {
-  const action = readOnly ? (
-    <Badge tone="warning">Read-only until reconnection</Badge>
-  ) : (
-    <Badge tone="success">Ready for the next step</Badge>
-  );
-  if (route === "/onboarding") {
-    return (
-      <EmptyState
-        action={action}
-        body="Connect a source directory to begin creating a private catalog of local skills."
-        title="Set up your first source"
-      />
-    );
-  }
-  if (route === "/sources") {
-    return (
-      <EmptyState
-        action={action}
-        body="Sources added in the next step will appear here, along with their scan status and health."
-        title="No source directories yet"
-      />
-    );
-  }
-  return (
-    <EmptyState
-      action={action}
-      body="After a source is available, SkillPin will surface matching skills here without turning this into a dashboard."
-      title="Your skills will appear here"
-    />
-  );
-}
-
-export function App() {
+function AppShell() {
   const [route, navigate] = useRoute();
   const { connection, error, isReadOnly, session, shutdown } = useSession();
+  const { add, isLoading: sourcesLoading, sources, update } = useSources();
   const [showEndDialog, setShowEndDialog] = useState(false);
   const [showDetails, setShowDetails] = useState(false);
+  const [editingSource, setEditingSource] = useState<
+    LocalSourceSummary | null | undefined
+  >(undefined);
   const [themePreference, setThemePreference] = useThemePreference();
   const closeEndDialog = useCallback(() => setShowEndDialog(false), []);
   const closeDetails = useCallback(() => setShowDetails(false), []);
+  const closeSourceDialog = useCallback(() => setEditingSource(undefined), []);
   const endSession = useCallback(() => {
     closeEndDialog();
     void shutdown();
@@ -107,6 +82,46 @@ export function App() {
   const status = connectionCopy(connection);
   const projectPath =
     session?.projectDirectory ?? "Connecting to protected local project…";
+  const hasSources = sources.length > 0;
+  const sourceDialogOpen = editingSource !== undefined;
+
+  useEffect(() => {
+    if (!sourcesLoading && !hasSources && route !== "/onboarding") {
+      navigate("/onboarding");
+    }
+  }, [hasSources, navigate, route, sourcesLoading]);
+
+  const saveSource = useCallback(
+    async (input: LocalSourceInput) => {
+      const saved =
+        editingSource === null
+          ? await add(input)
+          : await update(editingSource?.source.id ?? "", input);
+      if (editingSource === null) {
+        navigate("/sources");
+      }
+      return saved;
+    },
+    [add, editingSource, navigate, update],
+  );
+
+  const workSurface = !hasSources ? (
+    <OnboardingPage
+      disabled={isReadOnly}
+      onAddSource={() => setEditingSource(null)}
+    />
+  ) : route === "/sources" ? (
+    <SourceListPage
+      disabled={isReadOnly}
+      onAddSource={() => setEditingSource(null)}
+      onEditSource={setEditingSource}
+    />
+  ) : (
+    <EmptyState
+      body="The skill workbench is the next milestone. Your configured sources are ready for it."
+      title="Skills workbench is coming next"
+    />
+  );
 
   return (
     <div className="application">
@@ -136,6 +151,11 @@ export function App() {
               </Badge>
             </span>
           </Tooltip>
+          {!hasSources ? (
+            <Button onClick={() => setShowDetails(true)} variant="tertiary">
+              Session details
+            </Button>
+          ) : null}
           <Button
             disabled={connection === "exiting"}
             onClick={() => setShowEndDialog(true)}
@@ -145,45 +165,50 @@ export function App() {
           </Button>
         </div>
       </header>
-      <div className="workspace">
-        <nav aria-label="SkillPin sections" className="side-nav">
-          <p className="side-nav__label">Workspace</p>
-          {routes.map((item) => (
-            <button
-              aria-current={route === item ? "page" : undefined}
-              className={
-                route === item
-                  ? "side-nav__item side-nav__item--active"
-                  : "side-nav__item"
-              }
-              key={item}
-              onClick={() => navigate(item)}
-              type="button"
+      <div
+        className={hasSources ? "workspace" : "workspace workspace--onboarding"}
+      >
+        {hasSources ? (
+          <nav aria-label="SkillPin sections" className="side-nav">
+            <p className="side-nav__label">Workspace</p>
+            {workspaceRoutes.map((item) => (
+              <button
+                aria-current={route === item ? "page" : undefined}
+                className={
+                  route === item
+                    ? "side-nav__item side-nav__item--active"
+                    : "side-nav__item"
+                }
+                key={item}
+                onClick={() => navigate(item)}
+                type="button"
+              >
+                {item.slice(1)}
+              </button>
+            ))}
+            <Button
+              className="side-nav__details"
+              onClick={() => setShowDetails(true)}
+              variant="tertiary"
             >
-              {item.slice(1)}
-            </button>
-          ))}
-          <Button
-            className="side-nav__details"
-            onClick={() => setShowDetails(true)}
-            variant="tertiary"
-          >
-            Session details
-          </Button>
-        </nav>
+              Session details
+            </Button>
+          </nav>
+        ) : null}
         <main id="main-content" tabIndex={-1}>
-          <div className="page-heading">
-            <div>
-              <p className="eyebrow">Protected local workspace</p>
-              <h1>{route.slice(1)}</h1>
+          {hasSources ? (
+            <div className="page-heading">
+              <div>
+                <p className="eyebrow">Protected local workspace</p>
+                <h1>{route.slice(1)}</h1>
+              </div>
+              {isReadOnly ? (
+                <p className="connection-notice" role="status">
+                  Changes are disabled while the local session reconnects.
+                </p>
+              ) : null}
             </div>
-            {isReadOnly ? (
-              <p className="connection-notice" role="status">
-                Changes are disabled while the local session reconnects. Any
-                future selections stay in this page.
-              </p>
-            ) : null}
-          </div>
+          ) : null}
           {session?.status === "waiting-to-exit" ? (
             <p className="connection-notice" role="status">
               This local session is in its 60-second exit grace period.
@@ -196,9 +221,22 @@ export function App() {
               <p>{error.message}</p>
             </section>
           )}
-          <RouteContent readOnly={isReadOnly} route={route} />
+          {sourcesLoading && session !== null ? (
+            <p className="source-loading" role="status">
+              Loading configured sources…
+            </p>
+          ) : (
+            workSurface
+          )}
         </main>
       </div>
+      <SourceDialog
+        disabled={isReadOnly}
+        onClose={closeSourceDialog}
+        onSave={saveSource}
+        open={sourceDialogOpen}
+        source={editingSource ?? null}
+      />
       <Dialog
         description="Ending closes this protected local session. You can open SkillPin again from your project directory."
         onClose={closeEndDialog}
@@ -236,5 +274,13 @@ export function App() {
         </dl>
       </Drawer>
     </div>
+  );
+}
+
+export function App() {
+  return (
+    <SourceProvider>
+      <AppShell />
+    </SourceProvider>
   );
 }

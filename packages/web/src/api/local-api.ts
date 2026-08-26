@@ -3,8 +3,15 @@ import {
   type BootstrapSessionResponse,
   type LocalApiError,
   type LocalApiResponse,
+  type LocalDirectoryBrowserEntrypoint,
+  type LocalDirectoryListing,
   type LocalSessionEvent,
   type LocalSessionInfo,
+  type LocalSourceInput,
+  type LocalSourceListResponse,
+  type LocalSourcePathValidation,
+  type LocalSourceRemoveResult,
+  type LocalSourceSummary,
 } from "@skillpin/core";
 
 export class LocalApiClientError extends Error {
@@ -75,6 +82,125 @@ function isSessionInfo(value: unknown): value is LocalSessionInfo {
   );
 }
 
+function isLocalSource(value: unknown): boolean {
+  if (typeof value !== "object" || value === null) {
+    return false;
+  }
+  const source = value as Record<string, unknown>;
+  return (
+    typeof source.id === "string" &&
+    typeof source.displayName === "string" &&
+    typeof source.path === "string" &&
+    typeof source.enabled === "boolean"
+  );
+}
+
+function isSourceSummary(value: unknown): value is LocalSourceSummary {
+  if (typeof value !== "object" || value === null) {
+    return false;
+  }
+  const summary = value as Record<string, unknown>;
+  const scan = summary.scan;
+  return (
+    isLocalSource(summary.source) &&
+    summary.failure !== undefined &&
+    (summary.failure === null || isLocalApiError(summary.failure)) &&
+    [
+      "disabled",
+      "failed",
+      "healthy",
+      "no-skills",
+      "unscanned",
+      "warnings",
+    ].includes(String(summary.health)) &&
+    (scan === null ||
+      (typeof scan === "object" &&
+        scan !== null &&
+        typeof (scan as Record<string, unknown>).skillCount === "number" &&
+        Array.isArray((scan as Record<string, unknown>).warnings)))
+  );
+}
+
+function isSourceListResponse(
+  value: unknown,
+): value is LocalSourceListResponse {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    Array.isArray((value as Record<string, unknown>).sources) &&
+    (value as { sources: unknown[] }).sources.every(isSourceSummary)
+  );
+}
+
+function isPathValidation(value: unknown): value is LocalSourcePathValidation {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    typeof (value as Record<string, unknown>).path === "string"
+  );
+}
+
+function isDirectoryListing(value: unknown): value is LocalDirectoryListing {
+  if (typeof value !== "object" || value === null) {
+    return false;
+  }
+  const listing = value as Record<string, unknown>;
+  return (
+    typeof listing.directoryPath === "string" &&
+    Array.isArray(listing.entries) &&
+    listing.entries.every(
+      (entry) =>
+        typeof entry === "object" &&
+        entry !== null &&
+        typeof (entry as Record<string, unknown>).name === "string" &&
+        typeof (entry as Record<string, unknown>).path === "string" &&
+        typeof (entry as Record<string, unknown>).realPath === "string",
+    )
+  );
+}
+
+function isEntrypoints(value: unknown): value is {
+  readonly entries: readonly LocalDirectoryBrowserEntrypoint[];
+} {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    Array.isArray((value as Record<string, unknown>).entries) &&
+    (value as { entries: unknown[] }).entries.every(
+      (entry) =>
+        typeof entry === "object" &&
+        entry !== null &&
+        ["home", "recent", "root"].includes(
+          String((entry as Record<string, unknown>).kind),
+        ) &&
+        typeof (entry as Record<string, unknown>).label === "string" &&
+        typeof (entry as Record<string, unknown>).path === "string",
+    )
+  );
+}
+
+function isSourceRemoveResult(
+  value: unknown,
+): value is LocalSourceRemoveResult {
+  if (typeof value !== "object" || value === null) {
+    return false;
+  }
+  const result = value as Record<string, unknown>;
+  if (result.kind === "removed") {
+    return isLocalSource(result.source);
+  }
+  if (result.kind === "impact") {
+    const impact = result.impact;
+    return (
+      typeof impact === "object" &&
+      impact !== null &&
+      typeof (impact as Record<string, unknown>).sourceId === "string" &&
+      typeof (impact as Record<string, unknown>).managedLinkCount === "number"
+    );
+  }
+  return false;
+}
+
 function isBootstrapResponse(
   value: unknown,
 ): value is BootstrapSessionResponse {
@@ -94,7 +220,7 @@ export class LocalApiClient {
   #credential: string | null = null;
 
   public constructor(options: LocalApiClientOptions = {}) {
-    this.#fetch = options.fetchImpl ?? fetch;
+    this.#fetch = options.fetchImpl ?? globalThis.fetch.bind(globalThis);
   }
 
   public async bootstrap(): Promise<BootstrapSessionResponse> {
@@ -124,6 +250,118 @@ export class LocalApiClient {
     await this.#request<{ status: string }>("/api/session/shutdown", {
       method: "POST",
     });
+  }
+
+  public async sources(): Promise<LocalSourceListResponse> {
+    const response = await this.#request<LocalSourceListResponse>(
+      "/api/sources",
+      { method: "GET" },
+    );
+    if (!isSourceListResponse(response)) {
+      throw invalidResponse();
+    }
+    return response;
+  }
+
+  public async addSource(input: LocalSourceInput): Promise<LocalSourceSummary> {
+    const response = await this.#request<LocalSourceSummary>("/api/sources", {
+      body: JSON.stringify(input),
+      headers: { "Content-Type": "application/json" },
+      method: "POST",
+    });
+    if (!isSourceSummary(response)) {
+      throw invalidResponse();
+    }
+    return response;
+  }
+
+  public async updateSource(
+    sourceId: string,
+    input: LocalSourceInput,
+  ): Promise<LocalSourceSummary> {
+    const response = await this.#request<LocalSourceSummary>(
+      `/api/sources/${encodeURIComponent(sourceId)}`,
+      {
+        body: JSON.stringify(input),
+        headers: { "Content-Type": "application/json" },
+        method: "PATCH",
+      },
+    );
+    if (!isSourceSummary(response)) {
+      throw invalidResponse();
+    }
+    return response;
+  }
+
+  public async rescanSource(sourceId: string): Promise<LocalSourceSummary> {
+    const response = await this.#request<LocalSourceSummary>(
+      `/api/sources/${encodeURIComponent(sourceId)}/scan`,
+      { method: "POST" },
+    );
+    if (!isSourceSummary(response)) {
+      throw invalidResponse();
+    }
+    return response;
+  }
+
+  public async removeSource(
+    sourceId: string,
+    confirmProjectImpact = false,
+  ): Promise<LocalSourceRemoveResult> {
+    const response = await this.#request<LocalSourceRemoveResult>(
+      `/api/sources/${encodeURIComponent(sourceId)}`,
+      {
+        body: JSON.stringify({ confirmProjectImpact }),
+        headers: { "Content-Type": "application/json" },
+        method: "DELETE",
+      },
+    );
+    if (!isSourceRemoveResult(response)) {
+      throw invalidResponse();
+    }
+    return response;
+  }
+
+  public async validateSourcePath(
+    sourcePath: string,
+  ): Promise<LocalSourcePathValidation> {
+    const response = await this.#request<LocalSourcePathValidation>(
+      "/api/sources/validate",
+      {
+        body: JSON.stringify({ path: sourcePath }),
+        headers: { "Content-Type": "application/json" },
+        method: "POST",
+      },
+    );
+    if (!isPathValidation(response)) {
+      throw invalidResponse();
+    }
+    return response;
+  }
+
+  public async directoryEntrypoints(): Promise<
+    readonly LocalDirectoryBrowserEntrypoint[]
+  > {
+    const response = await this.#request<{
+      readonly entries: readonly LocalDirectoryBrowserEntrypoint[];
+    }>("/api/directories/entrypoints", { method: "GET" });
+    if (!isEntrypoints(response)) {
+      throw invalidResponse();
+    }
+    return response.entries;
+  }
+
+  public async directories(
+    directoryPath: string,
+  ): Promise<LocalDirectoryListing> {
+    const response = await this.#request<LocalDirectoryListing>(
+      `/api/directories?path=${encodeURIComponent(directoryPath)}`,
+      { method: "GET" },
+    );
+    if (!isDirectoryListing(response)) {
+      throw invalidResponse();
+    }
+    return response;
   }
 
   public webSocketProtocols(): string[] {

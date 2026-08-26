@@ -210,3 +210,8 @@ export function useSession(): SessionContextValue {
   }
   return value;
 }
+
+export function useLocalApiClient(): LocalApiClient {
+  useSession();
+  return client;
+}

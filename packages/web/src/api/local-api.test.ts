@@ -52,6 +52,166 @@ describe("LocalApiClient", () => {
     ]);
   });
 
+  it("uses authenticated, versioned source and directory operations", async () => {
+    const source = {
+      failure: null,
+      health: "healthy" as const,
+      scan: { skillCount: 1, warnings: [] },
+      source: {
+        displayName: "Personal",
+        enabled: true,
+        id: "source / id",
+        path: "/tmp/source",
+      },
+    };
+    const fetchImpl = vi
+      .fn<typeof fetch>()
+      .mockResolvedValueOnce(
+        jsonResponse({
+          version: 1,
+          data: {
+            credential: "secret-token",
+            credentialExpiresAt: "2026-08-26T00:00:00.000Z",
+            session,
+          },
+        }),
+      )
+      .mockResolvedValueOnce(
+        jsonResponse({ version: 1, data: { sources: [source] } }),
+      )
+      .mockResolvedValueOnce(jsonResponse({ version: 1, data: source }))
+      .mockResolvedValueOnce(jsonResponse({ version: 1, data: source }))
+      .mockResolvedValueOnce(jsonResponse({ version: 1, data: source }))
+      .mockResolvedValueOnce(
+        jsonResponse({
+          version: 1,
+          data: {
+            impact: { managedLinkCount: 1, sourceId: source.source.id },
+            kind: "impact",
+          },
+        }),
+      )
+      .mockResolvedValueOnce(
+        jsonResponse({ version: 1, data: { path: source.source.path } }),
+      )
+      .mockResolvedValueOnce(
+        jsonResponse({
+          version: 1,
+          data: { entries: [{ kind: "root", label: "Root", path: "/" }] },
+        }),
+      )
+      .mockResolvedValueOnce(
+        jsonResponse({
+          version: 1,
+          data: {
+            directoryPath: source.source.path,
+            entries: [
+              {
+                name: "child",
+                path: "/tmp/source/child",
+                realPath: "/tmp/source/child",
+              },
+            ],
+          },
+        }),
+      );
+    const client = new LocalApiClient({ fetchImpl });
+
+    await client.bootstrap();
+    await expect(client.sources()).resolves.toEqual({ sources: [source] });
+    await expect(
+      client.addSource({
+        displayName: source.source.displayName,
+        enabled: true,
+        path: source.source.path,
+      }),
+    ).resolves.toEqual(source);
+    await expect(
+      client.updateSource(source.source.id, {
+        displayName: source.source.displayName,
+        enabled: true,
+        path: source.source.path,
+      }),
+    ).resolves.toEqual(source);
+    await expect(client.rescanSource(source.source.id)).resolves.toEqual(
+      source,
+    );
+    await expect(client.removeSource(source.source.id)).resolves.toMatchObject({
+      kind: "impact",
+    });
+    await expect(
+      client.validateSourcePath(source.source.path),
+    ).resolves.toEqual({
+      path: source.source.path,
+    });
+    await expect(client.directoryEntrypoints()).resolves.toEqual([
+      { kind: "root", label: "Root", path: "/" },
+    ]);
+    await expect(client.directories(source.source.path)).resolves.toMatchObject(
+      {
+        directoryPath: source.source.path,
+      },
+    );
+
+    expect(fetchImpl.mock.calls.slice(1).map(([path]) => path)).toEqual([
+      "/api/sources",
+      "/api/sources",
+      "/api/sources/source%20%2F%20id",
+      "/api/sources/source%20%2F%20id/scan",
+      "/api/sources/source%20%2F%20id",
+      "/api/sources/validate",
+      "/api/directories/entrypoints",
+      "/api/directories?path=%2Ftmp%2Fsource",
+    ]);
+    for (const [, request] of fetchImpl.mock.calls.slice(1)) {
+      expect((request?.headers as Headers).get("Authorization")).toBe(
+        "Bearer secret-token",
+      );
+    }
+  });
+
+  it("rejects malformed source payloads", async () => {
+    const client = new LocalApiClient({
+      fetchImpl: vi
+        .fn<typeof fetch>()
+        .mockResolvedValueOnce(
+          jsonResponse({
+            version: 1,
+            data: {
+              credential: "secret-token",
+              credentialExpiresAt: "2026-08-26T00:00:00.000Z",
+              session,
+            },
+          }),
+        )
+        .mockResolvedValueOnce(
+          jsonResponse({
+            version: 1,
+            data: {
+              sources: [
+                {
+                  failure: null,
+                  health: "healthy",
+                  scan: { skillCount: "one", warnings: [] },
+                  source: {
+                    displayName: "Invalid",
+                    enabled: true,
+                    id: "source",
+                    path: "/tmp/source",
+                  },
+                },
+              ],
+            },
+          }),
+        ),
+    });
+
+    await client.bootstrap();
+    await expect(client.sources()).rejects.toMatchObject({
+      code: "LOCAL_API_INVALID_RESPONSE",
+    });
+  });
+
   it("normalizes API failures without including the credential in the error", async () => {
     const client = new LocalApiClient({
       fetchImpl: vi.fn<typeof fetch>().mockResolvedValue(
