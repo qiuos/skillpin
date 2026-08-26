@@ -1,0 +1,7 @@
+{"file": ".trellis/spec/backend/p11-build-install-delivery-contract.md", "reason": "Verify SPA fallback for app paths; no cookie on non-root; traversal still blocked"}
+{"file": ".trellis/spec/backend/catalog-workbench-api-contract.md", "reason": "Verify catalog readable after source scan; detail body contract unchanged"}
+{"file": ".trellis/spec/backend/local-session-api-contract.md", "reason": "Verify reachable session not mislabeled offline; security headers intact"}
+{"file": ".trellis/spec/frontend/skills-workbench-foundation.md", "reason": "Verify three-column full-width layout and honest empty/error UX"}
+{"file": ".trellis/spec/frontend/local-session-app-foundation.md", "reason": "Verify client routes load under production static server"}
+{"file": ".trellis/spec/frontend/quality-guidelines.md", "reason": "Lint, a11y, no layout regressions on narrow width"}
+{"file": ".trellis/spec/backend/quality-guidelines.md", "reason": "Integration tests for static SPA paths and catalog after source add"}

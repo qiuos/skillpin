@@ -1,0 +1,10 @@
+{"file": ".trellis/spec/backend/p11-build-install-delivery-contract.md", "reason": "Production static delivery: SPA routes, asset root, bootstrap cookie only on GET /"}
+{"file": ".trellis/spec/backend/catalog-workbench-api-contract.md", "reason": "Catalog list/detail API after source scan; candidate IDs and search contract"}
+{"file": ".trellis/spec/backend/source-management-api-contract.md", "reason": "Add/rescan source updates session catalog consumed by skills tab"}
+{"file": ".trellis/spec/backend/local-session-api-contract.md", "reason": "Session bootstrap, Host/Origin guards, connection lifecycle for false offline UX"}
+{"file": ".trellis/spec/frontend/skills-workbench-foundation.md", "reason": "Three-column workbench layout, filters/list/detail, empty and error states"}
+{"file": ".trellis/spec/frontend/local-session-app-foundation.md", "reason": "SPA routes /skills /sources /onboarding, shell, connection error banner"}
+{"file": ".trellis/spec/frontend/source-management-foundation.md", "reason": "Source add flow then navigate to skills; source list refresh coupling"}
+{"file": ".trellis/spec/frontend/project-change-workflow-foundation.md", "reason": "Bottom staging bar placement on skills workbench per product 6.4"}
+{"file": ".trellis/spec/frontend/component-guidelines.md", "reason": "Controls, drawers, layout patterns without new UI libs"}
+{"file": ".trellis/spec/frontend/state-management.md", "reason": "CatalogProvider/SourceProvider session-scoped refresh rules"}
