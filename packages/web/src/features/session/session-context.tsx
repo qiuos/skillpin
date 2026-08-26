@@ -35,10 +35,48 @@ interface SessionContextValue {
 const SessionContext = createContext<SessionContextValue | null>(null);
 const client = new LocalApiClient();
 let bootstrap: Promise<LocalSessionInfo> | null = null;
+const RETURN_ROUTE_KEY = "skillpin:return-route";
+const SPA_DOCUMENT_ROUTES = new Set(["/onboarding", "/skills", "/sources"]);
 
 function bootstrapSession(): Promise<LocalSessionInfo> {
-  bootstrap ??= client.bootstrap().then((response) => response.session);
+  if (bootstrap === null) {
+    bootstrap = client.bootstrap().then(
+      (response) => response.session,
+      (reason: unknown) => {
+        bootstrap = null;
+        throw reason;
+      },
+    );
+  }
   return bootstrap;
+}
+
+/** Deep SPA routes do not issue the bootstrap cookie; recover via GET /. */
+function recoverBootstrapRoute(): boolean {
+  const pathname = window.location.pathname;
+  if (!SPA_DOCUMENT_ROUTES.has(pathname)) {
+    return false;
+  }
+  try {
+    window.sessionStorage.setItem(RETURN_ROUTE_KEY, pathname);
+  } catch {
+    // sessionStorage may be unavailable; still return to the cookie-issuing route.
+  }
+  window.location.replace("/");
+  return true;
+}
+
+export function consumeReturnRoute(): string | null {
+  try {
+    const route = window.sessionStorage.getItem(RETURN_ROUTE_KEY);
+    if (route === null) {
+      return null;
+    }
+    window.sessionStorage.removeItem(RETURN_ROUTE_KEY);
+    return SPA_DOCUMENT_ROUTES.has(route) ? route : null;
+  } catch {
+    return null;
+  }
 }
 
 function websocketUrl(): string {
@@ -144,19 +182,23 @@ export function SessionProvider({ children }: PropsWithChildren) {
         connect();
       })
       .catch((reason: unknown) => {
-        if (!cancelled) {
-          setError(
-            reason instanceof LocalApiClientError
-              ? reason
-              : new LocalApiClientError({
-                  code: "LOCAL_API_UNEXPECTED_ERROR",
-                  message: "无法建立本地 SkillPin 会话。",
-                  recoveryAction: "retry",
-                  retryable: true,
-                }),
-          );
-          setConnection("error");
+        if (cancelled) {
+          return;
         }
+        if (recoverBootstrapRoute()) {
+          return;
+        }
+        setError(
+          reason instanceof LocalApiClientError
+            ? reason
+            : new LocalApiClientError({
+                code: "LOCAL_API_UNEXPECTED_ERROR",
+                message: "无法建立本地 SkillPin 会话。",
+                recoveryAction: "retry",
+                retryable: true,
+              }),
+        );
+        setConnection("error");
       });
 
     return () => {

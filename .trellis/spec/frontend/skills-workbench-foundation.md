@@ -16,7 +16,7 @@ LocalApiClient.catalogCandidate(id): Promise<LocalCatalogCandidateDetail>
 ## 3. Contracts
 
 - `CatalogProvider` owns in-memory catalog results and uses the private P6 `LocalApiClient`; components never fetch directly or store credentials/catalog data in browser storage.
-- `/skills` is a read-only, desktop three-column workbench: virtualized groups, candidate comparison, then explicit detail. Narrow layouts collapse into a vertical list/detail flow without losing keyboard access.
+- `/skills` is a read-only, desktop three-column workbench matching Product Tech Scheme §6.4 (Source & Status Filters | Skill Catalog | Skill Detail). The layout fills the workspace without a 1040px width restriction or duplicate outer page heading. Narrow layouts collapse into filter and detail drawers while keeping list navigation accessible.
 - The first stable candidate is opened by default only for inspection. Copy must say it copies a path; it must not imply project selection, installation, planning, or apply.
 - Render `markdownBody` with `react-markdown` + GFM. Do not enable raw HTML. Omit images. Allow only `http(s)` or relative anchors, using `target="_blank" rel="noreferrer"` for external links.
 - Explicit loading, error, no-source/no-skills, query-empty, and stale-detail states are required. Source changes refresh the current catalog without wiping session credentials.

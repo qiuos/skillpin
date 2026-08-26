@@ -12,7 +12,10 @@ import {
 import { SkillsWorkbenchPage } from "../features/catalog/skills-workbench-page.js";
 import { CatalogProvider } from "../features/catalog/catalog-context.js";
 import { OnboardingPage } from "../features/onboarding/onboarding-page.js";
-import { useSession } from "../features/session/session-context.js";
+import {
+  consumeReturnRoute,
+  useSession,
+} from "../features/session/session-context.js";
 import {
   SourceProvider,
   useSources,
@@ -43,10 +46,10 @@ function useRoute(): readonly [AppRoute, (route: AppRoute) => void] {
     window.addEventListener("popstate", updateRoute);
     return () => window.removeEventListener("popstate", updateRoute);
   }, []);
-  const navigate = (nextRoute: AppRoute) => {
+  const navigate = useCallback((nextRoute: AppRoute) => {
     window.history.pushState(null, "", nextRoute);
     setRoute(nextRoute);
-  };
+  }, []);
   return [route, navigate];
 }
 
@@ -96,6 +99,23 @@ function AppShell() {
       navigate("/onboarding");
     }
   }, [hasSources, navigate, route, sourcesLoading]);
+
+  useEffect(() => {
+    if (session === null || sourcesLoading || !hasSources) {
+      return;
+    }
+    const returned = consumeReturnRoute();
+    if (returned === null || returned === route) {
+      return;
+    }
+    if (
+      returned === "/skills" ||
+      returned === "/sources" ||
+      returned === "/onboarding"
+    ) {
+      navigate(returned);
+    }
+  }, [hasSources, navigate, route, session, sourcesLoading]);
 
   const saveSource = useCallback(
     async (input: LocalSourceInput) => {
@@ -198,8 +218,16 @@ function AppShell() {
             </Button>
           </nav>
         ) : null}
-        <main id="main-content" tabIndex={-1}>
-          {hasSources ? (
+        <main
+          className={
+            hasSources && route === "/skills"
+              ? "main-content main-content--workbench"
+              : "main-content"
+          }
+          id="main-content"
+          tabIndex={-1}
+        >
+          {hasSources && route !== "/skills" ? (
             <div className="page-heading">
               <div>
                 <p className="eyebrow">安全的本地工作区</p>
@@ -211,6 +239,11 @@ function AppShell() {
                 </p>
               ) : null}
             </div>
+          ) : null}
+          {hasSources && route === "/skills" && isReadOnly ? (
+            <p className="connection-notice" role="status">
+              本地会话重新连接中，暂无法修改设置。
+            </p>
           ) : null}
           {session?.status === "waiting-to-exit" ? (
             <p className="connection-notice" role="status">

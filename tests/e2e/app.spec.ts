@@ -431,6 +431,9 @@ test("browses searchable catalog candidates and safely renders an explicit skill
   await expect(
     page.getByLabel("技能工作台").getByRole("heading", { name: "技能目录" }),
   ).toBeVisible();
+  await expect(page.getByLabel("技能源与筛选")).toBeVisible();
+  await expect(page.getByLabel("技能目录")).toBeVisible();
+  await expect(page.getByLabel("技能详情")).toBeVisible();
   await expect(page.getByRole("button", { name: /review/i })).toBeVisible();
   await expect(
     page.getByRole("heading", { name: "Review skill" }),

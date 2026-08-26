@@ -28,6 +28,9 @@ import type { LocalSessionRuntime } from "../session/session-manager.js";
 
 const BOOTSTRAP_COOKIE = "skillpin_bootstrap";
 
+/** Client history routes that must resolve to the bundled SPA shell. */
+const SPA_DOCUMENT_ROUTES = new Set(["/onboarding", "/skills", "/sources"]);
+
 export interface LocalHttpServerOptions {
   readonly additionalRoutes?: readonly LocalApiRoute[];
   readonly heartbeatIntervalMs: number;
@@ -221,17 +224,8 @@ export class LocalHttpServer {
     const requestTarget = request.url ?? "/";
     const url = new URL(requestTarget, this.origin);
     const rawPath = requestTarget.split("?", 1)[0] ?? requestTarget;
-    if (
-      url.pathname === "/" ||
-      url.pathname === "/favicon.svg" ||
-      rawPath.startsWith("/assets/")
-    ) {
-      await this.handleStaticRequest(request, response, url.pathname);
-      return;
-    }
     if (!url.pathname.startsWith("/api/")) {
-      response.writeHead(404, { "Cache-Control": "no-store" });
-      response.end();
+      await this.handleStaticRequest(request, response, url.pathname, rawPath);
       return;
     }
     const guard = guardLocalRequest(
@@ -292,6 +286,7 @@ export class LocalHttpServer {
     request: IncomingMessage,
     response: ServerResponse,
     pathname: string,
+    rawPath: string,
   ): Promise<void> {
     if (request.method !== "GET" && request.method !== "HEAD") {
       response.writeHead(405, { "Cache-Control": "no-store" });
@@ -312,10 +307,19 @@ export class LocalHttpServer {
       response.end();
       return;
     }
+    // Allowlist only document roots, SPA history routes, assets, and favicon.
+    // Keep encoded /assets traversal on the raw path before URL normalization.
+    const assetRequestTarget = rawPath.startsWith("/assets/")
+      ? (request.url ?? rawPath)
+      : pathname === "/" || SPA_DOCUMENT_ROUTES.has(pathname)
+        ? "/"
+        : pathname === "/favicon.svg"
+          ? (request.url ?? pathname)
+          : null;
     const asset =
-      this.#staticDirectory === undefined
+      this.#staticDirectory === undefined || assetRequestTarget === null
         ? null
-        : await readStaticAsset(this.#staticDirectory, request.url ?? pathname);
+        : await readStaticAsset(this.#staticDirectory, assetRequestTarget);
     if (asset !== null) {
       const headers: Record<string, string> = {
         "Cache-Control": "no-store",

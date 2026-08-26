@@ -193,6 +193,38 @@ describe("P5 loopback HTTP and WebSocket security", () => {
     expect(originRejected.status).toBe(403);
   });
 
+  it("serves SPA document fallback for app routes without bootstrap cookies", async () => {
+    const staticDirectory = await bundledStaticDirectory();
+    const session = await startSession({ staticDirectory });
+
+    for (const route of ["/skills", "/sources", "/onboarding"] as const) {
+      const page = await requestLocal(session.address, route);
+      expect(page.status).toBe(200);
+      expect(page.headers["content-type"]).toContain("text/html");
+      expect(page.body).toContain("Bundled SkillPin");
+      expect(page.headers["set-cookie"]).toBeUndefined();
+      expect(page.headers["x-content-type-options"]).toBe("nosniff");
+    }
+
+    const unknown = await requestLocal(session.address, "/not-a-route");
+    expect(unknown.status).toBe(404);
+    expect(unknown.headers["set-cookie"]).toBeUndefined();
+
+    const privateFile = await requestLocal(session.address, "/private.txt");
+    expect(privateFile.status).toBe(404);
+    expect(privateFile.body).not.toContain("must not be served");
+    expect(privateFile.headers["set-cookie"]).toBeUndefined();
+
+    const packagedIndex = await requestLocal(session.address, "/index.html");
+    expect(packagedIndex.status).toBe(404);
+    expect(packagedIndex.headers["set-cookie"]).toBeUndefined();
+
+    const postRejected = await requestLocal(session.address, "/skills", {
+      method: "POST",
+    });
+    expect(postRejected.status).toBe(405);
+  });
+
   it("rejects non-session Host and Origin values before exposing an API route", async () => {
     const session = await startSession();
     const hostRejected = await requestLocal(session.address, "/api/session", {
