@@ -1,22 +1,18 @@
-# Frontend Type Safety
+# Type Safety
 
-## Contracts
+## Compiler baseline
 
-- Use TypeScript strict mode and React's `react-jsx` transform.
-- Import shared domain types and values from the `@skillpin/core` package boundary.
-- Do not use `any`, unchecked type assertions, or manually duplicated versions of shared result/error types.
-- Keep `document.getElementById("root")!` limited to the known Vite root element; validate nullable DOM lookups elsewhere.
+`packages/web/tsconfig.json` extends the root strict TypeScript profile and adds React/Vite settings: `jsx: "react-jsx"`, `module: "ESNext"`, and `moduleResolution: "Bundler"`. Keep the strict root checks enabled.
 
-## Good / Base / Bad
+## Rules
 
-```ts
-// Good: preserve the shared discriminated type.
-const startup = ok({ name: "SkillPin" });
+- Let TypeScript infer local implementation details when the inferred type is clear, as in the `application` constant in `packages/web/src/main.tsx`.
+- Define explicit exported props, shared UI contracts, and API payload types at their owning boundary.
+- Reuse domain types exported from `@skillpin/core`; do not reproduce result/error shapes in Web.
+- Narrow nullable DOM lookups before using them. The current root element is known by the Vite HTML shell and uses the non-null assertion once at the application bootstrap boundary.
 
-// Bad: discards type guarantees.
-const startup: any = { value: { name: "SkillPin" } };
-```
+## Avoid
 
-## Tests Required
-
-`npm run typecheck` is required for every UI change. Add behavior tests for branches that cannot be proven by types.
+- Do not use `any` to bridge incomplete API design.
+- Do not loosen root compiler options for a component-level issue.
+- Do not import types from another package's `src/` directory; export them from the owning package.

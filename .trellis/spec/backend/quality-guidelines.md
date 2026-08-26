@@ -1,47 +1,33 @@
-# Backend Quality Guidelines
+# Quality Guidelines
 
-## Scope / Trigger
+## TypeScript and modules
 
-P0 establishes the workspace, package boundary, and quality-command contract used by all later Node-side implementation.
+All runtime packages are ESM and extend the root strict compiler profile in `tsconfig.base.json`. Preserve strict typing, including `noUncheckedIndexedAccess`, `exactOptionalPropertyTypes`, `isolatedModules`, and `verbatimModuleSyntax`.
 
-## Signatures
+Use explicit `.js` extensions for relative runtime imports in NodeNext code; see `packages/core/src/index.test.ts` importing `./index.js`.
 
-| Command | Contract |
-| --- | --- |
-| `npm run lint` | ESLint checks source and configuration; package cycles are errors. |
-| `npm run typecheck` | Builds core declarations, then checks CLI and Web with strict TypeScript. |
-| `npm test` | Runs Vitest unit tests declared in `vitest.workspace.ts`. |
-| `npm run build` | Builds `core` → `cli` → `web` in that order. |
-| `npm run pack` | Builds and creates exactly one CLI archive under `artifacts/`. |
-| `npm run verify-package` | Requires exactly one archive and checks `package.json`, `dist/main.js`, and `dist/main.d.ts`. |
+## Validation commands
 
-## Contracts
+Run the relevant root commands before declaring a change complete:
 
-- TypeScript stays strict, with `noUncheckedIndexedAccess`, `exactOptionalPropertyTypes`, and `verbatimModuleSyntax` enabled.
-- Package-boundary violations and circular imports are lint errors; do not suppress them with inline disable comments.
-- Build output, test reports, archives, and dependencies are ignored by Git.
-
-## Validation & Error Matrix
-
-| Condition | Expected result |
-| --- | --- |
-| Core declarations absent | Root typecheck/build first compiles core. |
-| Archive missing | `verify-package` fails with an actionable instruction to run `npm run pack`. |
-| Archive has missing executable/type declarations | `verify-package` fails and lists missing entries. |
-| More than one archive exists | Packaging/verification fails rather than selecting an arbitrary archive. |
-
-## Good / Base / Bad
-
-```sh
-# Good: run the root quality gate.
-npm run format:check && npm run lint && npm run typecheck && npm test
-
-# Bad: typecheck only the CLI from a clean checkout; core declarations may not exist.
-npm run typecheck --workspace=@skillpin/cli
+```bash
+npm run format:check
+npm run lint
+npm run typecheck
+npm test
+npm run build
 ```
 
-## Tests Required
+Use `npm run test:e2e` when browser behavior changes, and `npm run pack && npm run verify-package` when CLI packaging changes. The CI workflow at `.github/workflows/ci.yml` runs quality checks on Ubuntu, macOS, and Windows.
 
-- Pure core code gets Vitest unit coverage.
-- Visible browser behavior gets Playwright coverage in `tests/e2e/`.
-- Any package archive contract change updates `scripts/verify-package.mjs` tests or validation evidence.
+## Tests
+
+- Use Vitest unit tests for core behavior, following `packages/core/src/index.test.ts`.
+- Use Playwright for browser-visible behavior, following `tests/e2e/app.spec.ts`.
+- Add platform-specific filesystem tests outside emitted package code and make cleanup reliable.
+
+## Avoid
+
+- Do not weaken the root TypeScript settings to silence a local error.
+- Do not bypass package boundaries with relative imports across workspaces.
+- Do not commit generated `dist/`, `artifacts/`, coverage, or Playwright output; `.gitignore` excludes them.

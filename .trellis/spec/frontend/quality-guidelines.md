@@ -1,15 +1,31 @@
-# Frontend Quality Guidelines
+# Quality Guidelines
 
-## Current Quality Gate
+## Formatting and linting
 
-P0 requires `npm run format:check`, `npm run lint`, `npm run typecheck`, `npm test`, `npm run build`, and `npm run test:e2e` before shipping UI baseline changes.
+The repository uses Prettier with double quotes and trailing commas (`.prettierrc.json`) and ESLint flat config (`eslint.config.js`). Keep source formatting compatible with `npm run format:check` and fix lint violations rather than disabling rules broadly.
 
-## Browser Contract
+## Accessibility and browser testing
 
-- Playwright starts Vite at `http://127.0.0.1:4173` via `playwright.config.ts`.
-- E2E tests live under `tests/e2e/` and assert accessible visible behavior.
-- CI runs browser E2E on Ubuntu and static/unit/package quality checks on Linux, macOS, and Windows.
+Make visible UI testable through semantic HTML and accessible names. The current browser test at `tests/e2e/app.spec.ts` verifies the page through a heading role and visible text rather than internal implementation details.
 
-## Common Mistake
+Run these checks for UI changes:
 
-Do not use a package's private `src/` path to make development typechecking easier. Build core declarations first and consume its public package exports; this matches the package users will receive.
+```bash
+npm run format:check
+npm run lint
+npm run typecheck
+npm run build
+npm run test:e2e
+```
+
+The browser test runs in Chromium on CI; the general quality workflow validates builds and tests on Ubuntu, macOS, and Windows.
+
+## Styling
+
+The current shell uses a single global stylesheet imported by `main.tsx`. Preserve its existing color, typography, layout values, and selector scope until a future UI task establishes a component styling system.
+
+## Avoid
+
+- Do not remove semantic headings or accessible labels just to satisfy visual styling.
+- Do not add generated build output to source control.
+- Do not make Web depend on CLI source for data or behavior.

@@ -1,53 +1,30 @@
-# Backend Error Handling
+# Error Handling
 
-## Scope / Trigger
+## Current convention
 
-P0 adds the shared domain result and error contract for expected failures before file-system and service features are introduced.
-
-## Signatures
+Use the shared `SkillPinError` class for expected domain failures and give each error a stable string code. The class and its discriminated `Result` helpers live in `packages/core/src/index.ts`.
 
 ```ts
-export class SkillPinError extends Error {
-  constructor(message: string, readonly code: string);
-}
-
-export type Result<T, E extends SkillPinError = SkillPinError> =
-  | { readonly ok: true; readonly value: T }
-  | { readonly ok: false; readonly error: E };
-
-export function ok<T>(value: T): { readonly ok: true; readonly value: T };
-export function err<E extends SkillPinError>(error: E): {
-  readonly ok: false;
-  readonly error: E;
-};
+const error = new SkillPinError("Missing project", "PROJECT_NOT_FOUND");
+return err(error);
 ```
 
-## Contracts
+Use `Result<T, E>` for expected, recoverable domain outcomes. Let unexpected programmer errors and operating-system failures retain their original error details until the boundary that can classify or present them.
 
-- Use `Result` for expected, recoverable domain outcomes once feature code is added.
-- `SkillPinError.code` is a stable machine-readable identifier; `message` is safe for user-facing context but must not contain credentials or sensitive paths.
-- Preserve the original error object in `err`; do not convert it to an untyped string.
+## Boundary behavior
 
-## Validation & Error Matrix
+- Core should define typed errors and return `Result` only for outcomes callers are expected to handle.
+- CLI entry points may turn a classified core error into concise terminal output and a non-zero exit status once commands exist.
+- Repository scripts fail fast by throwing `Error` when a precondition is violated, as in `scripts/build-package.mjs` and `scripts/verify-package.mjs`.
 
-| Situation | Required behavior |
-| --- | --- |
-| Success | Return `ok(value)`. |
-| Expected domain failure | Return `err(new SkillPinError(message, code))`. |
-| Programmer error / invariant breach | Throw; do not disguise it as a recoverable result. |
-| Unknown caught error at a boundary | Normalize it to a `SkillPinError` with a documented code before exposing it. |
+## Examples
 
-## Good / Base / Bad
+- `packages/core/src/index.ts` sets `this.name = new.target.name`, preserving subclass names.
+- `packages/core/src/index.test.ts` verifies an error survives an `err()` result without changing its type.
+- `scripts/verify-package.mjs` throws when the expected package archive is missing or malformed.
 
-```ts
-// Good
-return err(new SkillPinError("Project was not found.", "PROJECT_NOT_FOUND"));
+## Avoid
 
-// Bad: loses the error code and discriminant.
-return { error: "Project was not found." };
-```
-
-## Tests Required
-
-- Assert both `ok` discriminant branches and error-code preservation.
-- For each future error code, test the triggering validation path and the caller-visible result.
+- Do not encode expected failures as booleans or untyped strings when callers need a reason.
+- Do not catch an error only to discard its message, code, or cause.
+- Do not expose raw internal stack traces from a future CLI or local HTTP boundary.
