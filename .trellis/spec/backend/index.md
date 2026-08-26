@@ -23,6 +23,7 @@ This directory contains guidelines for backend development. Fill in each file wi
 | [P2 JSON Persistence Contract](./persistence-contract.md) | Versioned JSON schemas, repositories, and atomic replacement | P2 contract |
 | [P3 Source Configuration and Catalog Contract](./source-catalog-contract.md) | Node-only sources, scanning, parsing, grouping, and search | P3 contract |
 | [P4 Project Change Transaction Contract](./project-change-transaction-contract.md) | Project inspection, change planning, locks, transactions, and residue diagnostics | P4 contract |
+| [P5 Local Session, HTTP, and WebSocket Contract](./local-session-api-contract.md) | CLI arguments, loopback local service, credentials, WebSocket lifecycle, and graceful shutdown | P5 contract |
 
 ---
 
