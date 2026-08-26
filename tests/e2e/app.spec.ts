@@ -10,6 +10,15 @@ type MockSource = {
   source: { displayName: string; enabled: boolean; id: string; path: string };
 };
 
+type MockApiOptions = {
+  readonly markdownBody?: string;
+};
+
+type MockApiEvents = {
+  readonly applyRequests: number;
+  readonly shutdownRequests: number;
+};
+
 function source(
   id: string,
   displayName: string,
@@ -27,12 +36,24 @@ function source(
 async function installProtectedLocalApi(
   page: Page,
   initialSources: MockSource[] = [],
+  options: MockApiOptions = {},
 ): Promise<void> {
   await page.addInitScript(
-    ({ sources: seededSources }: { readonly sources: MockSource[] }) => {
+    ({
+      markdownBody,
+      sources: seededSources,
+    }: {
+      readonly markdownBody: string;
+      readonly sources: MockSource[];
+    }) => {
       type BrowserSource = MockSource;
       const sources = [...seededSources] as BrowserSource[];
       let sourceSequence = sources.length;
+      const events = { applyRequests: 0, shutdownRequests: 0 };
+      Object.defineProperty(window, "__skillpinMockApiEvents", {
+        configurable: true,
+        value: events,
+      });
       const session = {
         clientCount: 1,
         projectDirectory: "/Users/example/project",
@@ -84,6 +105,7 @@ async function installProtectedLocalApi(
           return reply(session);
         }
         if (url.pathname === "/api/session/shutdown" && method === "POST") {
+          events.shutdownRequests += 1;
           return reply({ status: "closed" });
         }
         if (url.pathname === "/api/project" && method === "GET") {
@@ -107,6 +129,7 @@ async function installProtectedLocalApi(
           });
         }
         if (url.pathname === "/api/project/apply" && method === "POST") {
+          events.applyRequests += 1;
           return reply({
             idempotent: false,
             snapshot: {
@@ -166,7 +189,7 @@ async function installProtectedLocalApi(
             displayName: "Review skill",
             id: "catalog-candidate",
             linkName: "review",
-            markdownBody: "# Review\n\nSafe local Markdown content.",
+            markdownBody,
             parseWarning: null,
             relativePath: "review",
             skillDirectory: `${source.path}/review`,
@@ -283,8 +306,26 @@ async function installProtectedLocalApi(
         writable: true,
       });
     },
-    { sources: initialSources },
+    {
+      markdownBody:
+        options.markdownBody ?? "# Review\n\nSafe local Markdown content.",
+      sources: initialSources,
+    },
   );
+}
+
+async function mockApiEvents(page: Page): Promise<MockApiEvents> {
+  return page.evaluate(() => {
+    const events = (
+      window as typeof window & {
+        __skillpinMockApiEvents?: MockApiEvents;
+      }
+    ).__skillpinMockApiEvents;
+    if (events === undefined) {
+      throw new Error("Missing mock API event recorder.");
+    }
+    return events;
+  });
 }
 
 test("onboards a first source without showing an empty workspace", async ({
@@ -402,6 +443,52 @@ test("browses searchable catalog candidates and safely renders an explicit skill
       /stage a candidate explicitly before it can change project links/i,
     ),
   ).toBeVisible();
+});
+
+test("does not execute untrusted Markdown from a skill detail", async ({
+  page,
+}) => {
+  await installProtectedLocalApi(
+    page,
+    [source("source-catalog", "Personal", "/Users/example/skills")],
+    {
+      markdownBody:
+        "# Review\n\n<script>document.documentElement.dataset.pwned = 'yes'</script>\n<iframe src=\"https://attacker.example\"></iframe>\n\nSafe local Markdown content.",
+    },
+  );
+  await page.goto("/skills");
+
+  await expect(page.getByText("Safe local Markdown content.")).toBeVisible();
+  await expect(page.locator("iframe")).toHaveCount(0);
+  await expect(
+    page.evaluate(() => document.documentElement.dataset.pwned),
+  ).resolves.toBeUndefined();
+});
+
+test("confirms ending a session with staged changes without applying them", async ({
+  page,
+}) => {
+  await installProtectedLocalApi(page, [
+    source("source-catalog", "Personal", "/Users/example/skills"),
+  ]);
+  await page.goto("/skills");
+
+  await page.getByRole("button", { name: "Stage for project" }).click();
+  await expect(page.getByText("1 staged project change")).toBeVisible();
+  await page.getByRole("button", { name: "End SkillPin" }).click();
+
+  const dialog = page.getByRole("dialog", { name: "End SkillPin session" });
+  await expect(dialog).toBeVisible();
+  await dialog.getByRole("button", { name: "End SkillPin" }).click();
+  await expect(
+    page.getByRole("button", { name: "End SkillPin" }),
+  ).toBeDisabled();
+  await expect
+    .poll(() => mockApiEvents(page))
+    .toEqual({
+      applyRequests: 0,
+      shutdownRequests: 1,
+    });
 });
 
 test("stages a candidate, reviews the server plan, and confirms apply separately", async ({
