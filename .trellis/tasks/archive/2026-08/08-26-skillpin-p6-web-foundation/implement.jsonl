@@ -1,0 +1,8 @@
+{"file": ".trellis/spec/frontend/directory-structure.md", "reason": "P6 React module ownership and package boundaries"}
+{"file": ".trellis/spec/frontend/component-guidelines.md", "reason": "Reusable accessible UI component conventions"}
+{"file": ".trellis/spec/frontend/hook-guidelines.md", "reason": "Session/API custom hook conventions"}
+{"file": ".trellis/spec/frontend/state-management.md", "reason": "Connection and theme state ownership"}
+{"file": ".trellis/spec/frontend/type-safety.md", "reason": "Browser-safe API contract typing"}
+{"file": ".trellis/spec/frontend/quality-guidelines.md", "reason": "P6 accessibility/testing gates"}
+{"file": ".trellis/spec/backend/local-session-api-contract.md", "reason": "P5 HTTP, credential and WebSocket compatibility boundary"}
+{"file": ".trellis/spec/guides/cross-layer-thinking-guide.md", "reason": "Web/P5 API data-flow and security review"}
