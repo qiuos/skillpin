@@ -1,4 +1,4 @@
-import { mkdtemp, rm } from "node:fs/promises";
+import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
@@ -24,7 +24,9 @@ afterEach(async () => {
   );
 });
 
-async function startSession(): Promise<ManagedSession> {
+async function startSession(
+  options: { readonly staticDirectory?: string } = {},
+): Promise<ManagedSession> {
   const project = await mkdtemp(path.join(tmpdir(), "skillpin-p5-api-"));
   temporaryDirectories.push(project);
   const manager = new SessionManager();
@@ -32,10 +34,29 @@ async function startSession(): Promise<ManagedSession> {
     exitGraceMs: 100,
     heartbeatIntervalMs: 5,
     heartbeatTimeoutMs: 40,
+    ...(options.staticDirectory === undefined
+      ? {}
+      : { staticDirectory: options.staticDirectory }),
     target: project,
   });
   sessions.push(started.session);
   return started.session;
+}
+
+async function bundledStaticDirectory(): Promise<string> {
+  const directory = await mkdtemp(path.join(tmpdir(), "skillpin-p11-web-"));
+  temporaryDirectories.push(directory);
+  await mkdir(path.join(directory, "assets"));
+  await writeFile(
+    path.join(directory, "index.html"),
+    '<!doctype html><html><head><title>Bundled SkillPin</title></head><body><div id="root"></div><script type="module" src="/assets/app.js"></script></body></html>',
+  );
+  await writeFile(
+    path.join(directory, "assets", "app.js"),
+    "window.skillpinBundled = true;\n",
+  );
+  await writeFile(path.join(directory, "private.txt"), "must not be served");
+  return directory;
 }
 
 async function bootstrap(session: ManagedSession): Promise<string> {
@@ -128,6 +149,48 @@ describe("P5 loopback HTTP and WebSocket security", () => {
     });
     expect(valid.status).toBe(200);
     expect(valid.headers["access-control-allow-origin"]).toBeUndefined();
+  });
+
+  it("serves package static assets without exposing filesystem paths or issuing asset cookies", async () => {
+    const staticDirectory = await bundledStaticDirectory();
+    const session = await startSession({ staticDirectory });
+
+    const page = await requestLocal(session.address, "/");
+    expect(page.status).toBe(200);
+    expect(page.body).toContain("Bundled SkillPin");
+    expect(page.body).not.toContain(
+      "The SkillPin web interface will load here.",
+    );
+    expect(page.headers["set-cookie"]).toBeDefined();
+    expect(page.headers["x-content-type-options"]).toBe("nosniff");
+
+    const asset = await requestLocal(session.address, "/assets/app.js");
+    expect(asset.status).toBe(200);
+    expect(asset.body).toContain("skillpinBundled");
+    expect(asset.headers["content-type"]).toContain("text/javascript");
+    expect(asset.headers["set-cookie"]).toBeUndefined();
+
+    const missing = await requestLocal(session.address, "/assets/missing.js");
+    const traversal = await requestLocal(
+      session.address,
+      "/assets/%2e%2e%2fprivate.txt",
+    );
+    expect(missing.status).toBe(404);
+    expect(traversal.status).toBe(404);
+    expect(`${missing.body}${traversal.body}`).not.toContain(staticDirectory);
+
+    const hostRejected = await requestLocal(session.address, "/", {
+      headers: { Host: "localhost:9999" },
+    });
+    const originRejected = await requestLocal(
+      session.address,
+      "/assets/app.js",
+      {
+        headers: { Origin: "https://attacker.example" },
+      },
+    );
+    expect(hostRejected.status).toBe(403);
+    expect(originRejected.status).toBe(403);
   });
 
   it("rejects non-session Host and Origin values before exposing an API route", async () => {

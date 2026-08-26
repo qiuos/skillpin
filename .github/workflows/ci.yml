@@ -31,6 +31,7 @@ jobs:
       - run: npm run build
       - run: npm run pack
       - run: npm run verify-package
+      - run: npm run test:package
 
   browser-e2e:
     name: Browser E2E (${{ matrix.os }})

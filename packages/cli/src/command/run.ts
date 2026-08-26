@@ -20,6 +20,7 @@ export interface RunCliOptions {
   readonly cwd: string;
   readonly output?: CliOutput;
   readonly sessionManager?: SessionManager;
+  readonly staticDirectory?: string;
   readonly version?: string;
 }
 
@@ -35,7 +36,12 @@ function defaultOutput(): CliOutput {
   };
 }
 
+declare const __SKILLPIN_VERSION__: string | undefined;
+
 export async function readCliVersion(): Promise<string> {
+  if (typeof __SKILLPIN_VERSION__ === "string") {
+    return __SKILLPIN_VERSION__;
+  }
   const packageJson = await readFile(
     new URL("../../package.json", import.meta.url),
     "utf8",
@@ -78,6 +84,9 @@ export async function runCli(options: RunCliOptions): Promise<RunCliResult> {
     const manager = options.sessionManager ?? new SessionManager();
     const started = await manager.start({
       ...(parsed.port === undefined ? {} : { port: parsed.port }),
+      ...(options.staticDirectory === undefined
+        ? {}
+        : { staticDirectory: options.staticDirectory }),
       target: path.resolve(options.cwd, parsed.target),
     });
     output.log(`SkillPin local session: ${started.session.address}`);

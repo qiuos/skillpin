@@ -1,6 +1,7 @@
 {
   "name": "@skillpin/cli",
   "version": "0.1.0",
+  "private": true,
   "description": "SkillPin command line interface",
   "type": "module",
   "bin": {

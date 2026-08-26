@@ -1,5 +1,6 @@
 import { execFileSync } from "node:child_process";
 import { mkdir, readdir, rm } from "node:fs/promises";
+import { tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -14,10 +15,11 @@ await mkdir(artifactsDirectory, { recursive: true });
 
 const npmPackArguments = [
   "pack",
-  "--workspace=@skillpin/cli",
+  "--ignore-scripts",
   `--pack-destination=${artifactsDirectory}`,
 ];
-
+const npmCacheDirectory = path.join(tmpdir(), "skillpin-npm-cache");
+await mkdir(npmCacheDirectory, { recursive: true });
 const npmCliPath = process.env.npm_execpath;
 if (process.platform === "win32" && npmCliPath === undefined) {
   throw new Error("Windows package build requires npm_execpath from npm run.");
@@ -28,14 +30,21 @@ execFileSync(
   process.platform === "win32"
     ? [npmCliPath, ...npmPackArguments]
     : npmPackArguments,
-  { cwd: rootDirectory, stdio: "inherit" },
+  {
+    cwd: rootDirectory,
+    env: {
+      ...process.env,
+      npm_config_cache: npmCacheDirectory,
+    },
+    stdio: "inherit",
+  },
 );
 
 const archives = (await readdir(artifactsDirectory)).filter((file) =>
   file.endsWith(".tgz"),
 );
 if (archives.length !== 1) {
-  throw new Error(`Expected one CLI archive, found ${archives.length}.`);
+  throw new Error(`Expected one SkillPin archive, found ${archives.length}.`);
 }
 
 console.log(`Created ${path.join("artifacts", archives[0])}`);

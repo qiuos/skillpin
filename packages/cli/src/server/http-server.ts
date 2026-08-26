@@ -5,6 +5,8 @@ import {
 } from "node:http";
 import type { Duplex } from "node:stream";
 
+import { readStaticAsset } from "./static-assets.js";
+
 import { LOCAL_API_VERSION, type LocalApiError } from "@skillpin/core";
 
 import {
@@ -31,6 +33,7 @@ export interface LocalHttpServerOptions {
   readonly heartbeatIntervalMs: number;
   readonly heartbeatTimeoutMs: number;
   readonly session: LocalSessionRuntime;
+  readonly staticDirectory?: string;
 }
 
 function writeJson(
@@ -114,6 +117,7 @@ function favicon(): string {
 export class LocalHttpServer {
   readonly #additionalRoutes: readonly LocalApiRoute[];
   readonly #session: LocalSessionRuntime;
+  readonly #staticDirectory: string | undefined;
   readonly #server = createServer((request, response) => {
     void this.handleRequest(request, response);
   });
@@ -124,6 +128,7 @@ export class LocalHttpServer {
   public constructor(options: LocalHttpServerOptions) {
     this.#additionalRoutes = options.additionalRoutes ?? [];
     this.#session = options.session;
+    this.#staticDirectory = options.staticDirectory;
     this.#webSocketHub = new WebSocketEventHub({
       heartbeatIntervalMs: options.heartbeatIntervalMs,
       heartbeatTimeoutMs: options.heartbeatTimeoutMs,
@@ -213,9 +218,15 @@ export class LocalHttpServer {
       response.destroy();
       return;
     }
-    const url = new URL(request.url ?? "/", this.origin);
-    if (url.pathname === "/" || url.pathname === "/favicon.svg") {
-      this.handleStaticRequest(request, response, url.pathname);
+    const requestTarget = request.url ?? "/";
+    const url = new URL(requestTarget, this.origin);
+    const rawPath = requestTarget.split("?", 1)[0] ?? requestTarget;
+    if (
+      url.pathname === "/" ||
+      url.pathname === "/favicon.svg" ||
+      rawPath.startsWith("/assets/")
+    ) {
+      await this.handleStaticRequest(request, response, url.pathname);
       return;
     }
     if (!url.pathname.startsWith("/api/")) {
@@ -277,11 +288,11 @@ export class LocalHttpServer {
     }
   }
 
-  private handleStaticRequest(
+  private async handleStaticRequest(
     request: IncomingMessage,
     response: ServerResponse,
     pathname: string,
-  ): void {
+  ): Promise<void> {
     if (request.method !== "GET" && request.method !== "HEAD") {
       response.writeHead(405, { "Cache-Control": "no-store" });
       response.end();
@@ -301,21 +312,50 @@ export class LocalHttpServer {
       response.end();
       return;
     }
+    const asset =
+      this.#staticDirectory === undefined
+        ? null
+        : await readStaticAsset(this.#staticDirectory, request.url ?? pathname);
+    if (asset !== null) {
+      const headers: Record<string, string> = {
+        "Cache-Control": "no-store",
+        "Content-Type": asset.contentType,
+        "X-Content-Type-Options": "nosniff",
+      };
+      if (pathname === "/") {
+        const bootstrap = this.#session.issueBootstrapToken();
+        headers["Set-Cookie"] =
+          `${BOOTSTRAP_COOKIE}=${bootstrap}; HttpOnly; Path=/; SameSite=Strict; Max-Age=300`;
+      }
+      response.writeHead(200, headers);
+      response.end(request.method === "HEAD" ? undefined : asset.body);
+      return;
+    }
     if (pathname === "/favicon.svg") {
       response.writeHead(200, {
         "Cache-Control": "no-store",
         "Content-Type": "image/svg+xml; charset=utf-8",
+        "X-Content-Type-Options": "nosniff",
       });
       response.end(request.method === "HEAD" ? undefined : favicon());
       return;
     }
-    const bootstrap = this.#session.issueBootstrapToken();
-    response.writeHead(200, {
+    if (pathname === "/" && this.#staticDirectory === undefined) {
+      const bootstrap = this.#session.issueBootstrapToken();
+      response.writeHead(200, {
+        "Cache-Control": "no-store",
+        "Content-Type": "text/html; charset=utf-8",
+        "Set-Cookie": `${BOOTSTRAP_COOKIE}=${bootstrap}; HttpOnly; Path=/; SameSite=Strict; Max-Age=300`,
+        "X-Content-Type-Options": "nosniff",
+      });
+      response.end(request.method === "HEAD" ? undefined : staticPage());
+      return;
+    }
+    response.writeHead(404, {
       "Cache-Control": "no-store",
-      "Content-Type": "text/html; charset=utf-8",
-      "Set-Cookie": `${BOOTSTRAP_COOKIE}=${bootstrap}; HttpOnly; Path=/; SameSite=Strict; Max-Age=300`,
+      "X-Content-Type-Options": "nosniff",
     });
-    response.end(request.method === "HEAD" ? undefined : staticPage());
+    response.end();
   }
 
   private handleBootstrap(

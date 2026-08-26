@@ -1,6 +1,7 @@
 {
   "name": "@skillpin/core",
   "version": "0.1.0",
+  "private": true,
   "description": "SkillPin shared domain primitives",
   "type": "module",
   "main": "./dist/index.js",

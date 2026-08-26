@@ -67,6 +67,7 @@ export interface ManagedSessionOptions {
   readonly projectDirectory: string;
   readonly projectFingerprint: string;
   readonly userConfigPath?: string;
+  readonly staticDirectory?: string;
 }
 
 /** A fixed-target session with all secrets held only in this process's memory. */
@@ -143,6 +144,9 @@ export class ManagedSession implements LocalSessionRuntime {
       ],
       heartbeatTimeoutMs: this.#heartbeatTimeoutMs,
       session: this,
+      ...(options.staticDirectory === undefined
+        ? {}
+        : { staticDirectory: options.staticDirectory }),
     });
   }
 
@@ -348,6 +352,7 @@ export interface StartSessionInput {
   readonly heartbeatIntervalMs?: number;
   readonly heartbeatTimeoutMs?: number;
   readonly port?: number;
+  readonly staticDirectory?: string;
   readonly target: string;
   readonly userConfigPath?: string;
 }
@@ -396,6 +401,9 @@ export class SessionManager {
           ...(input.userConfigPath === undefined
             ? {}
             : { userConfigPath: input.userConfigPath }),
+          ...(input.staticDirectory === undefined
+            ? {}
+            : { staticDirectory: input.staticDirectory }),
           onClosed: (closedSession) => this.#registry.remove(closedSession),
           projectDirectory,
           projectFingerprint,

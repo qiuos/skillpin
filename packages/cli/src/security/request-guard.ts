@@ -44,7 +44,8 @@ export function guardLocalRequest(
   if (host !== `127.0.0.1:${options.port}`) {
     return "invalid-host";
   }
-  if (requireOrigin && headerValue(headers, "origin") !== options.origin) {
+  const origin = headerValue(headers, "origin");
+  if ((requireOrigin || origin !== undefined) && origin !== options.origin) {
     return "invalid-origin";
   }
   return null;

@@ -1,18 +1,31 @@
 {
   "name": "skillpin",
   "version": "0.1.0",
-  "private": true,
   "description": "Local skill source manager",
+  "license": "UNLICENSED",
   "type": "module",
+  "bin": {
+    "skillpin": "./dist/main.js"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "docs",
+    "THIRD_PARTY_NOTICES.md"
+  ],
   "engines": {
     "node": ">=22"
+  },
+  "publishConfig": {
+    "access": "restricted"
   },
   "workspaces": [
     "packages/*"
   ],
   "scripts": {
     "dev": "npm run dev --workspace=@skillpin/web",
-    "build": "npm run build --workspace=@skillpin/core && npm run build --workspace=@skillpin/cli && npm run build --workspace=@skillpin/web",
+    "build:runtime": "npm run build --workspace=@skillpin/core && npm run build --workspace=@skillpin/cli && npm run build --workspace=@skillpin/web",
+    "build": "npm run build:runtime && node scripts/build-distribution.mjs",
     "typecheck": "npm run build --workspace=@skillpin/core && npm run typecheck --workspace=@skillpin/cli && npm run typecheck --workspace=@skillpin/web",
     "test": "vitest run --config vitest.workspace.ts",
     "test:watch": "vitest --config vitest.workspace.ts",
@@ -20,8 +33,10 @@
     "lint": "npm run build --workspace=@skillpin/core && eslint .",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
+    "prepare": "npm run build",
     "pack": "npm run build && node scripts/build-package.mjs",
-    "verify-package": "node scripts/verify-package.mjs"
+    "verify-package": "node scripts/verify-package.mjs",
+    "test:package": "node scripts/smoke-package.mjs"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.5",

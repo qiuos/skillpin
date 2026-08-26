@@ -55,10 +55,20 @@ export default tseslint.config(
     files: ["**/*.mjs"],
     languageOptions: {
       globals: {
+        Buffer: "readonly",
         TextDecoder: "readonly",
+        URL: "readonly",
+        clearTimeout: "readonly",
         console: "readonly",
         process: "readonly",
+        setTimeout: "readonly",
       },
+    },
+  },
+  {
+    files: ["scripts/build-distribution.mjs"],
+    rules: {
+      "import/no-unresolved": "off",
     },
   },
   {
