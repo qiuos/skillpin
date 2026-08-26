@@ -1,0 +1,32 @@
+# Frontend Development Guidelines
+
+> Current repository conventions for the React and Vite browser application.
+
+---
+
+## Overview
+
+This directory records the repository's current P0 frontend conventions, grounded in `packages/web/` and `tests/e2e/` source.
+
+---
+
+## Guidelines Index
+
+| Guide | Description | Status |
+|-------|-------------|--------|
+| [Directory Structure](./directory-structure.md) | Module organization and file layout | Baseline documented |
+| [Component Guidelines](./component-guidelines.md) | Component patterns, props, composition | Baseline documented |
+| [Hook Guidelines](./hook-guidelines.md) | Custom hooks, data fetching patterns | Baseline documented |
+| [State Management](./state-management.md) | Local state, global state, server state | Baseline documented |
+| [Quality Guidelines](./quality-guidelines.md) | Code standards, forbidden patterns | Baseline documented |
+| [Type Safety](./type-safety.md) | Type patterns, validation | Baseline documented |
+
+---
+
+## Usage
+
+These files record the P0 baseline. Update them when a later task establishes a real, repeatable convention; do not treat roadmap directories or future dependencies as existing practice.
+
+---
+
+**Language**: All documentation is written in **English**.
