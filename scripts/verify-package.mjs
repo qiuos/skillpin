@@ -11,6 +11,7 @@ const artifactsDirectory = path.join(rootDirectory, "artifacts");
 const decoder = new TextDecoder();
 const requiredDocuments = [
   "package/README.md",
+  "package/README.en.md",
   "package/THIRD_PARTY_NOTICES.md",
   "package/docs/installation.md",
   "package/docs/releasing.md",

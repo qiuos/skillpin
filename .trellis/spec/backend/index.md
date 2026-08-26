@@ -38,4 +38,4 @@ These files record the P0 baseline plus P1/P2 executable contracts. Update them 
 
 ---
 
-**Language**: All documentation is written in **English**.
+**Language**: Code-spec documentation is written in **English**. User-facing repository entrypoints may use their audience-specific language; the root `README.md` is Simplified Chinese by default and `README.en.md` is its English counterpart.
