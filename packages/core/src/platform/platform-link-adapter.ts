@@ -1,4 +1,4 @@
-import { type Result, SkillPinError } from "../index.js";
+import { type Result, SkillPinError } from "../shared/result.js";
 
 export type PlatformLinkType = "symlink" | "junction";
 

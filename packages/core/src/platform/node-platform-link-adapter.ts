@@ -2,7 +2,7 @@ import { type Stats } from "node:fs";
 import { lstat, readlink, rename, rm, symlink } from "node:fs/promises";
 import path from "node:path";
 
-import { err, ok, type Result } from "../index.js";
+import { err, ok, type Result } from "../shared/result.js";
 import {
   normalizeDirectoryTarget,
   systemErrorCode,

@@ -2,7 +2,7 @@ import { access, rename, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { randomUUID } from "node:crypto";
 
-import { err, ok, type Result, SkillPinError } from "../index.js";
+import { err, ok, type Result, SkillPinError } from "../shared/result.js";
 import {
   type ExpectedManagedLink,
   type ManagedDirectoryLink,

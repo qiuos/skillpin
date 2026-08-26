@@ -17,6 +17,10 @@
     "./changes": {
       "types": "./dist/changes/index.d.ts",
       "import": "./dist/changes/index.js"
+    },
+    "./persistence": {
+      "types": "./dist/persistence/index.d.ts",
+      "import": "./dist/persistence/index.js"
     }
   },
   "files": [

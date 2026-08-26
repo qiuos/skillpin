@@ -1,7 +1,7 @@
 import { realpath, stat } from "node:fs/promises";
 import path from "node:path";
 
-import { err, ok, type Result } from "../index.js";
+import { err, ok, type Result } from "../shared/result.js";
 import { PlatformLinkError } from "./platform-link-adapter.js";
 
 function withoutTrailingSeparator(
