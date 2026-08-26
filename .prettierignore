@@ -1,0 +1,10 @@
+.agents/
+.claude/
+.codex/
+.trellis/
+AGENTS.md
+artifacts/
+coverage/
+dist/
+node_modules/
+package-lock.json

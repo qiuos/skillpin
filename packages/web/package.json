@@ -1,0 +1,17 @@
+{
+  "name": "@skillpin/web",
+  "version": "0.1.0",
+  "private": true,
+  "description": "SkillPin browser application",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -p tsconfig.json --noEmit && vite build",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@skillpin/core": "0.1.0",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8"
+  }
+}
