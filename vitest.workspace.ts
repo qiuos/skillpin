@@ -36,6 +36,10 @@ export default defineConfig({
   },
   test: {
     name: "core",
-    include: ["packages/core/src/**/*.test.ts", "tests/**/*.test.ts"],
+    include: [
+      "packages/core/src/**/*.test.ts",
+      "packages/web/src/**/*.test.ts",
+      "tests/**/*.test.ts",
+    ],
   },
 });
