@@ -360,3 +360,38 @@ Implemented the protected read-only catalog API and the responsive P8 skills wor
 ### Next Steps
 
 - None - task complete
+
+
+## Session 11: Complete P9 project change workflow
+
+**Date**: 2026-08-26
+**Task**: Complete P9 project change workflow
+**Branch**: `main`
+
+### Summary
+
+Implemented protected local project snapshot, plan, and transactional apply APIs; added browser staging, review, confirmation, and recovery handling; documented the P9 contracts and passed formatting, lint, typecheck, build, unit/integration, and E2E checks.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `9be97be` | (see git log) |
+| `4f24fc1` | (see git log) |
+| `caeef64` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete

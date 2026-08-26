@@ -8,7 +8,7 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-1.md`
-- **Total Sessions**: 10
+- **Total Sessions**: 11
 - **Last Active**: 2026-08-26
 <!-- @@@/auto:current-status -->
 
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-1.md` | ~362 | Active |
+| `journal-1.md` | ~397 | Active |
 <!-- @@@/auto:active-documents -->
 
 ---
@@ -29,6 +29,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 11 | 2026-08-26 | Complete P9 project change workflow | `9be97be`, `4f24fc1`, `caeef64` | `main` |
 | 10 | 2026-08-26 | P8 skills workbench | `5162785`, `20de7bf`, `555626d` | `main` |
 | 9 | 2026-08-26 | Implement P7 source management | `17dc472`, `4ecd2de`, `0f6c26f` | `main` |
 | 8 | 2026-08-26 | Implement SkillPin P6 Web foundation | `e884a87`, `5c45867` | `main` |
