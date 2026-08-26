@@ -463,3 +463,36 @@ Added a tag-triggered GitHub Release workflow, documented patch-default formal r
 ### Next Steps
 
 - None - task complete
+
+
+## Session 14: Make the README Chinese by default
+
+**Date**: 2026-08-26
+**Task**: Make the README Chinese by default
+**Branch**: `main`
+
+### Summary
+
+Replaced the default README with a Simplified Chinese entrypoint, added the English counterpart, and made package verification require both README files.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `663fc53` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
