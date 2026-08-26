@@ -12,15 +12,22 @@ export function requestLocal(
   base: string,
   path: string,
   options: {
+    readonly body?: string;
     readonly headers?: Record<string, string>;
     readonly method?: string;
   } = {},
 ): Promise<HttpResult> {
   const url = new URL(path, base);
+  const headers = {
+    ...(options.body === undefined
+      ? {}
+      : { "Content-Length": String(Buffer.byteLength(options.body)) }),
+    ...options.headers,
+  };
   return new Promise((resolve, reject) => {
     const request = nodeRequest(
       {
-        headers: options.headers,
+        headers,
         host: url.hostname,
         method: options.method ?? "GET",
         path: `${url.pathname}${url.search}`,
@@ -39,7 +46,7 @@ export function requestLocal(
       },
     );
     request.once("error", reject);
-    request.end();
+    request.end(options.body);
   });
 }
 

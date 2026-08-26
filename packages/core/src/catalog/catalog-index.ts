@@ -100,6 +100,16 @@ export class CatalogIndex {
     this.failures.delete(sourceId);
   }
 
+  /** Reads one session-local scan without exposing mutable catalog maps. */
+  public sourceScan(sourceId: string): SourceScan | undefined {
+    return this.scans.get(sourceId);
+  }
+
+  /** Reads one session-local failure without exposing mutable catalog maps. */
+  public sourceFailure(sourceId: string): CatalogSourceFailure | undefined {
+    return this.failures.get(sourceId);
+  }
+
   public snapshot(sources: readonly SkillSource[]): CatalogSnapshot {
     return createCatalogSnapshot(sources, this.scans, this.failures);
   }

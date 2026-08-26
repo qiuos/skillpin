@@ -249,13 +249,20 @@ export class LocalHttpServer {
       return;
     }
     const routes = [...createSessionRoutes(), ...this.#additionalRoutes];
-    const route = routes.find((candidate) => candidate.path === url.pathname);
+    const matchingRoutes = routes.filter((candidate) =>
+      typeof candidate.path === "string"
+        ? candidate.path === url.pathname
+        : candidate.path.test(url.pathname),
+    );
+    const route = matchingRoutes.find(
+      (candidate) => candidate.method === request.method,
+    );
     if (route === undefined) {
-      writeError(response, 404, notFound());
-      return;
-    }
-    if (route.method !== request.method) {
-      writeError(response, 405, methodNotAllowed());
+      writeError(
+        response,
+        matchingRoutes.length === 0 ? 404 : 405,
+        matchingRoutes.length === 0 ? notFound() : methodNotAllowed(),
+      );
       return;
     }
     try {

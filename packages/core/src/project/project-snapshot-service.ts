@@ -26,7 +26,10 @@ export interface ProjectSnapshotServiceOptions {
   readonly adapter: PlatformLinkAdapter;
   readonly manifestRepository?: ProjectManifestRepository | undefined;
   readonly projectDirectory: string;
-  readonly sources?: readonly ProjectSourceHealth[] | undefined;
+  readonly sources?:
+    | readonly ProjectSourceHealth[]
+    | (() => readonly ProjectSourceHealth[])
+    | undefined;
 }
 
 /** Node-only project inspector; it never creates `.agents` or alters disk. */
@@ -34,7 +37,7 @@ export class ProjectSnapshotService {
   readonly #adapter: PlatformLinkAdapter;
   readonly #manifestRepository: ProjectManifestRepository;
   readonly #projectDirectory: string;
-  readonly #sourceStateById: ReadonlyMap<string, ProjectSourceState>;
+  readonly #sourceStateById: () => ReadonlyMap<string, ProjectSourceState>;
 
   public constructor(options: ProjectSnapshotServiceOptions) {
     this.#adapter = options.adapter;
@@ -44,12 +47,16 @@ export class ProjectSnapshotService {
       new ProjectManifestRepository({
         filePath: getProjectManifestPath(this.#projectDirectory),
       });
-    this.#sourceStateById = new Map(
-      (options.sources ?? []).map((source) => [
-        source.id,
-        source.enabled ? "available" : "disabled",
-      ]),
-    );
+    this.#sourceStateById = () =>
+      new Map(
+        (typeof options.sources === "function"
+          ? options.sources()
+          : (options.sources ?? [])
+        ).map((source) => [
+          source.id,
+          source.enabled ? "available" : "disabled",
+        ]),
+      );
   }
 
   public get projectDirectory(): string {
@@ -115,7 +122,7 @@ export class ProjectSnapshotService {
             sourceState:
               managedLink === null
                 ? undefined
-                : (this.#sourceStateById.get(managedLink.sourceId) ??
+                : (this.#sourceStateById().get(managedLink.sourceId) ??
                   "unconfigured"),
           });
         }),

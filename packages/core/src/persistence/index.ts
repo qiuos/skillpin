@@ -1,4 +1,8 @@
 export {
+  getUserConfigPath,
+  type UserConfigLocationOptions,
+} from "../config/config-location.js";
+export {
   createDefaultUserConfig,
   migrateUserConfigV0,
   parseUserConfig,

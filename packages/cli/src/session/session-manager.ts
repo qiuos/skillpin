@@ -24,7 +24,9 @@ import {
   type ExpiringToken,
 } from "../security/session-token.js";
 import { LocalHttpServer } from "../server/http-server.js";
+import { createSourceRoutes } from "../server/routes/source-routes.js";
 import { SessionRegistry } from "./session-registry.js";
+import { SourceRuntime } from "./source-runtime.js";
 import {
   DEFAULT_EXIT_GRACE_MS,
   DEFAULT_HEARTBEAT_INTERVAL_MS,
@@ -37,6 +39,7 @@ export interface LocalSessionRuntime {
   readonly projectDirectory: string;
   readonly projectFingerprint: string;
   readonly sessionId: string;
+  readonly sourceRuntime: SourceRuntime;
   close(reason: SessionCloseReason): Promise<void>;
   consumeBootstrapToken(token: string): ExpiringToken | null;
   hasValidCredential(headers: IncomingHttpHeaders): boolean;
@@ -60,6 +63,7 @@ export interface ManagedSessionOptions {
   readonly port?: number;
   readonly projectDirectory: string;
   readonly projectFingerprint: string;
+  readonly userConfigPath?: string;
 }
 
 /** A fixed-target session with all secrets held only in this process's memory. */
@@ -74,6 +78,7 @@ export class ManagedSession implements LocalSessionRuntime {
   readonly #server: LocalHttpServer;
   readonly #stateBase: Omit<SessionState, "status">;
   readonly projectServices: ProjectServices;
+  public readonly sourceRuntime: SourceRuntime;
   #activeOperations = 0;
   #clientCount = 0;
   #closePromise: Promise<void> | null = null;
@@ -104,10 +109,19 @@ export class ManagedSession implements LocalSessionRuntime {
     this.#onClosed = options.onClosed;
     this.#port = options.port ?? 0;
 
+    this.sourceRuntime = new SourceRuntime({
+      ...(options.userConfigPath === undefined
+        ? {}
+        : { configFilePath: options.userConfigPath }),
+      inspectProject: async () =>
+        this.projectServices.snapshotService.inspect(),
+    });
+
     const adapter = new NodePlatformLinkAdapter();
     const snapshotService = new ProjectSnapshotService({
       adapter,
       projectDirectory: this.projectDirectory,
+      sources: () => this.sourceRuntime.sourceHealth(),
     });
     this.projectServices = {
       changeService: new ProjectChangeService({
@@ -119,6 +133,7 @@ export class ManagedSession implements LocalSessionRuntime {
     };
     this.#server = new LocalHttpServer({
       heartbeatIntervalMs: this.#heartbeatIntervalMs,
+      additionalRoutes: createSourceRoutes(),
       heartbeatTimeoutMs: this.#heartbeatTimeoutMs,
       session: this,
     });
@@ -143,6 +158,7 @@ export class ManagedSession implements LocalSessionRuntime {
 
   public async start(): Promise<void> {
     try {
+      await this.sourceRuntime.initialize();
       const inspection = await this.projectServices.snapshotService.inspect();
       if (!inspection.ok) {
         throw new CliError(
@@ -326,6 +342,7 @@ export interface StartSessionInput {
   readonly heartbeatTimeoutMs?: number;
   readonly port?: number;
   readonly target: string;
+  readonly userConfigPath?: string;
 }
 
 export interface StartedSession {
@@ -369,6 +386,9 @@ export class SessionManager {
             ? {}
             : { heartbeatTimeoutMs: input.heartbeatTimeoutMs }),
           ...(input.port === undefined ? {} : { port: input.port }),
+          ...(input.userConfigPath === undefined
+            ? {}
+            : { userConfigPath: input.userConfigPath }),
           onClosed: (closedSession) => this.#registry.remove(closedSession),
           projectDirectory,
           projectFingerprint,
