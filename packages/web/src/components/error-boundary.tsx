@@ -22,8 +22,8 @@ export class ErrorBoundary extends Component<
     if (this.state.failed) {
       return (
         <main className="fatal-error">
-          <h1>SkillPin needs to restart</h1>
-          <p>Refresh this local page to reconnect to SkillPin.</p>
+          <h1>SkillPin 需要重新启动</h1>
+          <p>刷新此本地页面以重新连接 SkillPin。</p>
         </main>
       );
     }

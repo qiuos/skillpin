@@ -12,7 +12,7 @@ import { useLocalApiClient } from "../session/session-context.js";
 function messageFor(reason: unknown): string {
   return reason instanceof LocalApiClientError
     ? reason.message
-    : "Unable to browse local directories.";
+    : "无法浏览本地目录。";
 }
 
 export function DirectoryBrowser({
@@ -59,21 +59,18 @@ export function DirectoryBrowser({
   }, [client]);
 
   return (
-    <section aria-label="Directory browser" className="directory-browser">
+    <section aria-label="目录浏览器" className="directory-browser">
       <div className="directory-browser__header">
         <div>
-          <h3>Browse directories</h3>
-          <p>
-            Only directory names and paths are shown. File contents are never
-            read here.
-          </p>
+          <h3>浏览目录</h3>
+          <p>仅显示目录名称和路径，此处绝不会读取文件内容。</p>
         </div>
         <Button
           disabled={disabled || selectedPath.trim() === "" || loading}
           onClick={() => void openDirectory(selectedPath)}
           variant="tertiary"
         >
-          Open pasted path
+          打开粘贴路径
         </Button>
       </div>
       <div className="directory-browser__entrypoints">
@@ -101,7 +98,7 @@ export function DirectoryBrowser({
           </div>
           <div className="directory-browser__entries">
             {listing.entries.length === 0 ? (
-              <p className="muted-copy">No child directories are available.</p>
+              <p className="muted-copy">没有可用的子目录。</p>
             ) : (
               listing.entries.map((entry) => (
                 <div className="directory-entry" key={entry.realPath}>
@@ -118,7 +115,7 @@ export function DirectoryBrowser({
                     onClick={() => onChoose(entry.realPath)}
                     variant="tertiary"
                   >
-                    Use this folder
+                    选择此文件夹
                   </Button>
                 </div>
               ))

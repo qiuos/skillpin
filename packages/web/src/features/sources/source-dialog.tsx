@@ -30,7 +30,7 @@ function inputFor(source: LocalSourceSummary | null): LocalSourceInput {
 function errorMessage(reason: unknown): string {
   return reason instanceof LocalApiClientError
     ? reason.message
-    : "Unable to save this source.";
+    : "无法保存该技能源。";
 }
 
 export function SourceDialog({
@@ -67,13 +67,13 @@ export function SourceDialog({
 
   const validatePath = async (): Promise<string | null> => {
     if (input.path.trim() === "") {
-      setError("Enter a directory path before validating it.");
+      setError("验证前请输入目录路径。");
       return null;
     }
     try {
       const validated = await client.validateSourcePath(input.path);
       setInput((current) => ({ ...current, path: validated.path }));
-      setValidation(`Validated directory: ${validated.path}`);
+      setValidation(`已验证目录：${validated.path}`);
       setError(null);
       return validated.path;
     } catch (reason: unknown) {
@@ -86,7 +86,7 @@ export function SourceDialog({
   const submit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (input.displayName.trim() === "") {
-      setError("Enter a display name for this source.");
+      setError("请输入该技能源的显示名称。");
       return;
     }
     setSaving(true);
@@ -114,28 +114,28 @@ export function SourceDialog({
   const editing = source !== null;
   return (
     <Dialog
-      description="SkillPin validates this local directory before saving it and scans only for skill metadata."
+      description="SkillPin 会在保存前验证此本地目录，且仅扫描技能相关元数据。"
       onClose={onClose}
       open={open}
-      title={editing ? "Edit source" : "Add a source"}
+      title={editing ? "编辑技能源" : "添加技能源"}
     >
       <form className="source-form" onSubmit={(event) => void submit(event)}>
         <TextInput
           disabled={disabled || saving}
-          label="Display name"
+          label="显示名称"
           onChange={(event) =>
             setInput((current) => ({
               ...current,
               displayName: event.target.value,
             }))
           }
-          placeholder="Personal skills"
+          placeholder="个人技能库"
           value={input.displayName}
         />
         <TextInput
           disabled={disabled || saving}
-          hint="Paste an absolute directory path, or choose a child directory below."
-          label="Directory path"
+          hint="粘贴绝对目录路径，或在下方选择子目录。"
+          label="目录路径"
           onChange={(event) => {
             setValidation(null);
             setInput((current) => ({ ...current, path: event.target.value }));
@@ -147,7 +147,7 @@ export function SourceDialog({
           <Checkbox
             checked={input.enabled}
             disabled={disabled || saving}
-            label="Use this source in the active catalog"
+            label="在当前技能目录中启用此技能源"
             onChange={(event) =>
               setInput((current) => ({
                 ...current,
@@ -160,7 +160,7 @@ export function SourceDialog({
             onClick={() => void validatePath()}
             variant="tertiary"
           >
-            Validate path
+            验证路径
           </Button>
         </div>
         {validation === null ? null : (
@@ -179,14 +179,14 @@ export function SourceDialog({
           onClick={() => setShowBrowser((current) => !current)}
           variant="tertiary"
         >
-          {showBrowser ? "Hide directory browser" : "Browse directories"}
+          {showBrowser ? "隐藏目录浏览器" : "浏览目录"}
         </Button>
         {showBrowser ? (
           <DirectoryBrowser
             disabled={disabled || saving}
             onChoose={(path) => {
               setInput((current) => ({ ...current, path }));
-              setValidation(`Selected directory: ${path}`);
+              setValidation(`已选择目录：${path}`);
             }}
             selectedPath={input.path}
           />
@@ -194,10 +194,10 @@ export function SourceDialog({
         <ScanProgress pending={saving} source={saved} />
         <div className="dialog__actions source-form__actions">
           <Button disabled={saving} onClick={onClose} variant="secondary">
-            Cancel
+            取消
           </Button>
           <Button disabled={disabled || saving} type="submit" variant="primary">
-            {editing ? "Save changes" : "Add source"}
+            {editing ? "保存修改" : "添加技能源"}
           </Button>
         </div>
       </form>

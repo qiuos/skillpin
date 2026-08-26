@@ -184,7 +184,7 @@ export function Dialog({
             )}
           </div>
           <Button
-            aria-label="Close dialog"
+            aria-label="关闭对话框"
             onClick={onClose}
             variant="tertiary"
           >
@@ -227,7 +227,7 @@ export function Drawer({
               <p id={descriptionId}>{description}</p>
             )}
           </div>
-          <Button aria-label="Close panel" onClick={onClose} variant="tertiary">
+          <Button aria-label="关闭面板" onClick={onClose} variant="tertiary">
             ×
           </Button>
         </div>

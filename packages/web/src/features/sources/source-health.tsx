@@ -2,12 +2,12 @@ import { Badge } from "../../components/controls.js";
 import type { LocalSourceSummary } from "@skillpin/core";
 
 const healthCopy = {
-  disabled: { label: "Disabled", tone: "neutral" },
-  failed: { label: "Scan failed", tone: "warning" },
-  healthy: { label: "Ready", tone: "success" },
-  "no-skills": { label: "No skills found", tone: "warning" },
-  unscanned: { label: "Not scanned", tone: "neutral" },
-  warnings: { label: "Ready with warnings", tone: "warning" },
+  disabled: { label: "已禁用", tone: "neutral" },
+  failed: { label: "扫描失败", tone: "warning" },
+  healthy: { label: "就绪", tone: "success" },
+  "no-skills": { label: "未发现技能", tone: "warning" },
+  unscanned: { label: "未扫描", tone: "neutral" },
+  warnings: { label: "存在警告", tone: "warning" },
 } as const;
 
 export function SourceHealth({

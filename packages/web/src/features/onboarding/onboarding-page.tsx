@@ -9,15 +9,15 @@ export function OnboardingPage({
 }) {
   return (
     <section className="onboarding-page">
-      <p className="eyebrow">Local source setup</p>
+      <p className="eyebrow">配置本地技能源</p>
       <EmptyState
         action={
           <Button disabled={disabled} onClick={onAddSource} variant="primary">
-            Add your first source
+            添加第一个技能源
           </Button>
         }
-        body="Connect a directory you trust. SkillPin reads directory and SKILL.md metadata to build a private catalog for this local session."
-        title="Set up your first source"
+        body="添加你信任的本地目录。SkillPin 会读取该目录及其 SKILL.md 元数据，为当前会话建立私有技能目录。"
+        title="设置你的第一个技能源"
       />
     </section>
   );

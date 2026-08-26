@@ -41,7 +41,7 @@ function asClientError(reason: unknown): LocalApiClientError {
     ? reason
     : new LocalApiClientError({
         code: "LOCAL_API_UNEXPECTED_ERROR",
-        message: "Unable to update local skill sources.",
+        message: "无法更新本地技能源。",
         recoveryAction: "retry",
         retryable: true,
       });
@@ -79,7 +79,7 @@ export function SourceProvider({ children }: PropsWithChildren) {
       throw new LocalApiClientError({
         code: "SESSION_READ_ONLY",
         message:
-          "Reconnect to the protected local session before changing sources.",
+          "更改技能源前请先重新连接安全的本地会话。",
         recoveryAction: "retry",
         retryable: true,
       });

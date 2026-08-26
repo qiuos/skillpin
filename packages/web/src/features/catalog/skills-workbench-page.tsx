@@ -76,10 +76,10 @@ function projectErrorMessage(reason: unknown, fallback: string): string {
     return reason instanceof Error ? reason.message : fallback;
   }
   if (reason.recoveryAction === "manual-recovery") {
-    return `${reason.message} Manual recovery review is required before another apply.`;
+    return `${reason.message} 再次应用前需要先完成手动恢复检查。`;
   }
   if (reason.recoveryAction === "retry") {
-    return `${reason.message} Review the latest project state, then try again.`;
+    return `${reason.message} 请查看最新项目状态后再试。`;
   }
   return reason.message;
 }
@@ -107,7 +107,7 @@ export function SkillsWorkbenchPage() {
   const listRef = useRef<HTMLDivElement>(null);
   const rowVirtualizer = useVirtualizer({
     count: groups.length,
-    estimateSize: () => 82,
+    estimateSize: () => 96,
     getScrollElement: () => listRef.current,
     overscan: 8,
     useFlushSync: false,
@@ -133,7 +133,7 @@ export function SkillsWorkbenchPage() {
           setProjectError(
             reason instanceof Error
               ? reason.message
-              : "Unable to inspect project.",
+              : "无法检查项目。",
           );
       });
     return () => {
@@ -183,7 +183,7 @@ export function SkillsWorkbenchPage() {
           setDetailError(
             reason instanceof Error
               ? reason.message
-              : "Unable to load this skill.",
+              : "无法加载该技能。",
           );
       });
     return () => {
@@ -197,7 +197,7 @@ export function SkillsWorkbenchPage() {
         setCopied(label);
         window.setTimeout(() => setCopied(null), 1600);
       })
-      .catch(() => setCopied("Copy unavailable"));
+      .catch(() => setCopied("无法复制"));
   };
 
   const selections = (): readonly LocalProjectSelectionInput[] =>
@@ -237,7 +237,7 @@ export function SkillsWorkbenchPage() {
         setReviewOpen(true);
       })
       .catch((reason: unknown) =>
-        setProjectError(projectErrorMessage(reason, "Unable to plan changes.")),
+        setProjectError(projectErrorMessage(reason, "无法生成变更计划。")),
       );
   };
 
@@ -260,7 +260,7 @@ export function SkillsWorkbenchPage() {
       })
       .catch((reason: unknown) => {
         setProjectError(
-          projectErrorMessage(reason, "Unable to apply changes."),
+          projectErrorMessage(reason, "无法应用变更。"),
         );
         void client
           .project()
@@ -273,34 +273,34 @@ export function SkillsWorkbenchPage() {
   if (isLoading && groups.length === 0) {
     return (
       <EmptyState
-        body="Reading the session-local catalog…"
-        title="Loading skills"
+        body="正在读取会话本地技能目录…"
+        title="正在加载技能"
       />
     );
   }
   if (error !== null && groups.length === 0) {
-    return <EmptyState body={error.message} title="Unable to load skills" />;
+    return <EmptyState body={error.message} title="无法加载技能" />;
   }
   if (!isLoading && groups.length === 0) {
     return (
       <EmptyState
-        body="Rescan a source or adjust your search to discover local skills."
-        title={query === "" ? "No discovered skills" : "No matching skills"}
+        body="重新扫描技能源，或调整搜索条件以发现本地技能。"
+        title={query === "" ? "尚未发现技能" : "没有匹配的技能"}
       />
     );
   }
 
   return (
-    <section aria-label="Skills workbench" className="skills-workbench">
+    <section aria-label="技能工作台" className="skills-workbench">
       <div className="skills-workbench__toolbar">
         <div>
-          <p className="eyebrow">Session catalog</p>
-          <h1>Skills</h1>
+          <p className="eyebrow">会话技能目录</p>
+          <h1>技能目录</h1>
         </div>
         <TextInput
-          label="Search skills"
+          label="搜索技能"
           onChange={(event) => setQuery(event.target.value)}
-          placeholder="Name, summary, source, or content"
+          placeholder="名称、摘要、技能源或内容"
           type="search"
           value={query}
         />
@@ -313,11 +313,11 @@ export function SkillsWorkbenchPage() {
       <div className="skills-workbench__grid">
         <section
           className="skills-pane skills-pane--list"
-          aria-label="Skill groups"
+          aria-label="技能分组"
         >
           <div className="skills-pane__heading">
-            <span>{groups.length} groups</span>
-            <span>{isLoading ? "Updating…" : ""}</span>
+            <span>{groups.length} 个分组</span>
+            <span>{isLoading ? "更新中…" : ""}</span>
           </div>
           <div className="skills-list" ref={listRef}>
             <div
@@ -346,8 +346,7 @@ export function SkillsWorkbenchPage() {
                     <strong>{group.linkName}</strong>
                     <span>{group.candidates[0]?.summary}</span>
                     <small>
-                      {group.candidates.length} candidate
-                      {group.candidates.length === 1 ? "" : "s"}
+                      {group.candidates.length} 个候选
                     </small>
                   </button>
                 );
@@ -357,15 +356,14 @@ export function SkillsWorkbenchPage() {
         </section>
         <section
           className="skills-pane skills-pane--candidates"
-          aria-label="Source candidates"
+          aria-label="源候选"
         >
           <div className="skills-pane__heading">
-            <span>Candidates</span>
+            <span>候选来源</span>
           </div>
           <h2>{selectedGroup?.linkName}</h2>
           <p className="muted-copy">
-            Compare local sources. Stage a candidate explicitly before it can
-            change project links.
+            比较本地技能源。先显式暂存候选，再变更项目链接。
           </p>
           <div className="candidate-list" role="list">
             {selectedGroup?.candidates.map((candidate) => (
@@ -379,10 +377,10 @@ export function SkillsWorkbenchPage() {
                 <strong>{candidate.displayName}</strong>
                 <span>{candidateLabel(candidate)}</span>
                 {candidate.parseWarning === null ? null : (
-                  <Badge tone="warning">Parser note</Badge>
+                  <Badge tone="warning">解析备注</Badge>
                 )}
                 {staged[candidate.linkName] === candidate.id ? (
-                  <Badge tone="success">Staged</Badge>
+                  <Badge tone="success">已暂存</Badge>
                 ) : null}
               </button>
             ))}
@@ -398,14 +396,14 @@ export function SkillsWorkbenchPage() {
                 variant="secondary"
               >
                 {staged[selectedCandidate.linkName] === selectedCandidate.id
-                  ? "Unstage project change"
-                  : "Stage for project"}
+                  ? "取消暂存"
+                  : "暂存到项目"}
               </Button>
             </div>
           )}
           {project?.links.some((link) => link.state === "managed") ? (
             <div className="project-links">
-              <p className="skills-pane__heading">Current project links</p>
+              <p className="skills-pane__heading">当前项目链接</p>
               {project.links
                 .filter((link) => link.state === "managed")
                 .map((link) => (
@@ -416,14 +414,14 @@ export function SkillsWorkbenchPage() {
                         onClick={() => unstage(link.linkName)}
                         variant="tertiary"
                       >
-                        Unstage
+                        取消暂存
                       </Button>
                     ) : (
                       <Button
                         onClick={() => stageRemoval(link.linkName)}
                         variant="tertiary"
                       >
-                        Stage removal
+                        暂存移除
                       </Button>
                     )}
                   </div>
@@ -434,45 +432,45 @@ export function SkillsWorkbenchPage() {
         <section
           className="skills-pane skills-pane--detail"
           aria-live="polite"
-          aria-label="Skill detail"
+          aria-label="技能详情"
         >
           {detailError !== null ? (
-            <EmptyState body={detailError} title="Unable to read skill" />
+            <EmptyState body={detailError} title="无法读取技能" />
           ) : detail === null ? (
             <EmptyState
-              body="Choose a source candidate to read its Skill.md content."
-              title="No skill selected"
+              body="选择一个源候选以查看其 Skill.md 内容。"
+              title="未选择技能"
             />
           ) : (
             <>
               <div className="skills-pane__heading">
-                <span>Read-only detail</span>
+                <span>只读详情</span>
                 {copied === null ? null : <span role="status">{copied}</span>}
               </div>
               <h2>{detail.displayName}</h2>
               <p className="muted-copy">{detail.summary}</p>
               <div className="path-actions">
                 <Button
-                  onClick={() => copy("Source path copied", detail.source.path)}
+                  onClick={() => copy("已复制源路径", detail.source.path)}
                   variant="tertiary"
                 >
-                  Copy source path
+                  复制源路径
                 </Button>
                 <Button
                   onClick={() =>
-                    copy("Skill path copied", detail.skillDirectory)
+                    copy("已复制技能路径", detail.skillDirectory)
                   }
                   variant="tertiary"
                 >
-                  Copy skill path
+                  复制技能路径
                 </Button>
                 <Button
                   onClick={() =>
-                    copy("SKILL.md path copied", detail.skillFilePath)
+                    copy("已复制 SKILL.md 路径", detail.skillFilePath)
                   }
                   variant="tertiary"
                 >
-                  Copy SKILL.md path
+                  复制 SKILL.md 路径
                 </Button>
               </div>
               {detail.parseWarning === null ? null : (
@@ -499,24 +497,23 @@ export function SkillsWorkbenchPage() {
       )}
       {project?.recoveryDiagnostics.length ? (
         <p className="form-message form-message--error" role="alert">
-          Manual recovery review is required for{" "}
-          {project.recoveryDiagnostics.length} transaction artifact(s).
+          需要手动恢复检查：共{" "}
+          {project.recoveryDiagnostics.length} 个事务产物。
         </p>
       ) : null}
       {Object.keys(staged).length === 0 ? null : (
         <div className="change-bar" role="status">
           <span>
-            {Object.keys(staged).length} staged project change
-            {Object.keys(staged).length === 1 ? "" : "s"}
+            已暂存 {Object.keys(staged).length} 项项目变更
           </span>
-          <Button onClick={reviewChanges}>Review changes</Button>
+          <Button onClick={reviewChanges}>审查变更</Button>
         </div>
       )}
       <Dialog
-        description="Review the server-computed project plan before any filesystem change occurs."
+        description="在对文件系统做任何改动前，先审查服务端计算的项目计划。"
         onClose={() => setReviewOpen(false)}
         open={reviewOpen}
-        title="Review project changes"
+        title="审查项目变更"
       >
         <div className="project-review">
           {plan?.blockers.length ? (
@@ -525,8 +522,7 @@ export function SkillsWorkbenchPage() {
             </p>
           ) : (
             <p>
-              {plan?.changes.length ?? 0} change(s) will be applied to this
-              project.
+              将对本项目应用 {plan?.changes.length ?? 0} 项变更。
             </p>
           )}
           <ul>
@@ -538,22 +534,22 @@ export function SkillsWorkbenchPage() {
           </ul>
           <div className="dialog__actions">
             <Button onClick={() => setReviewOpen(false)} variant="secondary">
-              Keep editing
+              继续编辑
             </Button>
             <Button
               disabled={plan === null || plan.blockers.length > 0}
               onClick={() => setConfirmOpen(true)}
             >
-              Apply changes
+              应用变更
             </Button>
           </div>
         </div>
       </Dialog>
       <Dialog
-        description={`Apply ${plan?.changes.length ?? 0} reviewed change(s) to the active project. This uses SkillPin's transactional link workflow.`}
+        description={`将 ${plan?.changes.length ?? 0} 项已审查变更应用到当前项目。此过程使用 SkillPin 的事务链接流程。`}
         onClose={() => setConfirmOpen(false)}
         open={confirmOpen}
-        title="Confirm project changes"
+        title="确认项目变更"
       >
         <div className="dialog__actions">
           <Button
@@ -561,10 +557,10 @@ export function SkillsWorkbenchPage() {
             onClick={() => setConfirmOpen(false)}
             variant="secondary"
           >
-            Cancel
+            取消
           </Button>
           <Button disabled={applying} onClick={applyChanges}>
-            {applying ? "Applying…" : "Apply"}
+            {applying ? "应用中…" : "应用"}
           </Button>
         </div>
       </Dialog>

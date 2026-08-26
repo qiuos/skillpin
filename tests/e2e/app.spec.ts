@@ -336,36 +336,36 @@ test("onboards a first source without showing an empty workspace", async ({
 
   await expect(page.getByRole("banner")).toContainText("SkillPin");
   await expect(
-    page.getByRole("navigation", { name: "SkillPin sections" }),
+    page.getByRole("navigation", { name: "SkillPin 功能分区" }),
   ).toHaveCount(0);
   await expect(
-    page.getByRole("heading", { name: "Set up your first source" }),
+    page.getByRole("heading", { name: "设置你的第一个技能源" }),
   ).toBeVisible();
   await expect(page.getByText(/dashboard/i)).toHaveCount(0);
 
-  const add = page.getByRole("button", { name: "Add your first source" });
+  const add = page.getByRole("button", { name: "添加第一个技能源" });
   await expect(add).toBeEnabled();
   await add.click();
-  await page.getByLabel("Display name").fill("Personal skills");
-  await page.getByRole("button", { name: "Browse directories" }).click();
+  await page.getByLabel("显示名称").fill("Personal skills");
+  await page.getByRole("button", { name: "浏览目录" }).click();
   await page.getByRole("button", { name: "Home" }).click();
   await expect(
-    page.getByRole("button", { name: "Use this folder" }),
+    page.getByRole("button", { name: "选择此文件夹" }),
   ).toBeVisible();
-  await page.getByRole("button", { name: "Use this folder" }).click();
-  await expect(page.getByLabel("Directory path")).toHaveValue(
+  await page.getByRole("button", { name: "选择此文件夹" }).click();
+  await expect(page.getByLabel("目录路径")).toHaveValue(
     "/Users/example/技能目录",
   );
-  await page.getByRole("button", { name: "Add source" }).click();
+  await page.getByRole("button", { name: "添加技能源" }).click();
 
   await expect(page).toHaveURL(/\/sources$/);
   await expect(
-    page.getByRole("navigation", { name: "SkillPin sections" }),
+    page.getByRole("navigation", { name: "SkillPin 功能分区" }),
   ).toBeVisible();
   await expect(
     page.getByRole("heading", { name: "Personal skills" }),
   ).toBeVisible();
-  await expect(page.getByText("1 skill discovered.")).toBeVisible();
+  await expect(page.getByText("已发现 1 个技能。")).toBeVisible();
 });
 
 test("manages existing sources with search, enablement, rescan, and guarded removal", async ({
@@ -376,23 +376,23 @@ test("manages existing sources with search, enablement, rescan, and guarded remo
   ]);
   await page.goto("/sources");
 
-  await expect(page.getByRole("heading", { name: "sources" })).toBeVisible();
-  await page.getByLabel("Search sources").fill("shared");
+  await expect(page.getByRole("heading", { name: "技能源" })).toBeVisible();
+  await page.getByLabel("搜索技能源").fill("shared");
   await expect(
     page.getByRole("heading", { name: "Shared skills" }),
   ).toBeVisible();
-  await page.getByRole("button", { name: "Disable" }).click();
-  await expect(page.getByRole("button", { name: "Enable" })).toBeVisible();
-  await page.getByRole("button", { name: "Rescan" }).click();
-  await expect(page.getByText("1 skill discovered.")).toBeVisible();
-  await page.getByRole("button", { name: "Remove" }).click();
+  await page.getByRole("button", { name: "禁用" }).click();
+  await expect(page.getByRole("button", { name: "启用" })).toBeVisible();
+  await page.getByRole("button", { name: "重新扫描" }).click();
+  await expect(page.getByText("已发现 1 个技能。")).toBeVisible();
+  await page.getByRole("button", { name: "移除" }).click();
   await expect(
-    page.getByRole("dialog", { name: "Remove source with project links?" }),
+    page.getByRole("dialog", { name: "移除仍有项目链接的技能源？" }),
   ).toBeVisible();
-  await expect(page.getByText(/managed project link/i)).toBeVisible();
-  await page.getByRole("button", { name: "Remove source only" }).click();
+  await expect(page.getByText(/受管项目链接/)).toBeVisible();
+  await page.getByRole("button", { name: "仅移除技能源" }).click();
   await expect(
-    page.getByRole("heading", { name: "Set up your first source" }),
+    page.getByRole("heading", { name: "设置你的第一个技能源" }),
   ).toBeVisible();
 });
 
@@ -402,17 +402,17 @@ test("persists theme choice and returns focus after closing session panels", asy
   await installProtectedLocalApi(page);
   await page.goto("/");
 
-  const details = page.getByRole("button", { name: "Session details" });
+  const details = page.getByRole("button", { name: "会话详情" });
   await details.click();
-  await page.getByRole("radio", { name: "Light" }).check();
+  await page.getByRole("radio", { name: "浅色模式" }).check();
   await expect(page.locator("html")).toHaveAttribute("data-theme", "light");
-  await page.getByRole("button", { name: "Close panel" }).click();
+  await page.getByRole("button", { name: "关闭面板" }).click();
   await expect(details).toBeFocused();
 
-  const end = page.getByRole("button", { name: "End SkillPin" });
+  const end = page.getByRole("button", { name: "结束 SkillPin" });
   await end.click();
   await expect(
-    page.getByRole("dialog", { name: "End SkillPin session" }),
+    page.getByRole("dialog", { name: "结束 SkillPin 会话" }),
   ).toBeVisible();
   await page.keyboard.press("Escape");
   await expect(end).toBeFocused();
@@ -429,18 +429,18 @@ test("browses searchable catalog candidates and safely renders an explicit skill
   await page.goto("/skills");
 
   await expect(
-    page.getByRole("heading", { exact: true, name: "Skills" }),
+    page.getByLabel("技能工作台").getByRole("heading", { name: "技能目录" }),
   ).toBeVisible();
   await expect(page.getByRole("button", { name: /review/i })).toBeVisible();
   await expect(
     page.getByRole("heading", { name: "Review skill" }),
   ).toBeVisible();
   await expect(page.getByText("Safe local Markdown content.")).toBeVisible();
-  await page.getByLabel("Search skills").fill("local project");
+  await page.getByLabel("搜索技能").fill("local project");
   await expect(page.getByRole("button", { name: /review/i })).toBeVisible();
   await expect(
     page.getByText(
-      /stage a candidate explicitly before it can change project links/i,
+      /先显式暂存候选，再变更项目链接/,
     ),
   ).toBeVisible();
 });
@@ -473,15 +473,15 @@ test("confirms ending a session with staged changes without applying them", asyn
   ]);
   await page.goto("/skills");
 
-  await page.getByRole("button", { name: "Stage for project" }).click();
-  await expect(page.getByText("1 staged project change")).toBeVisible();
-  await page.getByRole("button", { name: "End SkillPin" }).click();
+  await page.getByRole("button", { name: "暂存到项目" }).click();
+  await expect(page.getByText("已暂存 1 项项目变更")).toBeVisible();
+  await page.getByRole("button", { name: "结束 SkillPin" }).click();
 
-  const dialog = page.getByRole("dialog", { name: "End SkillPin session" });
+  const dialog = page.getByRole("dialog", { name: "结束 SkillPin 会话" });
   await expect(dialog).toBeVisible();
-  await dialog.getByRole("button", { name: "End SkillPin" }).click();
+  await dialog.getByRole("button", { name: "结束 SkillPin" }).click();
   await expect(
-    page.getByRole("button", { name: "End SkillPin" }),
+    page.getByRole("button", { name: "结束 SkillPin" }),
   ).toBeDisabled();
   await expect
     .poll(() => mockApiEvents(page))
@@ -499,23 +499,23 @@ test("stages a candidate, reviews the server plan, and confirms apply separately
   ]);
   await page.goto("/skills");
 
-  await page.getByRole("button", { name: "Stage for project" }).click();
-  await expect(page.getByText("1 staged project change")).toBeVisible();
-  await page.getByRole("button", { name: "Review changes" }).click();
+  await page.getByRole("button", { name: "暂存到项目" }).click();
+  await expect(page.getByText("已暂存 1 项项目变更")).toBeVisible();
+  await page.getByRole("button", { name: "审查变更" }).click();
 
-  const review = page.getByRole("dialog", { name: "Review project changes" });
+  const review = page.getByRole("dialog", { name: "审查项目变更" });
   await expect(review).toBeVisible();
   await expect(review.getByText("add: review")).toBeVisible();
   await expect(
-    page.getByRole("dialog", { name: "Confirm project changes" }),
+    page.getByRole("dialog", { name: "确认项目变更" }),
   ).toHaveCount(0);
-  await review.getByRole("button", { name: "Apply changes" }).click();
+  await review.getByRole("button", { name: "应用变更" }).click();
 
-  const confirm = page.getByRole("dialog", { name: "Confirm project changes" });
+  const confirm = page.getByRole("dialog", { name: "确认项目变更" });
   await expect(confirm).toBeVisible();
-  await expect(confirm.getByText(/Apply 1 reviewed change/i)).toBeVisible();
-  await confirm.getByRole("button", { name: "Apply", exact: true }).click();
+  await expect(confirm.getByText(/将 1 项已审查变更应用到当前项目/)).toBeVisible();
+  await confirm.getByRole("button", { name: "应用", exact: true }).click();
 
   await expect(confirm).toHaveCount(0);
-  await expect(page.getByText("1 staged project change")).toHaveCount(0);
+  await expect(page.getByText("已暂存 1 项项目变更")).toHaveCount(0);
 });

@@ -24,6 +24,12 @@ import { ThemePicker, useThemePreference } from "./theme.js";
 const workspaceRoutes = ["/skills", "/sources"] as const;
 type AppRoute = "/onboarding" | (typeof workspaceRoutes)[number];
 
+const routeTitleMap: Record<AppRoute, string> = {
+  "/onboarding": "配置引导",
+  "/skills": "技能",
+  "/sources": "技能源",
+};
+
 function routeFor(pathname: string): AppRoute {
   return pathname === "/skills" || pathname === "/sources"
     ? pathname
@@ -49,17 +55,17 @@ function connectionCopy(
 ): { label: string; tone: "accent" | "neutral" | "success" | "warning" } {
   switch (connection) {
     case "online":
-      return { label: "Connected", tone: "success" };
+      return { label: "已连接", tone: "success" };
     case "connecting":
-      return { label: "Connecting", tone: "accent" };
+      return { label: "连接中", tone: "accent" };
     case "reconnecting":
-      return { label: "Reconnecting", tone: "warning" };
+      return { label: "重新连接中", tone: "warning" };
     case "exiting":
-      return { label: "Ending session", tone: "warning" };
+      return { label: "正在结束会话", tone: "warning" };
     case "disconnected":
-      return { label: "Disconnected", tone: "neutral" };
+      return { label: "已断开", tone: "neutral" };
     case "error":
-      return { label: "Connection unavailable", tone: "warning" };
+      return { label: "连接不可用", tone: "warning" };
   }
 }
 
@@ -82,7 +88,7 @@ function AppShell() {
   }, [closeEndDialog, shutdown]);
   const status = connectionCopy(connection);
   const projectPath =
-    session?.projectDirectory ?? "Connecting to protected local project…";
+    session?.projectDirectory ?? "正在连接安全的本地项目…";
   const hasSources = sources.length > 0;
   const sourceDialogOpen = editingSource !== undefined;
 
@@ -124,7 +130,7 @@ function AppShell() {
   return (
     <div className="application">
       <a className="skip-link" href="#main-content">
-        Skip to content
+        跳至主要内容
       </a>
       <header className="app-header">
         <div className="app-header__brand">
@@ -134,11 +140,11 @@ function AppShell() {
           <span>SkillPin</span>
         </div>
         <div className="project-identity">
-          <span className="project-identity__name">Local project</span>
+          <span className="project-identity__name">本地项目</span>
           <code title={projectPath}>{projectPath}</code>
         </div>
         <div className="app-header__actions">
-          <Tooltip content="Current protected local-session connection">
+          <Tooltip content="当前安全的本地会话连接状态">
             <span>
               <Badge tone={status.tone}>
                 <span
@@ -151,7 +157,7 @@ function AppShell() {
           </Tooltip>
           {!hasSources ? (
             <Button onClick={() => setShowDetails(true)} variant="tertiary">
-              Session details
+              会话详情
             </Button>
           ) : null}
           <Button
@@ -159,7 +165,7 @@ function AppShell() {
             onClick={() => setShowEndDialog(true)}
             variant="tertiary"
           >
-            End SkillPin
+            结束 SkillPin
           </Button>
         </div>
       </header>
@@ -167,8 +173,8 @@ function AppShell() {
         className={hasSources ? "workspace" : "workspace workspace--onboarding"}
       >
         {hasSources ? (
-          <nav aria-label="SkillPin sections" className="side-nav">
-            <p className="side-nav__label">Workspace</p>
+          <nav aria-label="SkillPin 功能分区" className="side-nav">
+            <p className="side-nav__label">工作区</p>
             {workspaceRoutes.map((item) => (
               <button
                 aria-current={route === item ? "page" : undefined}
@@ -181,7 +187,7 @@ function AppShell() {
                 onClick={() => navigate(item)}
                 type="button"
               >
-                {item.slice(1)}
+                {routeTitleMap[item]}
               </button>
             ))}
             <Button
@@ -189,7 +195,7 @@ function AppShell() {
               onClick={() => setShowDetails(true)}
               variant="tertiary"
             >
-              Session details
+              会话详情
             </Button>
           </nav>
         ) : null}
@@ -197,31 +203,30 @@ function AppShell() {
           {hasSources ? (
             <div className="page-heading">
               <div>
-                <p className="eyebrow">Protected local workspace</p>
-                <h1>{route.slice(1)}</h1>
+                <p className="eyebrow">安全的本地工作区</p>
+                <h1>{routeTitleMap[route]}</h1>
               </div>
               {isReadOnly ? (
                 <p className="connection-notice" role="status">
-                  Changes are disabled while the local session reconnects.
+                  本地会话重新连接中，暂无法修改设置。
                 </p>
               ) : null}
             </div>
           ) : null}
           {session?.status === "waiting-to-exit" ? (
             <p className="connection-notice" role="status">
-              This local session is in its 60-second exit grace period.
-              Reconnect to keep it open.
+              该本地会话处于 60 秒退出缓冲期。重新连接以保持开启。
             </p>
           ) : null}
           {error === null ? null : (
             <section className="error-notice" role="alert">
-              <h2>Could not connect to SkillPin</h2>
+              <h2>无法连接至 SkillPin</h2>
               <p>{error.message}</p>
             </section>
           )}
           {sourcesLoading && session !== null ? (
             <p className="source-loading" role="status">
-              Loading configured sources…
+              正在加载已配置的技能源…
             </p>
           ) : (
             workSurface
@@ -236,38 +241,38 @@ function AppShell() {
         source={editingSource ?? null}
       />
       <Dialog
-        description="Ending closes this protected local session. You can open SkillPin again from your project directory."
+        description="结束会话将关闭当前安全的本地进程。你可以随时在项目目录中重新打开 SkillPin。"
         onClose={closeEndDialog}
         open={showEndDialog}
-        title="End SkillPin session"
+        title="结束 SkillPin 会话"
       >
         <div className="dialog__actions">
           <Button onClick={closeEndDialog} variant="secondary">
-            Keep session open
+            保持会话开启
           </Button>
           <Button onClick={endSession} variant="danger">
-            End SkillPin
+            结束 SkillPin
           </Button>
         </div>
       </Dialog>
       <Drawer
-        description="Only session metadata is shown here. Credentials are never displayed or stored in the browser."
+        description="此处仅展示会话元数据。凭据绝不会在浏览器中显示或存储。"
         onClose={closeDetails}
         open={showDetails}
-        title="Local session"
+        title="本地会话"
       >
         <ThemePicker
           preference={themePreference}
           setPreference={setThemePreference}
         />
         <dl className="session-details">
-          <dt>Project directory</dt>
+          <dt>项目目录</dt>
           <dd>
             <code>{projectPath}</code>
           </dd>
-          <dt>Session status</dt>
-          <dd>{session?.status ?? "Waiting for session"}</dd>
-          <dt>Connected pages</dt>
+          <dt>会话状态</dt>
+          <dd>{session?.status ?? "等待会话建立"}</dd>
+          <dt>已连接页面</dt>
           <dd>{session?.clientCount ?? 0}</dd>
         </dl>
       </Drawer>

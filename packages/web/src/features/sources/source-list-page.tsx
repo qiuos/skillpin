@@ -59,9 +59,7 @@ export function SourceListPage({
       await action();
     } catch (reason: unknown) {
       setActionError(
-        reason instanceof Error
-          ? reason.message
-          : "Unable to update this source.",
+        reason instanceof Error ? reason.message : "无法更新该技能源。",
       );
     } finally {
       setPending(null);
@@ -96,11 +94,11 @@ export function SourceListPage({
       <EmptyState
         action={
           <Button disabled={disabled} onClick={onAddSource} variant="primary">
-            Add a source
+            添加技能源
           </Button>
         }
-        body="Add a directory to inspect local skill metadata and scan its available skills."
-        title="No source directories yet"
+        body="添加目录以检查本地技能元数据，并扫描其中可用的技能。"
+        title="还没有技能源目录"
       />
     );
   }
@@ -109,13 +107,13 @@ export function SourceListPage({
     <section className="source-list-page">
       <div className="source-list-page__toolbar">
         <TextInput
-          label="Search sources"
+          label="搜索技能源"
           onChange={(event) => setQuery(event.target.value)}
-          placeholder="Name or path"
+          placeholder="名称或路径"
           value={query}
         />
         <Button disabled={disabled} onClick={onAddSource} variant="primary">
-          Add source
+          添加技能源
         </Button>
       </div>
       {error === null && actionError === null ? null : (
@@ -125,7 +123,7 @@ export function SourceListPage({
       )}
       <div className="source-list" role="list">
         {visibleSources.length === 0 ? (
-          <p className="muted-copy">No sources match this search.</p>
+          <p className="muted-copy">没有匹配此搜索的技能源。</p>
         ) : (
           visibleSources.map((source) => {
             const isPending = pending === source.source.id;
@@ -142,7 +140,7 @@ export function SourceListPage({
                     <h2>{source.source.displayName}</h2>
                     <SourceHealth source={source} />
                     {duplicateName ? (
-                      <Badge tone="warning">Duplicate name</Badge>
+                      <Badge tone="warning">名称重复</Badge>
                     ) : null}
                   </div>
                   <code title={source.source.path}>{source.source.path}</code>
@@ -154,7 +152,7 @@ export function SourceListPage({
                     onClick={() => onEditSource(source)}
                     variant="tertiary"
                   >
-                    Edit
+                    编辑
                   </Button>
                   <Button
                     disabled={disabled || isPending}
@@ -169,7 +167,7 @@ export function SourceListPage({
                     }
                     variant="tertiary"
                   >
-                    {source.source.enabled ? "Disable" : "Enable"}
+                    {source.source.enabled ? "禁用" : "启用"}
                   </Button>
                   <Button
                     disabled={disabled || isPending}
@@ -180,14 +178,14 @@ export function SourceListPage({
                     }
                     variant="secondary"
                   >
-                    Rescan
+                    重新扫描
                   </Button>
                   <Button
                     disabled={disabled || isPending}
                     onClick={() => void requestRemoval(source)}
                     variant="danger"
                   >
-                    Remove
+                    移除
                   </Button>
                 </div>
               </article>
@@ -196,32 +194,28 @@ export function SourceListPage({
         )}
       </div>
       <Dialog
-        description="Removing a source only removes it from SkillPin configuration and this session's scan state. Your source directory, project links, and manifest stay unchanged."
+        description="移除技能源只会从 SkillPin 配置和当前会话的扫描状态中删除它。源目录、项目链接和清单文件不会改动。"
         onClose={() => setRemovalImpact(null)}
         open={removalImpact !== null}
-        title="Remove source with project links?"
+        title="移除仍有项目链接的技能源？"
       >
         <div className="removal-impact">
           <p>
-            <strong>{removalImpact?.managedLinkCount ?? 0}</strong> managed
-            project link
-            {(removalImpact?.managedLinkCount ?? 0) === 1
-              ? " still refers"
-              : "s still refer"}{" "}
-            to this source.
+            仍有 <strong>{removalImpact?.managedLinkCount ?? 0}</strong>{" "}
+            个受管项目链接指向此技能源。
           </p>
-          <p>Those links remain in place and may need attention later.</p>
+          <p>这些链接会保留，之后可能需要单独处理。</p>
         </div>
         <div className="dialog__actions">
           <Button onClick={() => setRemovalImpact(null)} variant="secondary">
-            Cancel
+            取消
           </Button>
           <Button
             disabled={pending !== null}
             onClick={() => void confirmRemoval()}
             variant="danger"
           >
-            Remove source only
+            仅移除技能源
           </Button>
         </div>
       </Dialog>

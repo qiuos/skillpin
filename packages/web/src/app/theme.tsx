@@ -57,23 +57,23 @@ export function ThemePicker({
 }) {
   return (
     <fieldset className="theme-picker">
-      <legend>Appearance</legend>
-      <p>Choose how SkillPin should appear in this browser.</p>
+      <legend>界面外观</legend>
+      <p>选择 SkillPin 在此浏览器中的显示主题。</p>
       <Radio
         checked={preference === "system"}
-        label="Use system setting"
+        label="跟随系统设置"
         name="theme"
         onChange={() => setPreference("system")}
       />
       <Radio
         checked={preference === "dark"}
-        label="Dark"
+        label="深色模式"
         name="theme"
         onChange={() => setPreference("dark")}
       />
       <Radio
         checked={preference === "light"}
-        label="Light"
+        label="浅色模式"
         name="theme"
         onChange={() => setPreference("light")}
       />

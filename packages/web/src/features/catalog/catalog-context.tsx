@@ -34,7 +34,7 @@ function asClientError(reason: unknown): LocalApiClientError {
     ? reason
     : new LocalApiClientError({
         code: "LOCAL_API_UNEXPECTED_ERROR",
-        message: "Unable to load the local skill catalog.",
+        message: "无法加载本地技能目录。",
         recoveryAction: "retry",
         retryable: true,
       });

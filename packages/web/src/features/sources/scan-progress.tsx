@@ -10,7 +10,7 @@ export function ScanProgress({
   if (pending) {
     return (
       <p className="scan-progress" role="status">
-        Scanning source directory…
+        正在扫描技能源目录…
       </p>
     );
   }
@@ -25,18 +25,13 @@ export function ScanProgress({
     );
   }
   if (source.scan === null) {
-    return (
-      <p className="scan-progress">This source has not been scanned yet.</p>
-    );
+    return <p className="scan-progress">该技能源尚未扫描。</p>;
   }
   const warnings = source.scan.warnings.length;
   return (
     <p className="scan-progress">
-      {source.scan.skillCount}{" "}
-      {source.scan.skillCount === 1 ? "skill" : "skills"}
-      {warnings === 0
-        ? " discovered."
-        : ` discovered with ${warnings} warning${warnings === 1 ? "" : "s"}.`}
+      已发现 {source.scan.skillCount} 个技能
+      {warnings === 0 ? "。" : `，包含 ${warnings} 个警告。`}
     </p>
   );
 }

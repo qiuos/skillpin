@@ -150,7 +150,7 @@ export function SessionProvider({ children }: PropsWithChildren) {
               ? reason
               : new LocalApiClientError({
                   code: "LOCAL_API_UNEXPECTED_ERROR",
-                  message: "Unable to establish the local SkillPin session.",
+                  message: "无法建立本地 SkillPin 会话。",
                   recoveryAction: "retry",
                   retryable: true,
                 }),
@@ -178,7 +178,7 @@ export function SessionProvider({ children }: PropsWithChildren) {
           ? reason
           : new LocalApiClientError({
               code: "LOCAL_API_UNEXPECTED_ERROR",
-              message: "Unable to end the local SkillPin session.",
+              message: "无法结束本地 SkillPin 会话。",
               recoveryAction: "retry",
               retryable: true,
             }),

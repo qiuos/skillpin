@@ -43,7 +43,7 @@ export interface LocalApiClientOptions {
 function invalidResponse(): LocalApiClientError {
   return new LocalApiClientError({
     code: "LOCAL_API_INVALID_RESPONSE",
-    message: "The local SkillPin service returned an invalid response.",
+    message: "本地 SkillPin 服务返回了无效响应。",
     recoveryAction: "retry",
     retryable: true,
   });
@@ -581,7 +581,7 @@ export class LocalApiClient {
     if (this.#credential === null) {
       throw new LocalApiClientError({
         code: "SESSION_CREDENTIAL_MISSING",
-        message: "The local SkillPin session is not ready yet.",
+        message: "本地 SkillPin 会话尚未就绪。",
         recoveryAction: "open-session",
         retryable: false,
       });
@@ -599,7 +599,7 @@ export class LocalApiClient {
       if (this.#credential === null) {
         throw new LocalApiClientError({
           code: "SESSION_CREDENTIAL_MISSING",
-          message: "The local SkillPin session is not ready yet.",
+          message: "本地 SkillPin 会话尚未就绪。",
           recoveryAction: "open-session",
           retryable: false,
         });
@@ -613,7 +613,7 @@ export class LocalApiClient {
     } catch {
       throw new LocalApiClientError({
         code: "LOCAL_API_UNREACHABLE",
-        message: "Unable to reach the local SkillPin service.",
+        message: "无法连接本地 SkillPin 服务。",
         recoveryAction: "retry",
         retryable: true,
       });
