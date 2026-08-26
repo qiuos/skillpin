@@ -8,7 +8,7 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-1.md`
-- **Total Sessions**: 15
+- **Total Sessions**: 16
 - **Last Active**: 2026-08-26
 <!-- @@@/auto:current-status -->
 
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-1.md` | ~531 | Active |
+| `journal-1.md` | ~565 | Active |
 <!-- @@@/auto:active-documents -->
 
 ---
@@ -29,6 +29,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 16 | 2026-08-26 | UI 中文化美化与发布 0.1.1 | `ba82e12`, `6d49ec2` | `main` |
 | 15 | 2026-08-26 | 发布 SkillPin 0.1.0 | `8e3ded5` | `main` |
 | 14 | 2026-08-26 | Make the README Chinese by default | `663fc53` | `main` |
 | 13 | 2026-08-26 | Automate GitHub release delivery | `37cf272` | `main` |
