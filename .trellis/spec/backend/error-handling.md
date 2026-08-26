@@ -2,7 +2,7 @@
 
 ## Current convention
 
-Use the shared `SkillPinError` class for expected domain failures and give each error a stable string code. The class and its discriminated `Result` helpers live in `packages/core/src/index.ts`.
+Use the shared `SkillPinError` class for expected domain failures and give each error a stable string code. The root package re-exports the class and its discriminated `Result` helpers from `packages/core/src/shared/result.ts`.
 
 ```ts
 const error = new SkillPinError("Missing project", "PROJECT_NOT_FOUND");
@@ -10,6 +10,10 @@ return err(error);
 ```
 
 Use `Result<T, E>` for expected, recoverable domain outcomes. Let unexpected programmer errors and operating-system failures retain their original error details until the boundary that can classify or present them.
+
+## Persistence errors
+
+P2 adds `CoreError`, a `SkillPinError` subclass with stable `CoreErrorCode`, typed details (`filePath`, `fieldPath`, backup/recovery paths, and system code where available), retryability, and recovery action. Use `serializeSkillPinError` before a future CLI/API/UI boundary. The persistence contract owns the exact error matrix: [P2 JSON Persistence Contract](./persistence-contract.md).
 
 ## Boundary behavior
 
@@ -21,6 +25,7 @@ Use `Result<T, E>` for expected, recoverable domain outcomes. Let unexpected pro
 
 - `packages/core/src/index.ts` sets `this.name = new.target.name`, preserving subclass names.
 - `packages/core/src/index.test.ts` verifies an error survives an `err()` result without changing its type.
+- `packages/core/src/domain/domain.test.ts` verifies that `CoreError` serializes a stable caller-safe payload.
 - `scripts/verify-package.mjs` throws when the expected package archive is missing or malformed.
 
 ## Avoid

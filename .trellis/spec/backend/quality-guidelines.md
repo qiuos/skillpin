@@ -25,6 +25,7 @@ Use `npm run test:e2e` when browser behavior changes, and `npm run pack && npm r
 - Use Vitest unit tests for core behavior, following `packages/core/src/index.test.ts`.
 - Use Playwright for browser-visible behavior, following `tests/e2e/app.spec.ts`.
 - Add platform-specific filesystem tests outside emitted package code and make cleanup reliable.
+- For Node-only core persistence, use an injected `AtomicJsonFileSystem` or `onBeforeWriteStep` fault hook rather than weakening production error paths; tests must assert original-content preservation on failure.
 
 ## Avoid
 

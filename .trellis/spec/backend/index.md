@@ -20,12 +20,13 @@ This directory contains guidelines for backend development. Fill in each file wi
 | [Quality Guidelines](./quality-guidelines.md) | Code standards, forbidden patterns | Baseline documented |
 | [Logging Guidelines](./logging-guidelines.md) | Structured logging, log levels | Baseline documented |
 | [Platform Link and Transaction Contract](./platform-link-contract.md) | Safe Node directory-link and transaction APIs | P1 contract |
+| [P2 JSON Persistence Contract](./persistence-contract.md) | Versioned JSON schemas, repositories, and atomic replacement | P2 contract |
 
 ---
 
 ## Usage
 
-These files record the P0 baseline. Update them when a later task establishes a real, repeatable convention; do not treat roadmap directories or future dependencies as existing practice.
+These files record the P0 baseline plus P1/P2 executable contracts. Update them when a later task establishes a real, repeatable convention; do not treat roadmap directories or future dependencies as existing practice.
 
 ---
 
