@@ -8,7 +8,8 @@ export type RecoveryAction =
   | "upgrade-skillpin"
   | "review-state"
   | "edit-source"
-  | "choose-directory";
+  | "choose-directory"
+  | "manual-recovery";
 
 export type CoreErrorCode =
   | "ATOMIC_WRITE_FAILED"
@@ -24,7 +25,13 @@ export type CoreErrorCode =
   | "SOURCE_INVALID"
   | "SOURCE_NOT_FOUND"
   | "SOURCE_UNREADABLE"
-  | "DIRECTORY_UNREADABLE";
+  | "DIRECTORY_UNREADABLE"
+  | "CHANGESET_INVALID"
+  | "PROJECT_APPLY_IN_PROGRESS"
+  | "PROJECT_NOT_DIRECTORY"
+  | "PROJECT_STRUCTURE_CONFLICT"
+  | "PROJECT_STATE_CONFLICT"
+  | "TRANSACTION_FAILED";
 
 export interface CoreErrorDetails {
   readonly backupPath?: string;
@@ -34,6 +41,9 @@ export interface CoreErrorDetails {
   readonly sourceId?: string;
   readonly sourcePath?: string;
   readonly systemCode?: string;
+  readonly requestId?: string;
+  readonly linkName?: string;
+  readonly transactionStep?: string;
 }
 
 export interface SerializedSkillPinError {
