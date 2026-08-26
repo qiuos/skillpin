@@ -35,6 +35,15 @@ The first remote P10 CI run on August 26, 2026 reproduced two fresh-checkout qua
 
 `.github/workflows/ci.yml` runs `quality` and `browser-e2e` on `ubuntu-latest`, `macos-latest`, and `windows-latest`. The browser job installs Chromium with Playwright's cross-platform browser installer and executes the Playwright suite. This makes the full browser core flow a required three-platform CI result rather than an Ubuntu-only signal.
 
+GitHub Actions run [`32949151022`](https://github.com/qiuos/skillpin/actions/runs/32949151022) completed successfully on August 26, 2026 for commit `2fee0500e2f308bfe95a8c730d0c9b6077445811`:
+
+| Matrix job | ubuntu-latest | macos-latest | windows-latest |
+|---|---|---|---|
+| `quality` | passed | passed | passed |
+| `browser-e2e` | passed (7 Playwright tests) | passed (7 Playwright tests) | passed (7 Playwright tests) |
+
+The successful quality jobs each ran `format:check`, lint, type-check, tests, build, package build, and package verification from a clean checkout. This satisfies the P10 hosted CI matrix gate.
+
 ## Native Platform Smoke Procedure
 
 Use Node.js 22 or later on a clean macOS, Linux, or Windows host:
@@ -47,6 +56,8 @@ Use Node.js 22 or later on a clean macOS, Linux, or Windows host:
 6. Corrupt a copy of the user config and project manifest; verify the originals remain unchanged and the UI exposes recovery guidance. Send Ctrl+C while idle and during a controlled apply.
 7. On Windows, repeat an add with directory symlink permission unavailable but Junction creation permitted. Verify the actual manifest link type and skill target access.
 
-## Current Local Result
+## Current P10 Evidence and Remaining Gate
 
-On macOS, August 26, 2026: format check, lint, typecheck, unit/integration suite (84 tests), build, and the 7-test Playwright suite pass after the P10 additions. Remote macOS/Linux/Windows matrix evidence and the Windows-native Junction privilege procedure remain required before P10 can be marked complete.
+On macOS, August 26, 2026: format check, lint, typecheck, unit/integration suite (84 tests), build, and the 7-test Playwright suite passed after the P10 additions. The final hosted CI matrix also passed on Ubuntu, macOS, and Windows in run `32949151022`.
+
+**Remaining P10 completion gate:** execute and record the Windows-native Junction fallback procedure under an actual directory-symlink permission denial. Hosted Windows CI proves the normal Windows quality and browser paths, but it cannot prove the privilege-denied fallback truthfully. P10 must remain in progress until the native run records `linkType: "junction"` in the generated manifest and confirms that the linked skill target is readable.
