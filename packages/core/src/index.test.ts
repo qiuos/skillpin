@@ -13,3 +13,21 @@ describe("Result helpers", () => {
     expect(err(error)).toEqual({ ok: false, error });
   });
 });
+
+import { LOCAL_API_VERSION, type LocalSessionInfo } from "./index.js";
+
+describe("browser-safe local API contracts", () => {
+  it("exports the versioned session contract from the core root", () => {
+    const session: LocalSessionInfo = {
+      clientCount: 0,
+      projectDirectory: "/projects/example",
+      projectFingerprint: "fingerprint",
+      sessionId: "session",
+      status: "running",
+      waitingToExitAt: null,
+    };
+
+    expect(LOCAL_API_VERSION).toBe(1);
+    expect(session.status).toBe("running");
+  });
+});

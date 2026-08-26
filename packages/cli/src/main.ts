@@ -1,8 +1,14 @@
 #!/usr/bin/env node
 
-import { ok } from "@skillpin/core";
+import { runCli } from "./command/run.js";
+import { attachSignalHandlers } from "./command/signal-handlers.js";
 
-const version = "0.1.0";
-const startup = ok({ version });
+const result = await runCli({
+  args: process.argv.slice(2),
+  cwd: process.cwd(),
+});
+process.exitCode = result.exitCode;
 
-console.log(`SkillPin ${startup.value.version} (P0 baseline)`);
+if (result.session !== undefined) {
+  attachSignalHandlers(result.session);
+}
