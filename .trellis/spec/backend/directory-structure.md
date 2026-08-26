@@ -1,44 +1,30 @@
-# Backend Directory Structure
+# Directory Structure
 
-## Scope / Trigger
+## Current layout
 
-P0 establishes a TypeScript npm workspace for the Node-side modules. There is no HTTP service, persistence module, or product feature yet.
+The runtime/shared package is `packages/core`. It is an ESM TypeScript package that compiles `src/` to `dist/` and exposes only its package root.
 
-## Current Layout
+- Put reusable domain primitives and platform-independent behavior under `packages/core/src/`.
+- Keep browser-safe shared primitives in `packages/core/src/index.ts`. Export Node-only platform and transaction contracts from stable subpaths: `packages/core/src/platform/index.ts` and `packages/core/src/changes/index.ts`.
+- Place tests next to the code they exercise using `*.test.ts`; the existing example is `packages/core/src/index.test.ts`.
+- Put executable entry points in `packages/cli/src/`; the current CLI entry point is `packages/cli/src/main.ts`.
+- Put repository-level build and archive verification utilities in `scripts/`, using ESM `.mjs` files such as `scripts/build-package.mjs`.
+- Put cross-package browser tests under `tests/e2e/`; keep future filesystem/platform integration tests under `tests/platform/` or `tests/integration/`, not in a package's emitted `dist/` tree.
 
-```text
-packages/
-├── core/
-│   └── src/
-│       ├── index.ts        # public domain primitives
-│       └── *.test.ts       # colocated unit tests
-└── cli/
-    └── src/
-        └── main.ts         # executable entry point
-```
+## Package boundaries
 
-## Contracts
+`@skillpin/core` is the reusable bottom layer. It must not import `@skillpin/cli` or `@skillpin/web`. `@skillpin/cli` can use core but must not import Web source; `@skillpin/web` can use core but must not import CLI. These constraints are enforced in `eslint.config.js`.
 
-- `@skillpin/core` is the reusable domain package and must not import `@skillpin/cli` or `@skillpin/web`.
-- `@skillpin/cli` may import public exports from `@skillpin/core` only; it must not import `@skillpin/web` or its source tree.
-- Public core APIs are exported from `packages/core/src/index.ts` until a feature justifies a named module. Imports must use the package name, not another package's `src/` path.
-- Node packages compile with `module` and `moduleResolution` set to `NodeNext`; relative ESM TypeScript imports use `.js` specifiers.
+## Examples
 
-## Good / Base / Bad
+- `packages/core/src/index.ts` exports the browser-safe `Result` primitives used by both outer packages.
+- `packages/core/src/platform/index.ts` and `packages/core/src/changes/index.ts` expose Node-only P1 APIs without pulling `node:fs` or `node:crypto` into the Web bundle.
+- `packages/cli/src/main.ts` imports `ok` from `@skillpin/core` rather than recreating the result shape.
+- `scripts/verify-package.mjs` is a repository utility rather than CLI runtime code.
 
-```ts
-// Good: stable package boundary.
-import { ok } from "@skillpin/core";
+## Avoid
 
-// Bad: bypasses package exports and couples the CLI to another package layout.
-import { ok } from "../../core/src/index.ts";
-```
-
-## Tests Required
-
-- Add a colocated Vitest test when adding a pure core helper.
-- Run `npm run lint`, `npm run typecheck`, and `npm test` after changing package boundaries.
-
-## Common Mistake
-
-`npm run build --workspaces` is not a dependency scheduler. Root scripts must explicitly build core before packages that consume its emitted declarations.
+- Do not put CLI command parsing or React code in `packages/core`.
+- Do not import another package's `src/` files; consume its declared package export instead.
+- Do not export Node-only modules from `@skillpin/core` package root, because Web imports that root. Use the `@skillpin/core/platform` or `@skillpin/core/changes` subpath instead.
+- Do not create empty directories merely to mirror the long-term roadmap; add a directory with its first concrete responsibility.

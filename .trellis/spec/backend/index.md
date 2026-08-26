@@ -1,0 +1,32 @@
+# Backend Development Guidelines
+
+> Current repository conventions for core runtime and CLI-adjacent development.
+
+---
+
+## Overview
+
+This directory contains guidelines for backend development. Fill in each file with your project's specific conventions.
+
+---
+
+## Guidelines Index
+
+| Guide | Description | Status |
+|-------|-------------|--------|
+| [Directory Structure](./directory-structure.md) | Module organization and file layout | Baseline documented |
+| [Database Guidelines](./database-guidelines.md) | ORM patterns, queries, migrations | Baseline documented |
+| [Error Handling](./error-handling.md) | Error types, handling strategies | Baseline documented |
+| [Quality Guidelines](./quality-guidelines.md) | Code standards, forbidden patterns | Baseline documented |
+| [Logging Guidelines](./logging-guidelines.md) | Structured logging, log levels | Baseline documented |
+| [Platform Link and Transaction Contract](./platform-link-contract.md) | Safe Node directory-link and transaction APIs | P1 contract |
+
+---
+
+## Usage
+
+These files record the P0 baseline. Update them when a later task establishes a real, repeatable convention; do not treat roadmap directories or future dependencies as existing practice.
+
+---
+
+**Language**: All documentation is written in **English**.

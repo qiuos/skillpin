@@ -1,0 +1,7 @@
+{"file":".trellis/tasks/08-26-p1-platform-links/prd.md","reason":"Confirmed P1 scope, safety constraints, acceptance criteria, and boundaries."}
+{"file":".trellis/tasks/08-26-p1-platform-links/research/node-fs-platform-contract.md","reason":"Node filesystem constraints and P1 implementation decisions."}
+{"file":".trellis/spec/backend/directory-structure.md","reason":"Core package layout, NodeNext imports, and package boundaries."}
+{"file":".trellis/spec/backend/error-handling.md","reason":"Result and SkillPinError conventions for safe filesystem failures."}
+{"file":".trellis/spec/backend/quality-guidelines.md","reason":"Runtime test, type safety, and validation expectations."}
+{"file":".trellis/spec/guides/code-reuse-thinking-guide.md","reason":"Avoid duplicate path, error-classification, and filesystem helpers."}
+{"file":".trellis/spec/backend/platform-link-contract.md","reason":"P1 executable platform-link, transaction, validation, and test contract."}
