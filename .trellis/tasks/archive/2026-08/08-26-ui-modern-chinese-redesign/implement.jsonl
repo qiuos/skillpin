@@ -1,0 +1,7 @@
+{"file": ".trellis/spec/frontend/quality-guidelines.md", "reason": "Styling/a11y/test commands; this task is the formal UI restyle exception"}
+{"file": ".trellis/spec/frontend/component-guidelines.md", "reason": "Component/a11y patterns to preserve while restyling"}
+{"file": ".trellis/spec/frontend/local-session-app-foundation.md", "reason": "Shell, session chrome, theme contract"}
+{"file": ".trellis/spec/frontend/source-management-foundation.md", "reason": "Onboarding/source list/dialog/browser UX contract"}
+{"file": ".trellis/spec/frontend/skills-workbench-foundation.md", "reason": "Workbench layout and catalog UX contract"}
+{"file": ".trellis/spec/frontend/project-change-workflow-foundation.md", "reason": "Stage/review/apply dialog copy and flow"}
+{"file": ".trellis/tasks/08-26-ui-modern-chinese-redesign/prd.md", "reason": "Locked Chinese + size + pragmatic-tool visual requirements"}

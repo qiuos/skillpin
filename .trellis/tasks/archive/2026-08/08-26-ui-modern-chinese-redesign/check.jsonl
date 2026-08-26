@@ -1,0 +1,7 @@
+{"file": ".trellis/spec/frontend/quality-guidelines.md", "reason": "format/lint/typecheck/e2e quality bar"}
+{"file": ".trellis/spec/frontend/component-guidelines.md", "reason": "semantic HTML and accessible names must survive restyle"}
+{"file": ".trellis/spec/frontend/local-session-app-foundation.md", "reason": "session chrome and theme still correct"}
+{"file": ".trellis/spec/frontend/source-management-foundation.md", "reason": "source flows still match foundation"}
+{"file": ".trellis/spec/frontend/skills-workbench-foundation.md", "reason": "workbench still matches foundation"}
+{"file": ".trellis/spec/frontend/project-change-workflow-foundation.md", "reason": "stage/review/apply still matches foundation"}
+{"file": ".trellis/tasks/08-26-ui-modern-chinese-redesign/prd.md", "reason": "acceptance criteria for Chinese, sizes, non-AI look"}
