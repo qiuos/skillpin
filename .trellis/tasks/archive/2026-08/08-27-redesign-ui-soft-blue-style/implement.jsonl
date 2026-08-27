@@ -1,0 +1,5 @@
+{"file": ".trellis/spec/frontend/quality-guidelines.md", "reason": "Styling contract to rewrite for Invoicer-style shell"}
+{"file": ".trellis/spec/frontend/local-session-app-foundation.md", "reason": "Chrome/theme language currently documents Boltshift top-nav"}
+{"file": ".trellis/spec/frontend/skills-workbench-foundation.md", "reason": "Three-column workbench aria/layout contracts"}
+{"file": ".trellis/spec/frontend/source-management-foundation.md", "reason": "Sources page chrome contracts"}
+{"file": ".trellis/spec/frontend/component-guidelines.md", "reason": "Shared control patterns"}

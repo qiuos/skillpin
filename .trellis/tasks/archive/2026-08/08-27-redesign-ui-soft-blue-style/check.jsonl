@@ -1,0 +1,5 @@
+{"file": ".trellis/spec/frontend/quality-guidelines.md", "reason": "Verify styling language and forbidden patterns after restyle"}
+{"file": ".trellis/spec/frontend/local-session-app-foundation.md", "reason": "Verify session chrome, theme, skip-link, no-dashboard contracts"}
+{"file": ".trellis/spec/frontend/skills-workbench-foundation.md", "reason": "Verify workbench three-column a11y contracts survive"}
+{"file": ".trellis/spec/frontend/source-management-foundation.md", "reason": "Verify sources list accessible names"}
+{"file": ".trellis/spec/backend/p10-cross-platform-acceptance-contract.md", "reason": "E2E acceptance expectations"}
