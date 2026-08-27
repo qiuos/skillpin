@@ -242,3 +242,36 @@ Replaced Invoicer soft-blue shell with Octopath HD-2D workbench: identity bar wi
 ### Next Steps
 
 - None - task complete
+
+
+## Session 23: Fix skill source reload and typography
+
+**Date**: 2026-08-27
+**Task**: Fix skill source reload and typography
+**Branch**: `main`
+
+### Summary
+
+Fixed same-origin Chromium source GET requests that omit Origin, added source reload guard regression coverage, raised UI typography baseline, updated contracts, and passed full quality/package verification.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `014ef23` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
