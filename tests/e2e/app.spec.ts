@@ -646,7 +646,12 @@ test("uses compact single-line catalog rows without crowding actions", async ({
     "min-height",
     "44px",
   );
-  await expect(page.getByLabel("搜索技能")).toHaveCSS("font-size", "16px");
+  await expect(page.getByLabel("搜索技能")).toHaveCSS("min-height", "54px");
+  await expect(page.getByLabel("搜索技能")).toHaveCSS("font-size", "22px");
+  await expect(page.locator(".catalog-filters__trigger")).toHaveCSS(
+    "font-size",
+    "22px",
+  );
   await expect(page.locator(".skill-row")).toHaveCSS("min-height", "56px");
   await expect(page.locator(".skill-row__context")).toHaveCount(0);
 

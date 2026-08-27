@@ -411,6 +411,12 @@ export function SkillsWorkbenchPage() {
 
   return (
     <section aria-label="技能工作台" className="skills-workbench">
+      <div aria-hidden="true" className="skills-workbench__atmosphere">
+        <span className="skills-workbench__halo" />
+        <span className="skills-workbench__mist skills-workbench__mist--far" />
+        <span className="skills-workbench__mist skills-workbench__mist--near" />
+        <span className="skills-workbench__fireflies" />
+      </div>
       <div className="skills-columns">
         <section aria-label="技能目录" className="skill-catalog ot-window">
           <div className="skill-catalog__head">
