@@ -186,14 +186,21 @@ function AppShell() {
             ) : null}
           </div>
           <div className="identity-bar__actions">
-            <span className="connection">
-              <span
-                aria-hidden="true"
-                className={`status-dot status-dot--${connection}`}
-              />
-              {statusLabel}
+            <span
+              aria-label={`本地会话：${statusLabel}`}
+              className={`connection connection--${connection}`}
+              role="status"
+            >
+              <span aria-hidden="true" className="connection__marker">
+                <span className={`status-dot status-dot--${connection}`} />
+              </span>
+              <span className="connection__copy">
+                <span className="connection__eyebrow">本地会话</span>
+                <strong className="connection__label">{statusLabel}</strong>
+              </span>
             </span>
             <Button
+              className="identity-bar__end-session"
               disabled={connection === "exiting"}
               onClick={() => setShowEndDialog(true)}
               variant="secondary"

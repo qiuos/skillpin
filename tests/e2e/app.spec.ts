@@ -579,6 +579,7 @@ test("browses searchable catalog candidates and safely renders an explicit skill
   await expect(page.getByLabel("技能源与筛选")).toBeVisible();
   await expect(page.getByLabel("技能目录")).toBeVisible();
   await expect(page.getByLabel("技能详情")).toBeVisible();
+  await expect(page.getByLabel("本地会话：已连接")).toBeVisible();
   await expect(page.getByRole("button", { name: /review/i })).toBeVisible();
   await expect(
     page.getByRole("heading", { name: "Review skill" }),
@@ -588,12 +589,18 @@ test("browses searchable catalog candidates and safely renders an explicit skill
   await expect(page.getByRole("button", { name: /review/i })).toBeVisible();
   await expect(
     page.getByText("在列表中点击启用或移除，立即应用变更。"),
-  ).toBeVisible();
+  ).toHaveCount(0);
+  await expect(page.locator(".skill-row__context")).toContainText("Personal");
+  await expect(page.locator(".identity-bar__end-session")).toHaveCSS(
+    "font-size",
+    "24px",
+  );
 
   const catalogBox = await page.getByLabel("技能目录").boundingBox();
   const detailBox = await page.getByLabel("技能详情").boundingBox();
   expect(catalogBox?.height).toBeGreaterThan(400);
   expect(detailBox?.height).toBeGreaterThan(400);
+  expect(catalogBox?.width).toBeGreaterThan(detailBox?.width ?? Infinity);
 });
 
 test("uses the approved skills-workbench typography and safely wraps wide rows", async ({

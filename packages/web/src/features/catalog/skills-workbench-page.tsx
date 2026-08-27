@@ -214,7 +214,7 @@ export function SkillsWorkbenchPage() {
 
   const rowVirtualizer = useVirtualizer({
     count: filteredGroups.length,
-    estimateSize: () => 224,
+    estimateSize: () => 252,
     getScrollElement: () => listElement,
     overscan: 8,
     useFlushSync: false,
@@ -376,14 +376,10 @@ export function SkillsWorkbenchPage() {
             <p className="muted-copy">{detail.summary}</p>
             <p className="muted-copy">来源 {detail.source.displayName}</p>
           </header>
-          {selectedGroup === null || selectedGroup.candidates.length < 2 ? (
-            <p className="muted-copy">在列表中点击启用或移除，立即应用变更。</p>
-          ) : (
+          {selectedGroup === null ||
+          selectedGroup.candidates.length < 2 ? null : (
             <div className="candidate-list" role="list">
               <p className="candidate-list__heading">可用来源</p>
-              <p className="muted-copy">
-                在列表中点击启用或移除，立即应用变更。
-              </p>
               {selectedGroup.candidates.map((candidate) => (
                 <button
                   className={`candidate-row${candidate.id === selectedCandidate?.id ? " candidate-row--active" : ""}`}
@@ -557,6 +553,15 @@ export function SkillsWorkbenchPage() {
                         </span>
                         <span className="skill-row__summary">
                           {group.candidates[0]?.summary}
+                        </span>
+                        <span className="skill-row__context">
+                          <span>{group.candidates[0]?.source.displayName}</span>
+                          {group.candidates.length > 1 ? (
+                            <span>候选 {group.candidates.length}</span>
+                          ) : null}
+                          {groupIsAbnormal(group) ? (
+                            <span className="skill-row__warning">解析备注</span>
+                          ) : null}
                         </span>
                       </button>
                       <div className="skill-row__actions">
