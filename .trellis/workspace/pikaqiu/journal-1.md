@@ -142,3 +142,36 @@ Analyzed Boltshift SaaS dashboard reference, obtained user ASCII confirmation fo
 ### Next Steps
 
 - None - task complete
+
+
+## Session 20: Octopath HD-2D skill workbench redesign
+
+**Date**: 2026-08-27
+**Task**: Octopath HD-2D skill workbench redesign
+**Branch**: `main`
+
+### Summary
+
+Replaced Invoicer soft-blue shell with Octopath HD-2D workbench: identity bar without sidebar/KPI, list-checkbox staging, always-visible command bar, read-only detail; specs and e2e updated; merged check fixes (review-and-apply label, source table columns, dead tone cleanup).
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `17883f4` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
