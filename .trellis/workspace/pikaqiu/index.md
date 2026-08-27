@@ -8,7 +8,7 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-1.md`
-- **Total Sessions**: 33
+- **Total Sessions**: 34
 - **Last Active**: 2026-08-27
 <!-- @@@/auto:current-status -->
 
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-1.md` | ~610 | Active |
+| `journal-1.md` | ~643 | Active |
 <!-- @@@/auto:active-documents -->
 
 ---
@@ -29,6 +29,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 34 | 2026-08-27 | 发布 SkillPin 0.1.13 | `4bb9d0e` | `main` |
 | 33 | 2026-08-27 | 优化连接状态与技能列表布局 | `42e809d`, `86b5f1e` | `main` |
 | 32 | 2026-08-27 | Publish SkillPin 0.1.12 | `765ffe6` | `main` |
 | 31 | 2026-08-27 | Refine workbench typography and scrollbars | `bf87cd4` | `main` |

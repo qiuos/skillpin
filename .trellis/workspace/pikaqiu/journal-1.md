@@ -608,3 +608,36 @@ Released SkillPin 0.1.12 after the typography and scrollbar refresh. Created the
 ### Next Steps
 
 - None - task complete
+
+
+## Session 34: 发布 SkillPin 0.1.13
+
+**Date**: 2026-08-27
+**Task**: 发布 SkillPin 0.1.13
+**Branch**: `main`
+
+### Summary
+
+将 SkillPin 从 0.1.12 发布为 0.1.13：创建版本提交和 v0.1.13 标签，完成 npm ci、格式、lint、类型、单元、构建、打包、包内容验证与隔离安装烟测；推送 main 和标签，并验证 GitHub Release 工作流成功上传 skillpin-0.1.13.tgz。未向 npm 公共仓库发布。
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `4bb9d0e` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
