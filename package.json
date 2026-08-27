@@ -2,7 +2,7 @@
   "name": "skillpin",
   "version": "0.1.13",
   "description": "Local skill source manager",
-  "license": "UNLICENSED",
+  "license": "MIT",
   "type": "module",
   "bin": {
     "skillpin": "./dist/main.js"
@@ -11,6 +11,7 @@
     "dist",
     "README.md",
     "README.en.md",
+    "LICENSE",
     "docs",
     "THIRD_PARTY_NOTICES.md"
   ],

@@ -10,6 +10,7 @@ const rootDirectory = path.resolve(
 const artifactsDirectory = path.join(rootDirectory, "artifacts");
 const decoder = new TextDecoder();
 const requiredDocuments = [
+  "package/LICENSE",
   "package/README.md",
   "package/README.en.md",
   "package/THIRD_PARTY_NOTICES.md",
@@ -164,10 +165,7 @@ assert(
   manifest.dependencies?.["@skillpin/core"] === undefined,
   "Package must not depend on the unpublished @skillpin/core workspace.",
 );
-assert(
-  manifest.license === "UNLICENSED",
-  "Package must declare its delivery license status.",
-);
+assert(manifest.license === "MIT", "Package must declare the MIT license.");
 assert(
   manifest.publishConfig?.access === "restricted",
   "Package must require restricted publish access.",

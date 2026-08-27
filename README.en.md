@@ -61,3 +61,7 @@ npm run pack
 npm run verify-package
 npm run test:package
 ```
+
+## License
+
+This project is released under the [MIT License](LICENSE).

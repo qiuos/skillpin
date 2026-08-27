@@ -61,3 +61,7 @@ npm run pack
 npm run verify-package
 npm run test:package
 ```
+
+## 开源协议
+
+本项目以 [MIT License](LICENSE) 开源发布。
