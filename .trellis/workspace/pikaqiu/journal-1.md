@@ -641,3 +641,39 @@ Released SkillPin 0.1.12 after the typography and scrollbar refresh. Created the
 ### Next Steps
 
 - None - task complete
+
+
+## Session 35: 优化技能列表并发布 SkillPin 0.1.14
+
+**Date**: 2026-08-27
+**Task**: 优化技能列表并发布 SkillPin 0.1.14
+**Branch**: `main`
+
+### Summary
+
+实现紧凑技能目录与可折叠高级筛选，采用 MIT 许可证，并完成 SkillPin 0.1.14 的私有 GitHub Release 发布前验证。
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `a0f2798` | (see git log) |
+| `cec1e3a` | (see git log) |
+| `c4fc756` | (see git log) |
+| `e724132` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
