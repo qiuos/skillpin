@@ -711,3 +711,36 @@ Updated the skills catalog row name and summary typography to 22px, kept action 
 ### Next Steps
 
 - None - task complete
+
+
+## Session 37: Enhance skills workbench atmosphere
+
+**Date**: 2026-08-27
+**Task**: Enhance skills workbench atmosphere
+**Branch**: `main`
+
+### Summary
+
+Unified primary source/filter typography with 22px skill-list copy, added CSS-only HD-2D backdrop atmosphere with reduced-motion safety, updated E2E coverage and frontend contracts.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `14587eb` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
