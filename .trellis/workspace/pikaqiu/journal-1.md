@@ -442,3 +442,36 @@ Improved skills-workbench readability, added explicit staged enable/remove actio
 ### Next Steps
 
 - None - task complete
+
+
+## Session 29: 修复技能默认页与大字号布局
+
+**Date**: 2026-08-27
+**Task**: 修复技能默认页与大字号布局
+**Branch**: `main`
+
+### Summary
+
+默认路由改为技能页，移除临时文字调试，并将技能标题固定为 32px、其余工作台文案与操作按钮固定为 24px；通过动态虚拟行测量和响应式换行/滚动消除首屏与大字号布局重叠问题。完整格式、静态检查、单测、构建和 Playwright E2E 均已通过。
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `7dadbbc` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
