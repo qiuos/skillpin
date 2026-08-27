@@ -8,7 +8,7 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-1.md`
-- **Total Sessions**: 20
+- **Total Sessions**: 21
 - **Last Active**: 2026-08-27
 <!-- @@@/auto:current-status -->
 
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-1.md` | ~177 | Active |
+| `journal-1.md` | ~210 | Active |
 <!-- @@@/auto:active-documents -->
 
 ---
@@ -29,6 +29,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 21 | 2026-08-27 | 修复技能源配置与顶部导航 | `7c7aa72492ff73a041fdb56616c7a862771cf807` | `main` |
 | 20 | 2026-08-27 | Octopath HD-2D skill workbench redesign | `17883f4` | `main` |
 | 19 | 2026-08-27 | Redesign SkillPin UI to Boltshift soft-blue dashboard layout & release 0.1.3 | `72af802`, `e179b79` | `main` |
 | 18 | 2026-08-27 | Release SkillPin 0.1.2 | `59c37aa` | `main` |

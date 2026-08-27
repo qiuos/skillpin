@@ -175,3 +175,36 @@ Replaced Invoicer soft-blue shell with Octopath HD-2D workbench: identity bar wi
 ### Next Steps
 
 - None - task complete
+
+
+## Session 21: 修复技能源配置与顶部导航
+
+**Date**: 2026-08-27
+**Task**: 修复技能源配置与顶部导航
+**Branch**: `main`
+
+### Summary
+
+修复技能源列表请求失败时被误判为首次配置的问题，新增重试与导航恢复回归测试；移除外观控制并固定当前工作台主题。
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `7c7aa72492ff73a041fdb56616c7a862771cf807` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
