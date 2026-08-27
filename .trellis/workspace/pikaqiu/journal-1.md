@@ -308,3 +308,36 @@ Fixed same-origin Chromium source GET requests that omit Origin, added source re
 ### Next Steps
 
 - None - task complete
+
+
+## Session 25: 优化界面可读性与工作台布局
+
+**Date**: 2026-08-27
+**Task**: 优化界面可读性与工作台布局
+**Branch**: `main`
+
+### Summary
+
+提升全局字体与控件尺寸，重做技能状态筛选菜单，调整列表/详情面板比例，将技能源页改为全宽布局，并完成测试与前端规范同步。
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `1347865` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
