@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 
 import type { LocalSourceInput, LocalSourceSummary } from "@skillpin/core";
 
-import { Button, Dialog, Drawer } from "../components/controls.js";
+import { Button, Dialog } from "../components/controls.js";
 import { SkillsWorkbenchPage } from "../features/catalog/skills-workbench-page.js";
 import { CatalogProvider } from "../features/catalog/catalog-context.js";
 import { OnboardingPage } from "../features/onboarding/onboarding-page.js";
@@ -16,7 +16,6 @@ import {
 } from "../features/sources/source-context.js";
 import { SourceDialog } from "../features/sources/source-dialog.js";
 import { SourceListPage } from "../features/sources/source-list-page.js";
-import { ThemePicker, useThemePreference } from "./theme.js";
 
 const workspaceRoutes = ["/skills", "/sources"] as const;
 type AppRoute = "/onboarding" | (typeof workspaceRoutes)[number];
@@ -68,34 +67,49 @@ function connectionCopy(
 
 function AppShell() {
   const [route, navigate] = useRoute();
-  const { connection, error, isReadOnly, session, shutdown } = useSession();
-  const { add, isLoading: sourcesLoading, sources, update } = useSources();
+  const {
+    connection,
+    error: sessionError,
+    isReadOnly,
+    session,
+    shutdown,
+  } = useSession();
+  const {
+    add,
+    error: sourceError,
+    hasLoaded: sourcesLoaded,
+    isLoading: sourcesLoading,
+    refresh,
+    sources,
+    update,
+  } = useSources();
   const [showEndDialog, setShowEndDialog] = useState(false);
-  const [showAppearance, setShowAppearance] = useState(false);
   const [editingSource, setEditingSource] = useState<
     LocalSourceSummary | null | undefined
   >(undefined);
-  const [themePreference, setThemePreference] = useThemePreference();
   const closeEndDialog = useCallback(() => setShowEndDialog(false), []);
-  const closeAppearance = useCallback(() => setShowAppearance(false), []);
   const closeSourceDialog = useCallback(() => setEditingSource(undefined), []);
   const endSession = useCallback(() => {
     closeEndDialog();
     void shutdown();
   }, [closeEndDialog, shutdown]);
   const statusLabel = connectionCopy(connection);
-  const projectPath = session?.projectDirectory ?? "正在连接安全的本地项目…";
   const hasSources = sources.length > 0;
   const sourceDialogOpen = editingSource !== undefined;
 
   useEffect(() => {
-    if (!sourcesLoading && !hasSources && route !== "/onboarding") {
+    if (
+      sourcesLoaded &&
+      !sourcesLoading &&
+      !hasSources &&
+      route !== "/onboarding"
+    ) {
       navigate("/onboarding");
     }
-  }, [hasSources, navigate, route, sourcesLoading]);
+  }, [hasSources, navigate, route, sourcesLoaded, sourcesLoading]);
 
   useEffect(() => {
-    if (session === null || sourcesLoading || !hasSources) {
+    if (session === null || !sourcesLoaded || sourcesLoading || !hasSources) {
       return;
     }
     const returned = consumeReturnRoute();
@@ -109,7 +123,7 @@ function AppShell() {
     ) {
       navigate(returned);
     }
-  }, [hasSources, navigate, route, session, sourcesLoading]);
+  }, [hasSources, navigate, route, session, sourcesLoaded, sourcesLoading]);
 
   const saveSource = useCallback(
     async (input: LocalSourceInput) => {
@@ -125,7 +139,7 @@ function AppShell() {
     [add, editingSource, navigate, update],
   );
 
-  const workSurface = !hasSources ? (
+  const workSurface = !sourcesLoaded ? null : !hasSources ? (
     <OnboardingPage
       disabled={isReadOnly}
       onAddSource={() => setEditingSource(null)}
@@ -177,9 +191,6 @@ function AppShell() {
               />
               {statusLabel}
             </span>
-            <Button onClick={() => setShowAppearance(true)} variant="tertiary">
-              外观
-            </Button>
             <Button
               disabled={connection === "exiting"}
               onClick={() => setShowEndDialog(true)}
@@ -213,10 +224,19 @@ function AppShell() {
                 该本地会话处于 60 秒退出缓冲期。重新连接以保持开启。
               </p>
             ) : null}
-            {error === null ? null : (
+            {sessionError === null ? null : (
               <section className="error-notice" role="alert">
                 <h2>无法连接至 SkillPin</h2>
-                <p>{error.message}</p>
+                <p>{sessionError.message}</p>
+              </section>
+            )}
+            {sourceError === null ? null : (
+              <section className="error-notice" role="alert">
+                <h2>无法加载技能源</h2>
+                <p>{sourceError.message}</p>
+                <Button onClick={() => void refresh()} variant="secondary">
+                  重新加载技能源
+                </Button>
               </section>
             )}
             {sourcesLoading && session !== null ? (
@@ -251,27 +271,6 @@ function AppShell() {
           </Button>
         </div>
       </Dialog>
-      <Drawer
-        description="此处仅展示主题与会话元数据。凭据绝不会在浏览器中显示或存储。"
-        onClose={closeAppearance}
-        open={showAppearance}
-        title="外观"
-      >
-        <ThemePicker
-          preference={themePreference}
-          setPreference={setThemePreference}
-        />
-        <dl className="session-details">
-          <dt>项目目录</dt>
-          <dd>
-            <code>{projectPath}</code>
-          </dd>
-          <dt>会话状态</dt>
-          <dd>{session?.status ?? "等待会话建立"}</dd>
-          <dt>已连接页面</dt>
-          <dd>{session?.clientCount ?? 0}</dd>
-        </dl>
-      </Drawer>
     </div>
   );
 }

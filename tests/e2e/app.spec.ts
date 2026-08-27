@@ -12,6 +12,11 @@ type MockSource = {
 
 type MockApiOptions = {
   readonly markdownBody?: string;
+  readonly sourceListAvailable?: boolean;
+};
+
+type MockApiControls = {
+  sourceListAvailable: boolean;
 };
 
 type MockApiEvents = {
@@ -41,18 +46,25 @@ async function installProtectedLocalApi(
   await page.addInitScript(
     ({
       markdownBody,
+      sourceListAvailable,
       sources: seededSources,
     }: {
       readonly markdownBody: string;
+      readonly sourceListAvailable: boolean;
       readonly sources: MockSource[];
     }) => {
       type BrowserSource = MockSource;
       const sources = [...seededSources] as BrowserSource[];
       let sourceSequence = sources.length;
       const events = { applyRequests: 0, shutdownRequests: 0 };
+      const controls = { sourceListAvailable };
       Object.defineProperty(window, "__skillpinMockApiEvents", {
         configurable: true,
         value: events,
+      });
+      Object.defineProperty(window, "__skillpinMockApiControls", {
+        configurable: true,
+        value: controls,
       });
       const session = {
         clientCount: 1,
@@ -199,6 +211,23 @@ async function installProtectedLocalApi(
           });
         }
         if (url.pathname === "/api/sources" && method === "GET") {
+          if (!controls.sourceListAvailable) {
+            return new Response(
+              JSON.stringify({
+                error: {
+                  code: "SOURCE_LIST_UNAVAILABLE",
+                  message: "Source list is temporarily unavailable",
+                  recoveryAction: "retry",
+                  retryable: true,
+                },
+                version: 1,
+              }),
+              {
+                headers: { "Content-Type": "application/json" },
+                status: 503,
+              },
+            );
+          }
           return reply({ sources });
         }
         if (url.pathname === "/api/sources/validate" && method === "POST") {
@@ -309,6 +338,7 @@ async function installProtectedLocalApi(
     {
       markdownBody:
         options.markdownBody ?? "# Review\n\nSafe local Markdown content.",
+      sourceListAvailable: options.sourceListAvailable ?? true,
       sources: initialSources,
     },
   );
@@ -326,6 +356,23 @@ async function mockApiEvents(page: Page): Promise<MockApiEvents> {
     }
     return events;
   });
+}
+
+async function setSourceListAvailable(
+  page: Page,
+  sourceListAvailable: boolean,
+): Promise<void> {
+  await page.evaluate((available) => {
+    const controls = (
+      window as typeof window & {
+        __skillpinMockApiControls?: MockApiControls;
+      }
+    ).__skillpinMockApiControls;
+    if (controls === undefined) {
+      throw new Error("Missing mock API controls.");
+    }
+    controls.sourceListAvailable = available;
+  }, sourceListAvailable);
 }
 
 test("onboards a first source without showing an empty workspace", async ({
@@ -368,6 +415,35 @@ test("onboards a first source without showing an empty workspace", async ({
   await expect(page.getByText("已发现 1 个技能。")).toBeVisible();
 });
 
+test("does not mistake an unavailable source list for first-time setup and recovers", async ({
+  page,
+}) => {
+  await installProtectedLocalApi(
+    page,
+    [source("source-existing", "Shared skills", "/Users/example/shared")],
+    { sourceListAvailable: false },
+  );
+  await page.goto("/skills");
+
+  await expect(page).toHaveURL(/\/skills$/);
+  await expect(
+    page.getByRole("heading", { name: "无法加载技能源" }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "设置你的第一个技能源" }),
+  ).toHaveCount(0);
+
+  await setSourceListAvailable(page, true);
+  await page.getByRole("button", { name: "重新加载技能源" }).click();
+
+  await expect(
+    page.getByRole("navigation", { name: "SkillPin 功能分区" }),
+  ).toBeVisible();
+  await page.getByRole("button", { name: "技能源" }).click();
+  await expect(page).toHaveURL(/\/sources$/);
+  await expect(page.getByRole("heading", { name: "技能源" })).toBeVisible();
+});
+
 test("manages existing sources with search, enablement, rescan, and guarded removal", async ({
   page,
 }) => {
@@ -396,18 +472,13 @@ test("manages existing sources with search, enablement, rescan, and guarded remo
   ).toBeVisible();
 });
 
-test("persists theme choice and returns focus after closing session panels", async ({
+test("does not expose appearance controls and returns focus after closing session dialogs", async ({
   page,
 }) => {
   await installProtectedLocalApi(page);
   await page.goto("/");
 
-  const appearance = page.getByRole("button", { name: "外观" });
-  await appearance.click();
-  await page.getByRole("radio", { name: "浅色模式" }).check();
-  await expect(page.locator("html")).toHaveAttribute("data-theme", "light");
-  await page.getByRole("button", { name: "关闭面板" }).click();
-  await expect(appearance).toBeFocused();
+  await expect(page.getByRole("button", { name: "外观" })).toHaveCount(0);
 
   const end = page.getByRole("button", { name: "结束 SkillPin" });
   await end.click();
@@ -416,8 +487,6 @@ test("persists theme choice and returns focus after closing session panels", asy
   ).toBeVisible();
   await page.keyboard.press("Escape");
   await expect(end).toBeFocused();
-  await page.reload();
-  await expect(page.locator("html")).toHaveAttribute("data-theme", "light");
 });
 
 test("browses searchable catalog candidates and safely renders an explicit skill detail", async ({

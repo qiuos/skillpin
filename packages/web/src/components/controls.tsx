@@ -193,46 +193,6 @@ export function Dialog({
   );
 }
 
-export function Drawer({
-  children,
-  description,
-  onClose,
-  open,
-  title,
-}: OverlayProps) {
-  const titleId = useId();
-  const descriptionId = useId();
-  const ref = useFocusTrap(open, onClose);
-  if (!open) return null;
-  return (
-    <div className="overlay" onMouseDown={onClose}>
-      <aside
-        aria-describedby={description === undefined ? undefined : descriptionId}
-        aria-labelledby={titleId}
-        aria-modal="true"
-        className="drawer"
-        onMouseDown={(event) => event.stopPropagation()}
-        ref={ref}
-        role="dialog"
-        tabIndex={-1}
-      >
-        <div className="overlay__header">
-          <div>
-            <h2 id={titleId}>{title}</h2>
-            {description === undefined ? null : (
-              <p id={descriptionId}>{description}</p>
-            )}
-          </div>
-          <Button aria-label="关闭面板" onClick={onClose} variant="tertiary">
-            ×
-          </Button>
-        </div>
-        {children}
-      </aside>
-    </div>
-  );
-}
-
 export function Tooltip({
   children,
   content,

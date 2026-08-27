@@ -21,6 +21,7 @@ new LocalApiClient()
 
 useSources(): {
   sources: readonly LocalSourceSummary[];
+  hasLoaded: boolean;
   isLoading: boolean;
   error: LocalApiClientError | null;
   add(input): Promise<LocalSourceSummary>;
@@ -36,8 +37,9 @@ useSources(): {
 ## 3. Contracts
 
 - Source and directory calls use the authenticated `LocalApiClient`; feature components do not call `fetch`, store credentials, or duplicate response decoding.
-- Source refresh begins in a loading state until a non-null session can load configuration. Do not redirect a direct `/sources` visit to onboarding before the first source response resolves.
-- With no configured sources, render the onboarding work surface and hide workspace navigation. The first successful add navigates to `/sources`; the populated `/skills` route remains only a short P8 placeholder.
+- Source refresh begins in a loading state and first runs when the session is online; it retries when a reconnected session returns online. Do not redirect a direct `/sources` visit to onboarding before the first source response resolves.
+- `hasLoaded` means the server has successfully returned an authoritative source list. It stays false after an initial refresh failure; an empty `sources` array alone must never be interpreted as first-run configuration.
+- With a successfully loaded empty source list, render the onboarding work surface and hide workspace navigation. With an unresolved or failed list, keep the current route and render a stable source error with a retry action instead. The first successful add navigates to `/sources`.
 - The add/edit dialog trims a nonblank display name and validates its path through the server. Use the returned canonical path for save; server errors show their stable message rather than browser-side filesystem guesses.
 - The directory browser may show only entrypoint labels and directory metadata. It preserves Unicode paths and sends pasted paths back through the typed API.
 - Source rows always show path and enabled state, mark duplicate display names, show health/count/warnings/failure, and keep edit/rescan available for a failed source.
@@ -49,6 +51,7 @@ useSources(): {
 | Condition | Browser behavior | User-facing behavior |
 | --- | --- | --- |
 | Initial source request pending | Keep route stable; show loading status after session exists | Do not flash or redirect away from a populated `/sources` route |
+| Initial source request failed | Keep `hasLoaded: false`; do not clear prior rows or navigate to onboarding | Stable source error with a retry action; never show first-run setup merely because the local list is empty |
 | Malformed/version-mismatched source payload | `LocalApiClient` throws `LOCAL_API_INVALID_RESPONSE` | Stable source error, no raw payload |
 | Server path validation failure | Keep form values and surface stable server error | User can correct/paste/browse another path |
 | Source scan failure | Preserve row with `health: "failed"` and failure message | Edit or retry through Rescan |
@@ -65,7 +68,16 @@ const validated = await client.validateSourcePath(input.path);
 await onSave({ ...input, path: validated.path });
 ```
 
-**Base — an empty source list:** show only first-run onboarding and an add-source action, not a dashboard or empty workbench navigation.
+**Base — an authoritative empty source list:** after `hasLoaded` is true, show only first-run onboarding and an add-source action, not a dashboard or empty workbench navigation.
+
+**Bad — treat a failed load as first-run setup:**
+
+```tsx
+const hasSources = sources.length > 0;
+return hasSources ? <Workspace /> : <OnboardingPage />;
+```
+
+The initial array is empty before the protected request succeeds. Gate onboarding and route redirects on `hasLoaded` as well as `sources.length`.
 
 **Bad — cache protected source/session data in browser storage:**
 
@@ -80,6 +92,8 @@ The local service is the source of truth. Keep feature state in memory and refre
 - `local-api.test.ts` must cover authenticated source/directory request paths, percent-encoded source ids and directory paths, typed source summaries, removal impact decoding, and malformed source payload rejection.
 - Playwright must mock only API endpoint requests (never broad `/api/**` module globs), then cover first-run onboarding, directory selection with Unicode path, source creation scan outcome, search/enable/rescan/remove actions, and guarded removal confirmation.
 - Retain P6 theme, dialog-focus, connection, and credential tests; P7 must not weaken their accessibility or private-credential guarantees.
+
+- Playwright must cover an unavailable initial `GET /api/sources`: `/skills` or `/sources` stays on its route, onboarding is absent, a retry can recover source navigation, and the “技能 / 技能源” tabs then appear.
 
 ## 7. Wrong vs Correct
 

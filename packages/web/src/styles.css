@@ -66,18 +66,6 @@
   --transition: 160ms ease;
 }
 
-:root[data-theme="dark"] {
-  color-scheme: dark;
-  --parchment: #e6d9b8;
-  --parchment-2: #d9c99f;
-  --parchment-input: #efe4c6;
-  --ink: #332612;
-  --ink-soft: #63503a;
-  --gold-pale: #d9c68f;
-  --dusk: #201910;
-  --dusk-2: #2c2318;
-}
-
 html,
 body,
 #root {
@@ -1088,43 +1076,6 @@ select.catalog-tools__status {
 .removal-impact p {
   margin: 0 0 9px;
   color: var(--ink-soft);
-}
-
-/* ============ Theme picker & session details ============ */
-.theme-picker {
-  display: grid;
-  gap: 10px;
-  margin: 0;
-  padding: 16px 20px 14px;
-  border: 0;
-  border-bottom: 1px solid var(--gold);
-}
-.theme-picker legend {
-  color: #5a3f16;
-  font-size: 15px;
-  font-weight: 700;
-}
-.theme-picker p {
-  margin: -4px 0 3px;
-  font-size: var(--font-ui);
-  color: var(--ink-soft);
-}
-.session-details {
-  display: grid;
-  grid-template-columns: auto 1fr;
-  gap: 8px 14px;
-  margin: 0;
-  padding: 16px 20px 22px;
-  color: var(--ink-soft);
-  font-size: var(--font-small);
-}
-.session-details dt {
-  color: var(--gold-deep);
-  font-weight: 700;
-}
-.session-details dd {
-  margin: 0;
-  overflow-wrap: anywhere;
 }
 
 /* ============ Directory browser (source dialog) ============ */

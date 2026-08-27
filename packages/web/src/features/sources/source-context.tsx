@@ -20,6 +20,7 @@ import { useLocalApiClient, useSession } from "../session/session-context.js";
 interface SourceContextValue {
   readonly add: (input: LocalSourceInput) => Promise<LocalSourceSummary>;
   readonly error: LocalApiClientError | null;
+  readonly hasLoaded: boolean;
   readonly isLoading: boolean;
   readonly refresh: () => Promise<void>;
   readonly remove: (
@@ -49,8 +50,9 @@ function asClientError(reason: unknown): LocalApiClientError {
 
 export function SourceProvider({ children }: PropsWithChildren) {
   const client = useLocalApiClient();
-  const { isReadOnly, session } = useSession();
+  const { connection, isReadOnly, session } = useSession();
   const [sources, setSources] = useState<readonly LocalSourceSummary[]>([]);
+  const [hasLoaded, setHasLoaded] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<LocalApiClientError | null>(null);
 
@@ -62,6 +64,7 @@ export function SourceProvider({ children }: PropsWithChildren) {
     try {
       const response = await client.sources();
       setSources(response.sources);
+      setHasLoaded(true);
       setError(null);
     } catch (reason: unknown) {
       setError(asClientError(reason));
@@ -71,8 +74,11 @@ export function SourceProvider({ children }: PropsWithChildren) {
   }, [client, session]);
 
   useEffect(() => {
+    if (connection !== "online") {
+      return;
+    }
     void refresh();
-  }, [refresh]);
+  }, [connection, refresh]);
 
   const ensureWritable = useCallback(() => {
     if (isReadOnly) {
@@ -91,6 +97,7 @@ export function SourceProvider({ children }: PropsWithChildren) {
       try {
         const added = await client.addSource(input);
         setSources((current) => [...current, added]);
+        setHasLoaded(true);
         setError(null);
         return added;
       } catch (reason: unknown) {
@@ -112,6 +119,7 @@ export function SourceProvider({ children }: PropsWithChildren) {
             source.source.id === sourceId ? updated : source,
           ),
         );
+        setHasLoaded(true);
         setError(null);
         return updated;
       } catch (reason: unknown) {
@@ -133,6 +141,7 @@ export function SourceProvider({ children }: PropsWithChildren) {
             source.source.id === sourceId ? rescanned : source,
           ),
         );
+        setHasLoaded(true);
         setError(null);
         return rescanned;
       } catch (reason: unknown) {
@@ -157,6 +166,7 @@ export function SourceProvider({ children }: PropsWithChildren) {
             current.filter((source) => source.source.id !== sourceId),
           );
         }
+        setHasLoaded(true);
         setError(null);
         return result;
       } catch (reason: unknown) {
@@ -172,6 +182,7 @@ export function SourceProvider({ children }: PropsWithChildren) {
     () => ({
       add,
       error,
+      hasLoaded,
       isLoading,
       refresh,
       remove,
@@ -179,7 +190,17 @@ export function SourceProvider({ children }: PropsWithChildren) {
       sources,
       update,
     }),
-    [add, error, isLoading, refresh, remove, rescan, sources, update],
+    [
+      add,
+      error,
+      hasLoaded,
+      isLoading,
+      refresh,
+      remove,
+      rescan,
+      sources,
+      update,
+    ],
   );
 
   return (

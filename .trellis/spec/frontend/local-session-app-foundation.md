@@ -33,7 +33,7 @@ useSession(): {
 - Decode both HTTP responses and WebSocket messages against `LOCAL_API_VERSION`. Unknown/malformed events are ignored; malformed responses become the stable `LOCAL_API_INVALID_RESPONSE` client error.
 - Keep bootstrap promise ownership module-local so React StrictMode cannot consume P5's one-time bootstrap cookie twice.
 - If WebSocket transport is unavailable, retain feature-local selections and set `isReadOnly` rather than clearing UI state. Retry with capped exponential backoff (currently 500ms to 10s). Render an explicit waiting-to-exit/grace-period state when `LocalSessionInfo.status` requires it.
-- Theme preference may use localStorage under `skillpin.theme`; it stores only `"system" | "light" | "dark"`. When set to `system`, subscribe to `matchMedia("(prefers-color-scheme: dark)")` changes. Resolved theme is applied as `document.documentElement.dataset.theme` (`light` | `dark`) so CSS tokens in `styles.css` switch. Visual tokens follow the Octopath HD-2D workbench language: dusk canvas, parchment/gold windows, and a top identity bar without sidebar or KPI chrome (see frontend quality-guidelines Styling); no session data belongs in localStorage.
+- The application uses the fixed default Octopath HD-2D workbench theme from CSS root tokens. Do not add a browser-stored theme preference, `data-theme` switching, or an appearance/settings drawer unless a future product requirement explicitly restores theme customization. Visual tokens remain dusk canvas, parchment/gold windows, and a top identity bar without sidebar or KPI chrome (see frontend quality-guidelines Styling); no session data belongs in localStorage.
 
 ## 4. Validation & Error Matrix
 
@@ -70,8 +70,7 @@ This leaks a bearer credential into persistent browser state or a URL. Keep it i
 ## 6. Tests Required
 
 - `packages/web/src/api/local-api.test.ts` must assert a bootstrap envelope, authorization header on an authenticated request, subprotocol formatting, invalid event rejection, and structured API failure conversion.
-- Theme tests must assert fixed preferences override system state and `system` follows it.
-- Playwright must assert the protected application shell, accessible `/onboarding`, `/sources`, and `/skills` navigation, and absence of a dashboard default.
+- Playwright must assert the protected application shell, accessible `/onboarding`, `/sources`, and `/skills` navigation, absence of a dashboard default, and absence of an appearance-control entry.
 - P5 integration tests remain the evidence that loopback routing, cookie bootstrap, credential validation, and WebSocket protocol enforcement work end-to-end.
 
 ## 7. Wrong vs Correct
