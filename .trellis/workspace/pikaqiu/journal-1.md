@@ -208,3 +208,37 @@ Replaced Invoicer soft-blue shell with Octopath HD-2D workbench: identity bar wi
 ### Next Steps
 
 - None - task complete
+
+
+## Session 22: 发布 SkillPin v0.1.6
+
+**Date**: 2026-08-27
+**Task**: 发布 SkillPin v0.1.6
+**Branch**: `main`
+
+### Summary
+
+发布包含技能源首次配置状态修复与顶部导航调整的 SkillPin v0.1.6；完成本地发布校验，推送 main 与 v0.1.6 标签，并确认 GitHub Release 资产已生成。
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `ded6fca` | (see git log) |
+| `9dd5aa1` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
