@@ -11,6 +11,8 @@ type MockSource = {
 };
 
 type MockApiOptions = {
+  readonly catalogLinkName?: string;
+  readonly catalogSummary?: string;
   readonly markdownBody?: string;
   readonly projectLinkManaged?: boolean;
   readonly sourceListAvailable?: boolean;
@@ -47,11 +49,15 @@ async function installProtectedLocalApi(
 ): Promise<void> {
   await page.addInitScript(
     ({
+      catalogLinkName,
+      catalogSummary,
       markdownBody,
       projectLinkManaged,
       sourceListAvailable,
       sources: seededSources,
     }: {
+      readonly catalogLinkName: string;
+      readonly catalogSummary: string;
       readonly markdownBody: string;
       readonly projectLinkManaged: boolean;
       readonly sourceListAvailable: boolean;
@@ -209,18 +215,18 @@ async function installProtectedLocalApi(
             contentFingerprint: "catalog-fingerprint",
             displayName: "Review skill",
             id: "catalog-candidate",
-            linkName: "review",
+            linkName: catalogLinkName,
             parseWarning: null,
             relativePath: "review",
             source,
-            summary: "Review a local project.",
+            summary: catalogSummary,
           };
           return reply({
             groups: [
               {
                 candidates: [candidate],
-                conflictKey: "review",
-                linkName: "review",
+                conflictKey: catalogLinkName,
+                linkName: catalogLinkName,
                 matchingCandidateIds: [candidate.id],
               },
             ],
@@ -241,14 +247,14 @@ async function installProtectedLocalApi(
             contentFingerprint: "catalog-fingerprint",
             displayName: "Review skill",
             id: "catalog-candidate",
-            linkName: "review",
+            linkName: catalogLinkName,
             markdownBody,
             parseWarning: null,
             relativePath: "review",
             skillDirectory: `${source.path}/review`,
             skillFilePath: `${source.path}/review/SKILL.md`,
             source,
-            summary: "Review a local project.",
+            summary: catalogSummary,
           });
         }
         if (url.pathname === "/api/sources" && method === "GET") {
@@ -377,6 +383,8 @@ async function installProtectedLocalApi(
       });
     },
     {
+      catalogLinkName: options.catalogLinkName ?? "review",
+      catalogSummary: options.catalogSummary ?? "Review a local project.",
       markdownBody:
         options.markdownBody ?? "# Review\n\nSafe local Markdown content.",
       projectLinkManaged: options.projectLinkManaged ?? false,
@@ -537,8 +545,16 @@ test("browses searchable catalog candidates and safely renders an explicit skill
   await installProtectedLocalApi(page, [
     source("source-catalog", "Personal", "/Users/example/skills"),
   ]);
-  await page.goto("/skills");
+  await page.goto("/");
 
+  await expect(
+    page
+      .getByRole("navigation", { name: "SkillPin 功能分区" })
+      .getByRole("button", {
+        exact: true,
+        name: "技能",
+      }),
+  ).toHaveAttribute("aria-current", "page");
   await expect(
     page.getByLabel("技能工作台").getByRole("heading", { name: "技能目录" }),
   ).toBeVisible();
@@ -562,27 +578,47 @@ test("browses searchable catalog candidates and safely renders an explicit skill
   expect(detailBox?.height).toBeGreaterThan(400);
 });
 
-test("temporarily exposes adjustable skills-workbench typography", async ({
+test("uses fixed large skills-workbench typography and safely wraps wide rows", async ({
   page,
 }) => {
-  await installProtectedLocalApi(page, [
-    source("source-catalog", "Personal", "/Users/example/skills"),
-  ]);
+  await installProtectedLocalApi(
+    page,
+    [source("source-catalog", "Personal", "/Users/example/skills")],
+    {
+      catalogLinkName:
+        "a-long-skill-name-that-must-wrap-without-overlapping-its-action",
+      catalogSummary:
+        "A deliberately long skill summary verifies that the larger workbench typography wraps inside the catalog row instead of being hidden behind the action control.",
+    },
+  );
   await page.goto("/skills");
 
-  await page.getByRole("button", { name: "文字调试（临时）" }).click();
-  const debug = page.getByLabel("文字调试");
   await expect(
-    debug.getByText("临时调试：确定字号后会移除此面板。"),
-  ).toBeVisible();
-  await debug.getByLabel("列表技能名 字号").fill("24");
-  await debug.getByLabel("列表摘要与状态 字号").fill("21");
-  await debug.getByLabel("详情内容 字号").fill("22");
-  await expect(debug.getByText("24px")).toBeVisible();
-  await expect(debug.getByText("21px")).toBeVisible();
-  await expect(debug.getByText("22px")).toBeVisible();
-  await expect(page.locator(".skill-row__name")).toHaveCSS("font-size", "24px");
-  await expect(page.locator(".markdown-detail")).toHaveCSS("font-size", "22px");
+    page.getByRole("button", { name: "文字调试（临时）" }),
+  ).toHaveCount(0);
+  await expect(page.locator(".skill-row__name")).toHaveCSS("font-size", "32px");
+  await expect(page.locator(".skill-row__summary")).toHaveCSS(
+    "font-size",
+    "24px",
+  );
+  await expect(page.getByRole("heading", { name: "Review skill" })).toHaveCSS(
+    "font-size",
+    "32px",
+  );
+  await expect(page.locator(".markdown-detail")).toHaveCSS("font-size", "24px");
+  await expect(page.locator(".skill-row__action")).toHaveCSS(
+    "font-size",
+    "24px",
+  );
+  await expect(page.getByLabel("搜索技能")).toHaveCSS("font-size", "24px");
+
+  const selectBox = await page.locator(".skill-row__select").boundingBox();
+  const actionBox = await page.locator(".skill-row__action").boundingBox();
+  expect(selectBox).not.toBeNull();
+  expect(actionBox).not.toBeNull();
+  expect((selectBox?.x ?? 0) + (selectBox?.width ?? 0)).toBeLessThanOrEqual(
+    (actionBox?.x ?? 0) + 1,
+  );
 });
 
 test("uses the styled status filter menu with keyboard and outside-click behavior", async ({

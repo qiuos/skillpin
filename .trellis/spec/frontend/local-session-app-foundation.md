@@ -34,6 +34,7 @@ useSession(): {
 - Keep bootstrap promise ownership module-local so React StrictMode cannot consume P5's one-time bootstrap cookie twice.
 - If WebSocket transport is unavailable, retain feature-local selections and set `isReadOnly` rather than clearing UI state. Retry with capped exponential backoff (currently 500ms to 10s). Render an explicit waiting-to-exit/grace-period state when `LocalSessionInfo.status` requires it.
 - The application uses the fixed default Octopath HD-2D workbench theme from CSS root tokens. Do not add a browser-stored theme preference, `data-theme` switching, or an appearance/settings drawer unless a future product requirement explicitly restores theme customization. Visual tokens remain dusk canvas, parchment/gold windows, and a top identity bar without sidebar or KPI chrome (see frontend quality-guidelines Styling); no session data belongs in localStorage.
+- On an unspecified startup pathname (including `/`), route to `/skills` so configured sessions visibly select the Skills tab. Preserve explicit `/onboarding`, `/sources`, and `/skills` navigation; lack of sources still renders onboarding regardless of the selected workspace route.
 
 ## 4. Validation & Error Matrix
 

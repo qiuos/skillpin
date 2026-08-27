@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import type { CSSProperties } from "react";
 
 import { useVirtualizer } from "@tanstack/react-virtual";
 import type { Components } from "react-markdown";
@@ -26,18 +25,6 @@ import { useSources } from "../sources/source-context.js";
 import { useCatalog } from "./catalog-context.js";
 
 type StatusFilter = "all" | "enabled" | "disabled" | "abnormal";
-
-type TypographySizes = {
-  readonly detailContent: number;
-  readonly listCopy: number;
-  readonly listName: number;
-};
-
-const initialTypography: TypographySizes = {
-  detailContent: 19,
-  listCopy: 18,
-  listName: 20,
-};
 
 const statusFilterOptions: readonly {
   readonly label: string;
@@ -150,9 +137,6 @@ export function SkillsWorkbenchPage() {
   const [project, setProject] = useState<LocalProjectSnapshot | null>(null);
   const [projectError, setProjectError] = useState<string | null>(null);
   const [changingLinkName, setChangingLinkName] = useState<string | null>(null);
-  const [typography, setTypography] =
-    useState<TypographySizes>(initialTypography);
-  const [typographyDebugOpen, setTypographyDebugOpen] = useState(false);
   const [listElement, setListElement] = useState<HTMLDivElement | null>(null);
   const statusFilterRef = useRef<HTMLDivElement>(null);
 
@@ -230,7 +214,7 @@ export function SkillsWorkbenchPage() {
 
   const rowVirtualizer = useVirtualizer({
     count: filteredGroups.length,
-    estimateSize: () => 118,
+    estimateSize: () => 224,
     getScrollElement: () => listElement,
     overscan: 8,
     useFlushSync: false,
@@ -339,10 +323,6 @@ export function SkillsWorkbenchPage() {
     return () => observer.disconnect();
   }, [listElement, rowVirtualizer]);
 
-  useEffect(() => {
-    rowVirtualizer.measure();
-  }, [rowVirtualizer, typography]);
-
   const toggleSource = (sourceId: string) => {
     setSelectedSourceIds((current) => {
       const next = new Set(current ?? sources.map((item) => item.source.id));
@@ -440,58 +420,7 @@ export function SkillsWorkbenchPage() {
   );
 
   return (
-    <section
-      aria-label="技能工作台"
-      className="skills-workbench"
-      style={
-        {
-          "--skill-detail-content-size": `${typography.detailContent}px`,
-          "--skill-list-copy-size": `${typography.listCopy}px`,
-          "--skill-list-name-size": `${typography.listName}px`,
-        } as CSSProperties
-      }
-    >
-      <div className="skills-workbench__debug-toggle">
-        <Button
-          aria-expanded={typographyDebugOpen}
-          onClick={() => setTypographyDebugOpen((open) => !open)}
-          variant="secondary"
-        >
-          文字调试（临时）
-        </Button>
-      </div>
-      {typographyDebugOpen ? (
-        <section aria-label="文字调试" className="typography-debug ot-window">
-          <p className="typography-debug__notice">
-            临时调试：确定字号后会移除此面板。
-          </p>
-          {(
-            [
-              ["listName", "列表技能名"],
-              ["listCopy", "列表摘要与状态"],
-              ["detailContent", "详情内容"],
-            ] as const
-          ).map(([key, label]) => (
-            <label className="typography-debug__field" key={key}>
-              <span>{label}</span>
-              <input
-                aria-label={`${label} 字号`}
-                max={36}
-                min={16}
-                onChange={(event) => {
-                  const size = Number(event.target.value);
-                  if (!Number.isFinite(size)) return;
-                  setTypography((current) => ({ ...current, [key]: size }));
-                }}
-                step={1}
-                type="number"
-                value={typography[key]}
-              />
-              <output>{typography[key]}px</output>
-            </label>
-          ))}
-        </section>
-      ) : null}
+    <section aria-label="技能工作台" className="skills-workbench">
       <div className="skills-columns">
         <section aria-label="技能目录" className="skill-catalog ot-window">
           <div className="skill-catalog__head">
@@ -611,8 +540,9 @@ export function SkillsWorkbenchPage() {
                     <div
                       className={`skill-row${active ? " skill-row--active" : ""}`}
                       key={group.conflictKey}
+                      data-index={item.index}
+                      ref={rowVirtualizer.measureElement}
                       style={{
-                        height: `${item.size}px`,
                         transform: `translateY(${item.start}px)`,
                       }}
                     >

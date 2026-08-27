@@ -27,9 +27,11 @@ const routeTitleMap: Record<AppRoute, string> = {
 };
 
 function routeFor(pathname: string): AppRoute {
-  return pathname === "/skills" || pathname === "/sources"
+  return pathname === "/onboarding" ||
+    pathname === "/skills" ||
+    pathname === "/sources"
     ? pathname
-    : "/onboarding";
+    : "/skills";
 }
 
 function useRoute(): readonly [AppRoute, (route: AppRoute) => void] {

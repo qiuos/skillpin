@@ -16,8 +16,8 @@ LocalApiClient.catalogCandidate(id): Promise<LocalCatalogCandidateDetail>
 ## 3. Contracts
 
 - `CatalogProvider` owns in-memory catalog results and uses the private P6 `LocalApiClient`; components never fetch directly or store credentials/catalog data in browser storage.
-- `/skills` is a desktop two-window workbench: compact filters inside the catalog toolbar, selectable skill list, and persistent read-only Skill Detail. The workbench fills available space without a 1040px width clamp. Its nested application/workspace/main/workbench layout must retain explicit height/min-height propagation so both windows are full-size on their first render; the virtual list must remeasure when its scroll element receives a new size. Each skill row has an explicit P9 enable/remove action; selecting the row only opens inspection. Narrow layouts stack the windows while keeping list navigation accessible.
-- Skills-list names, summaries/statuses, and detail prose are controlled by workbench-scoped CSS variables. A temporary `文字调试（临时）` panel may expose numeric session-only controls for list-name, list-copy, and detail-content pixel sizes while typography is being calibrated. Keep that panel and its CSS isolated so it can be removed once final sizes are supplied.
+- `/skills` is a desktop two-window workbench: compact filters inside the catalog toolbar, selectable skill list, and persistent read-only Skill Detail. The workbench fills available space without a 1040px width clamp. Its nested application/workspace/main/workbench layout must retain explicit height/min-height propagation so both windows are full-size on their first render; the virtual list must remeasure when its scroll element receives a new size and measure dynamically wrapping rows. Each skill row has an explicit P9 enable/remove action; selecting the row only opens inspection. Narrow layouts stack the windows while keeping list navigation accessible.
+- Skills-workbench typography is fixed and scoped: a skill name/title uses `32px`; all other workbench text, including filters, status, detail prose, empty states, and action buttons, uses `24px`. Keep action controls, source chips, long row text, and candidate/Markdown content wrap-safe; use independent catalog/detail scrolling rather than clipping or overlaying large text. Do not restore the temporary `文字调试（临时）` panel unless a future requirement explicitly reopens typography calibration.
 - The first stable candidate is opened by default only for inspection. Detail displays source identity, candidate comparison when needed, and constrained Markdown; it has no path copy or project-mutation control.
 - Render `markdownBody` with `react-markdown` + GFM. Do not enable raw HTML. Omit images. Allow only `http(s)` or relative anchors, using `target="_blank" rel="noreferrer"` for external links.
 - Explicit loading, error, no-source/no-skills, query-empty, and stale-detail states are required. Source changes refresh the current catalog without wiping session credentials.
@@ -32,7 +32,7 @@ LocalApiClient.catalogCandidate(id): Promise<LocalCatalogCandidateDetail>
 | Clipboard unavailable | Show bounded copy feedback; do not throw or change project state |
 | Source Markdown contains HTML/image/unsafe scheme | Do not render it as executable HTML, remote image, or clickable unsafe link |
 | First populated workbench render | Catalog and detail panels fill the available work area without a page refresh; remeasure virtual rows after size changes |
-| Temporary typography calibration | Controls show active pixel values and alter only workbench-scoped list/detail variables; do not persist them |
+| Large fixed workbench typography | Skill names/titles render at 32px and all other workbench text/actions render at 24px; rows, toolbars, and detail content wrap or scroll without clipping/overlap |
 | Mobile/narrow viewport | Stack panes while retaining labels and controls |
 
 ## 5. Good / Base / Bad Cases
@@ -46,7 +46,7 @@ LocalApiClient.catalogCandidate(id): Promise<LocalCatalogCandidateDetail>
 ## 6. Tests Required
 
 - Local API client tests must validate catalog response decoding, percent-encoded detail paths, and bearer authentication.
-- Playwright must cover a populated `/skills` workbench, group/candidate detail rendering, search, the no-project-mutation comparison wording, fresh full-height two-window rendering, and temporary typography controls.
+- Playwright must cover a populated root-started skills workbench with the Skills tab selected, group/candidate detail rendering, search, the no-project-mutation comparison wording, fresh full-height two-window rendering, fixed 32px/24px typography, removed debugger controls, and long-row action separation.
 - Retain P6/P7 theme, focus, source-routing, and credential-private tests.
 
 ## 7. Wrong vs Correct
