@@ -574,3 +574,37 @@ Released SkillPin 0.1.12 after the typography and scrollbar refresh. Created the
 ### Next Steps
 
 - None - task complete
+
+
+## Session 33: 优化连接状态与技能列表布局
+
+**Date**: 2026-08-27
+**Task**: 优化连接状态与技能列表布局
+**Branch**: `main`
+
+### Summary
+
+将顶栏连接状态升级为带状态色标识和文字层级的复古徽章，统一结束会话按钮的尺寸；调整技能工作台为列表优先布局，补充来源、候选数量和解析备注信息，并移除详情中的冗余操作提示。完成格式、lint、类型、单元、构建与端到端验证。
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `42e809d` | (see git log) |
+| `86b5f1e` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
