@@ -13,12 +13,7 @@ import type {
   LocalProjectSnapshot,
 } from "@skillpin/core";
 
-import {
-  Badge,
-  Button,
-  EmptyState,
-  TextInput,
-} from "../../components/controls.js";
+import { Badge, Button, EmptyState } from "../../components/controls.js";
 import { LocalApiClientError } from "../../api/local-api.js";
 import { useLocalApiClient } from "../session/session-context.js";
 import { useSources } from "../sources/source-context.js";
@@ -35,13 +30,6 @@ const statusFilterOptions: readonly {
   { label: "未启用", value: "disabled" },
   { label: "异常", value: "abnormal" },
 ];
-
-function statusFilterLabel(value: StatusFilter): string {
-  return (
-    statusFilterOptions.find((option) => option.value === value)?.label ??
-    "全部状态"
-  );
-}
 
 function safeHref(href: string | undefined): string | undefined {
   if (href === undefined) return undefined;
@@ -125,7 +113,7 @@ export function SkillsWorkbenchPage() {
   const [selectedSourceIds, setSelectedSourceIds] =
     useState<ReadonlySet<string> | null>(null);
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
-  const [statusFilterOpen, setStatusFilterOpen] = useState(false);
+  const [filtersOpen, setFiltersOpen] = useState(false);
   const [selectedGroupKey, setSelectedGroupKey] = useState<string | null>(null);
   const [selectedCandidateId, setSelectedCandidateId] = useState<string | null>(
     null,
@@ -138,7 +126,7 @@ export function SkillsWorkbenchPage() {
   const [projectError, setProjectError] = useState<string | null>(null);
   const [changingLinkName, setChangingLinkName] = useState<string | null>(null);
   const [listElement, setListElement] = useState<HTMLDivElement | null>(null);
-  const statusFilterRef = useRef<HTMLDivElement>(null);
+  const filtersRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const timer = window.setTimeout(() => void search(query), 160);
@@ -146,17 +134,17 @@ export function SkillsWorkbenchPage() {
   }, [query, search]);
 
   useEffect(() => {
-    if (!statusFilterOpen) {
+    if (!filtersOpen) {
       return;
     }
     const closeWhenOutside = (event: PointerEvent) => {
-      if (!statusFilterRef.current?.contains(event.target as Node)) {
-        setStatusFilterOpen(false);
+      if (!filtersRef.current?.contains(event.target as Node)) {
+        setFiltersOpen(false);
       }
     };
     const closeOnEscape = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
-        setStatusFilterOpen(false);
+        setFiltersOpen(false);
       }
     };
     document.addEventListener("pointerdown", closeWhenOutside);
@@ -165,7 +153,7 @@ export function SkillsWorkbenchPage() {
       document.removeEventListener("pointerdown", closeWhenOutside);
       document.removeEventListener("keydown", closeOnEscape);
     };
-  }, [statusFilterOpen]);
+  }, [filtersOpen]);
 
   useEffect(() => {
     let cancelled = false;
@@ -189,6 +177,12 @@ export function SkillsWorkbenchPage() {
   }, [client]);
 
   const activeSourceIds = selectedSourceIds;
+  const activeFilterCount =
+    (statusFilter === "all" ? 0 : 1) + (activeSourceIds === null ? 0 : 1);
+  const filterButtonLabel =
+    activeFilterCount === 0
+      ? "筛选"
+      : `筛选，已应用 ${activeFilterCount} 个条件`;
   const filteredGroups = useMemo(() => {
     return groups.filter((group) => {
       if (activeSourceIds !== null) {
@@ -214,7 +208,7 @@ export function SkillsWorkbenchPage() {
 
   const rowVirtualizer = useVirtualizer({
     count: filteredGroups.length,
-    estimateSize: () => 252,
+    estimateSize: () => 56,
     getScrollElement: () => listElement,
     overscan: 8,
     useFlushSync: false,
@@ -426,84 +420,117 @@ export function SkillsWorkbenchPage() {
             </span>
           </div>
           <section aria-label="技能源与筛选" className="catalog-tools">
-            <TextInput
-              label="搜索技能"
+            <input
+              aria-label="搜索技能"
+              className="catalog-search text-input"
               onChange={(event) => setQuery(event.target.value)}
-              placeholder="名称、摘要、技能源或内容"
+              placeholder="搜索技能、描述或内容"
               type="search"
               value={query}
             />
-            <div className="status-filter" ref={statusFilterRef}>
+            <div className="catalog-filters" ref={filtersRef}>
               <button
-                aria-expanded={statusFilterOpen}
-                aria-haspopup="listbox"
-                aria-label={`筛选状态：${statusFilterLabel(statusFilter)}`}
-                className="status-filter__trigger"
-                onClick={() => setStatusFilterOpen((open) => !open)}
+                aria-expanded={filtersOpen}
+                aria-haspopup="dialog"
+                aria-label={filterButtonLabel}
+                className="catalog-filters__trigger"
+                onClick={() => setFiltersOpen((open) => !open)}
                 type="button"
               >
-                <span className="status-filter__label">状态</span>
-                <strong>{statusFilterLabel(statusFilter)}</strong>
-                <span aria-hidden="true" className="status-filter__chevron">
+                <span>筛选</span>
+                {activeFilterCount === 0 ? null : (
+                  <span aria-hidden="true" className="catalog-filters__count">
+                    {activeFilterCount}
+                  </span>
+                )}
+                <span aria-hidden="true" className="catalog-filters__chevron">
                   ▾
                 </span>
               </button>
-              {statusFilterOpen ? (
+              {filtersOpen ? (
                 <div
-                  aria-label="筛选状态"
-                  className="status-filter__menu ot-window"
-                  role="listbox"
+                  aria-label="技能筛选"
+                  className="catalog-filters__popover ot-window"
+                  role="dialog"
                 >
-                  {statusFilterOptions.map((option) => (
+                  <section aria-labelledby="status-filter-heading">
+                    <p
+                      className="catalog-filters__heading"
+                      id="status-filter-heading"
+                    >
+                      状态
+                    </p>
+                    <div
+                      aria-label="筛选状态"
+                      className="status-filter__options"
+                      role="listbox"
+                    >
+                      {statusFilterOptions.map((option) => (
+                        <button
+                          aria-selected={statusFilter === option.value}
+                          className={`status-filter__option${
+                            statusFilter === option.value
+                              ? " status-filter__option--selected"
+                              : ""
+                          }`}
+                          key={option.value}
+                          onClick={() => setStatusFilter(option.value)}
+                          role="option"
+                          type="button"
+                        >
+                          {option.label}
+                        </button>
+                      ))}
+                    </div>
+                  </section>
+                  <section aria-labelledby="source-filter-heading">
+                    <p
+                      className="catalog-filters__heading"
+                      id="source-filter-heading"
+                    >
+                      技能源
+                    </p>
+                    <div className="catalog-tools__sources">
+                      <button
+                        aria-pressed={activeSourceIds === null}
+                        className={`source-chip${activeSourceIds === null ? " source-chip--active" : ""}`}
+                        onClick={selectAllSources}
+                        type="button"
+                      >
+                        全部来源
+                      </button>
+                      {sources.map((item) => {
+                        const checked =
+                          activeSourceIds === null ||
+                          activeSourceIds.has(item.source.id);
+                        return (
+                          <button
+                            aria-pressed={checked}
+                            className={`source-chip${checked ? " source-chip--active" : ""}`}
+                            key={item.source.id}
+                            onClick={() => toggleSource(item.source.id)}
+                            type="button"
+                          >
+                            {item.source.displayName}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </section>
+                  {activeFilterCount === 0 ? null : (
                     <button
-                      aria-selected={statusFilter === option.value}
-                      className={`status-filter__option${
-                        statusFilter === option.value
-                          ? " status-filter__option--selected"
-                          : ""
-                      }`}
-                      key={option.value}
+                      className="catalog-filters__clear"
                       onClick={() => {
-                        setStatusFilter(option.value);
-                        setStatusFilterOpen(false);
+                        setStatusFilter("all");
+                        setSelectedSourceIds(null);
                       }}
-                      role="option"
                       type="button"
                     >
-                      {option.label}
+                      清除筛选
                     </button>
-                  ))}
+                  )}
                 </div>
               ) : null}
-            </div>
-            <div className="catalog-tools__sources">
-              <button
-                className={`source-chip${activeSourceIds === null ? " source-chip--active" : ""}`}
-                onClick={selectAllSources}
-                type="button"
-              >
-                全部来源{" "}
-                {groups.reduce(
-                  (sum, group) => sum + group.candidates.length,
-                  0,
-                )}
-              </button>
-              {sources.map((item) => {
-                const checked =
-                  activeSourceIds === null ||
-                  activeSourceIds.has(item.source.id);
-                return (
-                  <button
-                    className={`source-chip${checked ? " source-chip--active" : ""}`}
-                    key={item.source.id}
-                    onClick={() => toggleSource(item.source.id)}
-                    type="button"
-                  >
-                    {item.source.displayName}
-                    <small> {item.scan?.skillCount ?? 0}</small>
-                  </button>
-                );
-              })}
             </div>
           </section>
           {error === null ? null : (
@@ -554,20 +581,17 @@ export function SkillsWorkbenchPage() {
                         <span className="skill-row__summary">
                           {group.candidates[0]?.summary}
                         </span>
-                        <span className="skill-row__context">
-                          <span>{group.candidates[0]?.source.displayName}</span>
-                          {group.candidates.length > 1 ? (
-                            <span>候选 {group.candidates.length}</span>
-                          ) : null}
-                          {groupIsAbnormal(group) ? (
-                            <span className="skill-row__warning">解析备注</span>
-                          ) : null}
-                        </span>
+                        {groupIsAbnormal(group) ? (
+                          <span
+                            aria-label="存在解析备注"
+                            className="skill-row__warning"
+                            title="解析备注"
+                          >
+                            ⚠
+                          </span>
+                        ) : null}
                       </button>
                       <div className="skill-row__actions">
-                        <span className="skill-row__meta">
-                          {enabled ? "已启用" : "未启用"}
-                        </span>
                         <Button
                           className="skill-row__action"
                           disabled={applying}

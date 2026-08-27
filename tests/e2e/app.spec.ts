@@ -590,7 +590,8 @@ test("browses searchable catalog candidates and safely renders an explicit skill
   await expect(
     page.getByText("在列表中点击启用或移除，立即应用变更。"),
   ).toHaveCount(0);
-  await expect(page.locator(".skill-row__context")).toContainText("Personal");
+  await expect(page.locator(".skill-row__context")).toHaveCount(0);
+  await expect(page.getByLabel("技能目录")).not.toContainText("Personal");
   await expect(page.locator(".identity-bar__end-session")).toHaveCSS(
     "font-size",
     "24px",
@@ -603,7 +604,7 @@ test("browses searchable catalog candidates and safely renders an explicit skill
   expect(catalogBox?.width).toBeGreaterThan(detailBox?.width ?? Infinity);
 });
 
-test("uses the approved skills-workbench typography and safely wraps wide rows", async ({
+test("uses compact single-line catalog rows without crowding actions", async ({
   page,
 }) => {
   await installProtectedLocalApi(
@@ -621,10 +622,10 @@ test("uses the approved skills-workbench typography and safely wraps wide rows",
   await expect(
     page.getByRole("button", { name: "文字调试（临时）" }),
   ).toHaveCount(0);
-  await expect(page.locator(".skill-row__name")).toHaveCSS("font-size", "28px");
+  await expect(page.locator(".skill-row__name")).toHaveCSS("font-size", "18px");
   await expect(page.locator(".skill-row__summary")).toHaveCSS(
     "font-size",
-    "24px",
+    "16px",
   );
   await expect(page.getByRole("heading", { name: "Review skill" })).toHaveCSS(
     "font-size",
@@ -639,13 +640,15 @@ test("uses the approved skills-workbench typography and safely wraps wide rows",
   await expect(page.locator(".markdown-detail")).toHaveCSS("font-size", "24px");
   await expect(page.locator(".skill-row__action")).toHaveCSS(
     "font-size",
-    "24px",
+    "16px",
   );
   await expect(page.locator(".skill-row__action")).toHaveCSS(
     "min-height",
-    "56px",
+    "44px",
   );
-  await expect(page.getByLabel("搜索技能")).toHaveCSS("font-size", "24px");
+  await expect(page.getByLabel("搜索技能")).toHaveCSS("font-size", "16px");
+  await expect(page.locator(".skill-row")).toHaveCSS("min-height", "56px");
+  await expect(page.locator(".skill-row__context")).toHaveCount(0);
 
   const selectBox = await page.locator(".skill-row__select").boundingBox();
   const actionBox = await page.locator(".skill-row__action").boundingBox();
@@ -656,7 +659,7 @@ test("uses the approved skills-workbench typography and safely wraps wide rows",
   );
 });
 
-test("uses the styled status filter menu with keyboard and outside-click behavior", async ({
+test("uses the compact filter popover with keyboard and outside-click behavior", async ({
   page,
 }) => {
   await installProtectedLocalApi(page, [
@@ -664,23 +667,18 @@ test("uses the styled status filter menu with keyboard and outside-click behavio
   ]);
   await page.goto("/skills");
 
-  const filter = page.getByRole("button", {
-    name: "筛选状态：全部状态",
-  });
+  const filter = page.locator(".catalog-filters__trigger");
   await filter.focus();
   await filter.press("Enter");
-  const menu = page.getByRole("listbox", { name: "筛选状态" });
-  await expect(menu).toBeVisible();
+  const popover = page.getByRole("dialog", { name: "技能筛选" });
+  await expect(popover).toBeVisible();
   await page.getByRole("option", { name: "未启用" }).press("Enter");
-  await expect(menu).toHaveCount(0);
-  await expect(
-    page.getByRole("button", { name: "筛选状态：未启用" }),
-  ).toBeVisible();
+  await expect(filter).toHaveAccessibleName("筛选，已应用 1 个条件");
+  await page.getByRole("button", { name: "Personal", exact: true }).click();
+  await expect(filter).toHaveAccessibleName("筛选，已应用 2 个条件");
 
-  await page.getByRole("button", { name: "筛选状态：未启用" }).click();
-  await expect(menu).toBeVisible();
   await page.getByLabel("搜索技能").click();
-  await expect(menu).toHaveCount(0);
+  await expect(popover).toHaveCount(0);
 });
 
 test("does not execute untrusted Markdown from a skill detail", async ({
@@ -743,7 +741,7 @@ test("enables a skill directly without batch selection or confirmation", async (
       planRequests: 1,
       shutdownRequests: 0,
     });
-  await expect(catalog.getByText("已启用")).toBeVisible();
+  await expect(catalog.getByText("已启用")).toHaveCount(0);
   await expect(
     catalog.getByRole("button", { name: "移除", exact: true }),
   ).toBeVisible();
@@ -762,7 +760,7 @@ test("removes an enabled skill directly without confirmation", async ({
   await page.goto("/skills");
 
   const catalog = page.getByLabel("技能目录");
-  await expect(catalog.getByText("已启用")).toBeVisible();
+  await expect(catalog.getByText("已启用")).toHaveCount(0);
   await catalog.getByRole("button", { name: "移除", exact: true }).click();
 
   await expect
@@ -772,7 +770,7 @@ test("removes an enabled skill directly without confirmation", async ({
       planRequests: 1,
       shutdownRequests: 0,
     });
-  await expect(catalog.getByText("未启用")).toBeVisible();
+  await expect(catalog.getByText("未启用")).toHaveCount(0);
   await expect(
     catalog.getByRole("button", { name: "启用", exact: true }),
   ).toBeVisible();
