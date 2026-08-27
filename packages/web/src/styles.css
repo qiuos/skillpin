@@ -54,10 +54,10 @@
   --radius-card: 0;
   --radius-panel: 0;
   --radius-shell: 0;
-  --control-height: 34px;
-  --font-body: 13px;
-  --font-ui: 13px;
-  --font-small: 12px;
+  --control-height: 38px;
+  --font-body: 15px;
+  --font-ui: 15px;
+  --font-small: 13px;
   --frame-glow: rgba(198, 161, 90, 0.16);
   --shadow-sm: 2px 2px 0 rgba(26, 20, 14, 0.35);
   --shadow-md: 6px 7px 0 rgba(16, 12, 8, 0.35);
@@ -118,7 +118,7 @@ a:focus-visible,
 
 code {
   font-family: var(--mono);
-  font-size: 0.8125rem;
+  font-size: var(--font-small);
 }
 
 h1,
@@ -130,14 +130,14 @@ p {
 h1 {
   margin-bottom: 0;
   color: #5a3f16;
-  font-size: 20px;
+  font-size: 22px;
   font-weight: 700;
   letter-spacing: 0.04em;
 }
 
 h2 {
   color: #5a3f16;
-  font-size: 15px;
+  font-size: 17px;
   font-weight: 700;
   letter-spacing: 0.02em;
 }
@@ -242,7 +242,7 @@ h2 {
 .product-name {
   margin: 0;
   color: #5a3f16;
-  font-size: 22px;
+  font-size: 24px;
   font-weight: 700;
   letter-spacing: 0.08em;
   text-shadow: 0 1px 0 #fff6d8;
@@ -453,7 +453,7 @@ h2 {
 }
 .field__label {
   color: var(--gold-deep);
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 700;
   letter-spacing: 0.1em;
 }
@@ -516,11 +516,11 @@ select.catalog-tools__status {
   border: 1px solid var(--gold-deep);
   background: var(--gold-pale);
   color: var(--gold-dark);
-  font-size: 18px;
+  font-size: 20px;
 }
 .empty-state h2 {
   margin: 0;
-  font-size: 18px;
+  font-size: 20px;
 }
 .empty-state p {
   margin: 0;
@@ -544,7 +544,7 @@ select.catalog-tools__status {
   border: 1px solid var(--gold);
   background: rgba(255, 255, 255, 0.35);
   color: var(--ink-soft);
-  font-size: 11px;
+  font-size: 13px;
   white-space: nowrap;
 }
 .badge--success {
@@ -595,7 +595,7 @@ select.catalog-tools__status {
   border-bottom: 1px solid var(--gold);
 }
 .source-panel__head h1 {
-  font-size: 18px;
+  font-size: 20px;
 }
 .source-panel__count {
   color: var(--ink-soft);
@@ -629,7 +629,7 @@ select.catalog-tools__status {
   padding: 0 4px 8px;
   border-bottom: 1px solid var(--gold-pale);
   color: var(--gold-deep);
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 700;
   letter-spacing: 0.12em;
 }
@@ -678,9 +678,9 @@ select.catalog-tools__status {
   gap: 7px;
 }
 .source-row__actions .button {
-  min-height: 30px;
+  min-height: 34px;
   padding: 0 10px;
-  font-size: 12px;
+  font-size: 13px;
 }
 
 /* ============ Skills workbench ============ */
@@ -715,7 +715,7 @@ select.catalog-tools__status {
 }
 .skill-catalog__head h2 {
   margin: 0;
-  font-size: 17px;
+  font-size: 19px;
   letter-spacing: 0.06em;
 }
 .skill-catalog__count {
@@ -753,12 +753,12 @@ select.catalog-tools__status {
   border: 1px solid var(--gold);
   background: transparent;
   color: var(--ink-soft);
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 700;
 }
 .source-chip small {
   color: var(--ink-faint);
-  font-size: 11px;
+  font-size: 13px;
 }
 .source-chip:hover:not(:disabled) {
   color: var(--ink);
@@ -858,13 +858,13 @@ select.catalog-tools__status {
 .skill-row__summary {
   overflow: hidden;
   color: var(--ink-soft);
-  font-size: 12px;
+  font-size: 13px;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 .skill-row__meta {
   color: var(--ink-faint);
-  font-size: 11px;
+  font-size: 13px;
   white-space: nowrap;
 }
 
@@ -883,13 +883,13 @@ select.catalog-tools__status {
 .skill-detail__eyebrow {
   margin: 0 0 6px;
   color: var(--gold-deep);
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 700;
   letter-spacing: 0.18em;
 }
 .skill-detail__head h2 {
   margin: 0;
-  font-size: 21px;
+  font-size: 23px;
   line-height: 1.15;
 }
 .skill-detail__head .muted-copy {
@@ -902,7 +902,7 @@ select.catalog-tools__status {
 .candidate-list__heading {
   margin: 0 0 6px;
   color: var(--gold-deep);
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 700;
   letter-spacing: 0.12em;
 }
@@ -926,7 +926,7 @@ select.catalog-tools__status {
   color: var(--ink);
 }
 .candidate-row span {
-  font-size: 12px;
+  font-size: 13px;
 }
 
 .markdown-detail {
@@ -936,7 +936,7 @@ select.catalog-tools__status {
   padding: 12px 14px;
   border: 1px solid var(--gold);
   background: rgba(251, 246, 230, 0.7);
-  font-size: 12px;
+  font-size: 13px;
   line-height: 1.65;
 }
 .markdown-detail > :first-child {

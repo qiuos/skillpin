@@ -91,6 +91,45 @@ afterEach(async () => {
 });
 
 describe("P7 source management API", () => {
+  it("accepts same-origin browser source requests that omit Origin", async () => {
+    const project = await temporaryDirectory("skillpin-p7-browser-project-");
+    const configDirectory = await temporaryDirectory(
+      "skillpin-p7-browser-config-",
+    );
+    const session = await startSession(
+      project,
+      path.join(configDirectory, "config.json"),
+    );
+    const credential = await credentialFor(session);
+
+    const sameOrigin = await requestLocal(session.address, "/api/sources", {
+      headers: {
+        Authorization: `Bearer ${credential}`,
+        "Sec-Fetch-Site": "same-origin",
+      },
+    });
+    expect(sameOrigin.status).toBe(200);
+    expect(data<{ sources: unknown[] }>(sameOrigin.body).sources).toEqual([]);
+    expect(sameOrigin.headers["access-control-allow-origin"]).toBeUndefined();
+
+    const missingMetadata = await requestLocal(
+      session.address,
+      "/api/sources",
+      {
+        headers: { Authorization: `Bearer ${credential}` },
+      },
+    );
+    expect(missingMetadata.status).toBe(403);
+
+    const crossSite = await requestLocal(session.address, "/api/sources", {
+      headers: {
+        Authorization: `Bearer ${credential}`,
+        "Sec-Fetch-Site": "cross-site",
+      },
+    });
+    expect(crossSite.status).toBe(403);
+  });
+
   it("keeps routes protected, scans independently, and preserves configuration on rescan", async () => {
     const project = await temporaryDirectory("skillpin-p7-project-");
     const configDirectory = await temporaryDirectory("skillpin-p7-config-");

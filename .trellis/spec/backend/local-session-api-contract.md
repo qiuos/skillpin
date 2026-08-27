@@ -35,7 +35,7 @@ The browser-safe root contract is versioned by `LOCAL_API_VERSION`. Success payl
 - `skillpin [target]`, `--target <directory>`, `--port <1..65535>`, `--no-open`, `--help`, and `--version` are the public P5 CLI surface. A positional target and `--target` cannot be combined; invalid options return `CLI_ARGUMENT_INVALID` without starting a session.
 - The startup target is normalized to a directory realpath before registry lookup. Session identity is a SHA-256-style non-reversible fingerprint, not a path string. A repeated start for the same real directory returns the existing in-process session; separate directories may run concurrently.
 - The server listens on `127.0.0.1` only. Explicit ports are never rebound to another address, and an `EADDRINUSE` startup is a stable `CLI_PORT_UNAVAILABLE` failure. Do not introduce `0.0.0.0`, LAN binding, CORS, or remote access.
-- Every request first proves a loopback remote address and exact `Host: 127.0.0.1:<session-port>`. Browser-originated API/upgrade traffic must also send the session origin exactly. The HTTP server must not emit permissive CORS headers.
+- Every request first proves a loopback remote address and exact `Host: 127.0.0.1:<session-port>`. Browser-originated API/upgrade traffic with an `Origin` header must match the session origin exactly. Chromium omits `Origin` for same-origin `GET` fetches, so guarded API requests without it may proceed only with `Sec-Fetch-Site: same-origin`; missing or non-same-origin fetch metadata is rejected. The HTTP server must not emit permissive CORS headers.
 - `GET /` mints a high-entropy, short-lived, HttpOnly bootstrap cookie. `POST /api/session/bootstrap` consumes it once and returns a short-lived in-memory bearer credential. Never persist or log either token, and never put credentials in a URL query.
 - Authenticated JSON routes require `Authorization: Bearer <credential>`. Compare candidate tokens with the `tokensEqual()` constant-time helper and reject expired credentials.
 - WebSockets additionally require RFC 6455 `Sec-WebSocket-Version: 13`, the `skillpin.v1` subprotocol, and a `skillpin.credential.<credential>` protocol token. Negotiate only `skillpin.v1`; refuse absent/invalid version, protocol, origin, host, or credential before accepting the upgrade.
@@ -51,7 +51,7 @@ The browser-safe root contract is versioned by `LOCAL_API_VERSION`. Success payl
 | Target missing, inaccessible, or non-directory | `CLI_TARGET_INVALID`; registry remains unchanged |
 | Explicit port already in use | `CLI_PORT_UNAVAILABLE`; close any partially-created runtime/listener |
 | Non-loopback remote address or wrong Host | reject before routing; no session payload |
-| Missing/wrong Origin on browser route or upgrade | reject with `403`; no CORS response |
+| Wrong `Origin`, or a guarded API request with neither exact `Origin` nor `Sec-Fetch-Site: same-origin` | reject with `403`; no CORS response |
 | Bootstrap cookie absent, expired, or already consumed | `SESSION_BOOTSTRAP_INVALID`; do not mint a credential |
 | Missing/wrong/expired bearer credential | `SESSION_CREDENTIAL_INVALID`; no protected response |
 | WebSocket lacks v13, `skillpin.v1`, credential protocol, or valid credential | reject upgrade with `403` |
@@ -64,14 +64,14 @@ The browser-safe root contract is versioned by `LOCAL_API_VERSION`. Success payl
 - **Good:** `skillpin --no-open /project` resolves the real directory, starts `127.0.0.1` on a free port, prints its address, and accepts a one-time bootstrap followed by a bearer-authenticated session request.
 - **Base:** a symlinked alias of an already-running project resolves to the same real directory and returns the existing session address; it must not create a second server.
 - **Base:** a page refresh drops the only WebSocket and reconnects within 60 seconds; state returns from `waiting-to-exit` to `running` without closing the service.
-- **Bad:** a website sends an API request with a foreign Origin or host header. Reject before route handling and do not expose response data or CORS headers.
+- **Bad:** a website sends an API request with a foreign Origin, a wrong host header, or `Sec-Fetch-Site: cross-site` while omitting Origin. Reject before route handling and do not expose response data or CORS headers.
 - **Bad:** a client offers a credential as only a WebSocket protocol or downgrades the WebSocket version. Reject it; accepting a credential alone is not sufficient protocol negotiation.
 - **Bad:** an explicit-port startup fails after session construction. Close its HTTP/WebSocket runtime before returning the classified startup error, so no heartbeat handle leaks.
 
 ## 6. Tests Required
 
 - CLI tests for help/version, default/positional/`--target`, invalid combinations, `--no-open`, port parsing, and port collision.
-- Real-loopback integration tests for static bootstrap, one-time cookie exchange, authenticated API routes, absent CORS, wrong Host/Origin, and invalid/expired credentials.
+- Real-loopback integration tests for static bootstrap, one-time cookie exchange, authenticated API routes, absent CORS, wrong Host/Origin, invalid/expired credentials, and an authenticated `GET` with no `Origin` plus `Sec-Fetch-Site: same-origin`; assert absent or `cross-site` fetch metadata remains a `403`.
 - Raw WebSocket tests asserting v13 + `skillpin.v1` + credential negotiation, heartbeat/client counts, and strictly increasing event sequences. Include missing protocol/version/credential rejection cases.
 - Lifecycle tests for realpath session reuse, separate project sessions, 60-second (injectable short) disconnect grace/reconnect cancellation, explicit/signal shutdown, and registry cleanup.
 - Graceful close must track a real P4 `ProjectChangeService.apply()` operation through `runProjectOperation()`, not a fabricated promise only.
@@ -114,4 +114,21 @@ await changeService.apply(request);
 const result = await session.runProjectOperation(() =>
   session.projectServices.changeService.apply(request),
 );
+```
+
+**Wrong — reject every guarded request without `Origin`:**
+
+```ts
+if (requireOrigin && request.headers.origin !== session.origin) {
+  reject(403);
+}
+```
+
+**Correct — retain exact-Origin validation and recognize Chromium's same-origin GET metadata only when Origin is absent:**
+
+```ts
+if (origin !== undefined ? origin !== session.origin :
+    requireOrigin && request.headers["sec-fetch-site"] !== "same-origin") {
+  reject(403);
+}
 ```

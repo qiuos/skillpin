@@ -45,7 +45,18 @@ export function guardLocalRequest(
     return "invalid-host";
   }
   const origin = headerValue(headers, "origin");
-  if ((requireOrigin || origin !== undefined) && origin !== options.origin) {
+  if (origin !== undefined) {
+    if (origin !== options.origin) {
+      return "invalid-origin";
+    }
+    return null;
+  }
+  // Chromium omits Origin for same-origin GET fetches. Sec-Fetch-Site preserves
+  // the browser boundary without weakening the loopback, host, or credential checks.
+  if (
+    requireOrigin &&
+    headerValue(headers, "sec-fetch-site") !== "same-origin"
+  ) {
     return "invalid-origin";
   }
   return null;
