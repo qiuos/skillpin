@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import type { CSSProperties } from "react";
 
 import { useVirtualizer } from "@tanstack/react-virtual";
 import type { Components } from "react-markdown";
@@ -9,7 +10,6 @@ import type {
   LocalCatalogCandidate,
   LocalCatalogCandidateDetail,
   LocalCatalogGroup,
-  LocalProjectPlanResponse,
   LocalProjectSelectionInput,
   LocalProjectSnapshot,
 } from "@skillpin/core";
@@ -17,7 +17,6 @@ import type {
 import {
   Badge,
   Button,
-  Dialog,
   EmptyState,
   TextInput,
 } from "../../components/controls.js";
@@ -26,7 +25,19 @@ import { useLocalApiClient } from "../session/session-context.js";
 import { useSources } from "../sources/source-context.js";
 import { useCatalog } from "./catalog-context.js";
 
-type StatusFilter = "all" | "enabled" | "disabled" | "pending" | "abnormal";
+type StatusFilter = "all" | "enabled" | "disabled" | "abnormal";
+
+type TypographySizes = {
+  readonly detailContent: number;
+  readonly listCopy: number;
+  readonly listName: number;
+};
+
+const initialTypography: TypographySizes = {
+  detailContent: 19,
+  listCopy: 18,
+  listName: 20,
+};
 
 const statusFilterOptions: readonly {
   readonly label: string;
@@ -35,7 +46,6 @@ const statusFilterOptions: readonly {
   { label: "全部状态", value: "all" },
   { label: "已启用", value: "enabled" },
   { label: "未启用", value: "disabled" },
-  { label: "待变更", value: "pending" },
   { label: "异常", value: "abnormal" },
 ];
 
@@ -120,34 +130,6 @@ function groupIsAbnormal(group: LocalCatalogGroup): boolean {
   );
 }
 
-function changeSummary(changes: LocalProjectPlanResponse["changes"]): string {
-  const added = changes.filter((change) => change.kind === "add").length;
-  const removed = changes.filter((change) => change.kind === "remove").length;
-  const replaced = changes.filter((change) => change.kind === "replace").length;
-  const parts = [
-    added === 0 ? null : `启用 ${added} 个技能`,
-    removed === 0 ? null : `移除 ${removed} 个技能`,
-    replaced === 0 ? null : `更新 ${replaced} 个技能`,
-  ];
-
-  return parts.filter((part): part is string => part !== null).join("，");
-}
-
-function changeActionLabel(
-  changes: LocalProjectPlanResponse["changes"],
-): string {
-  if (
-    changes.length > 0 &&
-    changes.every((change) => change.kind === "remove")
-  ) {
-    return "移除";
-  }
-  if (changes.length > 0 && changes.every((change) => change.kind === "add")) {
-    return "启用";
-  }
-  return "确认变更";
-}
-
 export function SkillsWorkbenchPage() {
   const client = useLocalApiClient();
   const { sources } = useSources();
@@ -166,12 +148,12 @@ export function SkillsWorkbenchPage() {
   );
   const [detailError, setDetailError] = useState<string | null>(null);
   const [project, setProject] = useState<LocalProjectSnapshot | null>(null);
-  const [staged, setStaged] = useState<Record<string, string | null>>({});
-  const [plan, setPlan] = useState<LocalProjectPlanResponse | null>(null);
   const [projectError, setProjectError] = useState<string | null>(null);
-  const [confirmOpen, setConfirmOpen] = useState(false);
-  const [applying, setApplying] = useState(false);
-  const listRef = useRef<HTMLDivElement>(null);
+  const [changingLinkName, setChangingLinkName] = useState<string | null>(null);
+  const [typography, setTypography] =
+    useState<TypographySizes>(initialTypography);
+  const [typographyDebugOpen, setTypographyDebugOpen] = useState(false);
+  const [listElement, setListElement] = useState<HTMLDivElement | null>(null);
   const statusFilterRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -232,27 +214,24 @@ export function SkillsWorkbenchPage() {
         if (!matchesSource) return false;
       }
       const enabled = groupIsEnabled(group, project);
-      const pending = Object.hasOwn(staged, group.linkName);
       const abnormal = groupIsAbnormal(group);
       switch (statusFilter) {
         case "enabled":
           return enabled;
         case "disabled":
           return !enabled;
-        case "pending":
-          return pending;
         case "abnormal":
           return abnormal;
         default:
           return true;
       }
     });
-  }, [activeSourceIds, groups, project, staged, statusFilter]);
+  }, [activeSourceIds, groups, project, statusFilter]);
 
   const rowVirtualizer = useVirtualizer({
     count: filteredGroups.length,
-    estimateSize: () => 92,
-    getScrollElement: () => listRef.current,
+    estimateSize: () => 118,
+    getScrollElement: () => listElement,
     overscan: 8,
     useFlushSync: false,
   });
@@ -305,75 +284,42 @@ export function SkillsWorkbenchPage() {
     };
   }, [loadCandidate, selectedCandidate]);
 
-  const selections = (): readonly LocalProjectSelectionInput[] =>
-    Object.entries(staged).map(([linkName, candidateId]) => ({
-      candidateId,
-      linkName,
-    }));
+  const applyDirectChange = (group: LocalCatalogGroup, enabled: boolean) => {
+    const candidate =
+      group.conflictKey === selectedGroup?.conflictKey
+        ? (selectedCandidate ?? group.candidates[0])
+        : group.candidates[0];
+    if (!enabled && candidate === undefined) {
+      setProjectError("无法启用：没有可用的技能来源。");
+      return;
+    }
 
-  const stageCandidate = (candidate: LocalCatalogCandidate) => {
-    setStaged((current) => ({
-      ...current,
-      [candidate.linkName]: candidate.id,
-    }));
-    setPlan(null);
-  };
-
-  const stageRemoval = (linkName: string) => {
-    setStaged((current) => ({ ...current, [linkName]: null }));
-    setPlan(null);
-  };
-
-  const unstage = (linkName: string) => {
-    setStaged((current) => {
-      const remaining = { ...current };
-      delete remaining[linkName];
-      return remaining;
-    });
-    setPlan(null);
-  };
-
-  const confirmChanges = () => {
+    const selections: readonly LocalProjectSelectionInput[] = [
+      {
+        candidateId: enabled ? null : candidate!.id,
+        linkName: group.linkName,
+      },
+    ];
+    setChangingLinkName(group.linkName);
     setProjectError(null);
     void client
-      .projectPlan(selections())
+      .projectPlan(selections)
       .then((next) => {
         if (next.blockers.length > 0) {
-          setPlan(null);
-          setProjectError(
+          throw new Error(
             next.blockers.map((blocker) => blocker.message).join(" "),
           );
-          return;
         }
         if (next.changes.length === 0) {
-          setPlan(null);
-          setProjectError("没有需要应用的变更。");
-          return;
+          throw new Error("没有需要应用的变更。");
         }
-        setPlan(next);
-        setConfirmOpen(true);
+        return client.applyProjectChanges({
+          baseRevision: next.baseRevision,
+          requestId: crypto.randomUUID(),
+          selections,
+        });
       })
-      .catch((reason: unknown) =>
-        setProjectError(projectErrorMessage(reason, "无法生成变更计划。")),
-      );
-  };
-
-  const applyChanges = () => {
-    if (plan === null) return;
-    setApplying(true);
-    setProjectError(null);
-    void client
-      .applyProjectChanges({
-        baseRevision: plan.baseRevision,
-        requestId: crypto.randomUUID(),
-        selections: selections(),
-      })
-      .then((result) => {
-        setProject(result.snapshot);
-        setStaged({});
-        setPlan(null);
-        setConfirmOpen(false);
-      })
+      .then((result) => setProject(result.snapshot))
       .catch((reason: unknown) => {
         setProjectError(projectErrorMessage(reason, "无法应用变更。"));
         void client
@@ -381,8 +327,21 @@ export function SkillsWorkbenchPage() {
           .then((snapshot) => setProject(snapshot))
           .catch(() => undefined);
       })
-      .finally(() => setApplying(false));
+      .finally(() => setChangingLinkName(null));
   };
+
+  useEffect(() => {
+    const element = listElement;
+    if (element === null) return;
+    const observer = new ResizeObserver(() => rowVirtualizer.measure());
+    observer.observe(element);
+    rowVirtualizer.measure();
+    return () => observer.disconnect();
+  }, [listElement, rowVirtualizer]);
+
+  useEffect(() => {
+    rowVirtualizer.measure();
+  }, [rowVirtualizer, typography]);
 
   const toggleSource = (sourceId: string) => {
     setSelectedSourceIds((current) => {
@@ -401,19 +360,6 @@ export function SkillsWorkbenchPage() {
     setSelectedCandidateId(group.candidates[0]?.id ?? null);
   };
 
-  const toggleStaged = (group: LocalCatalogGroup, enabled: boolean) => {
-    if (Object.hasOwn(staged, group.linkName)) {
-      unstage(group.linkName);
-      return;
-    }
-    if (enabled) {
-      stageRemoval(group.linkName);
-      return;
-    }
-    const candidate = group.candidates[0];
-    if (candidate !== undefined) stageCandidate(candidate);
-  };
-
   if (isLoading && groups.length === 0) {
     return <EmptyState body="正在读取会话本地技能目录…" title="正在加载技能" />;
   }
@@ -428,19 +374,6 @@ export function SkillsWorkbenchPage() {
       />
     );
   }
-
-  const pendingCount = Object.keys(staged).length;
-  const stagedCandidateIds = Object.values(staged);
-  const stagedActionLabel =
-    pendingCount === 0
-      ? "启用"
-      : stagedCandidateIds.every((candidateId) => candidateId === null)
-        ? "移除"
-        : stagedCandidateIds.every((candidateId) => candidateId !== null)
-          ? "启用"
-          : "确认变更";
-  const confirmationActionLabel = changeActionLabel(plan?.changes ?? []);
-  const confirmationSummary = changeSummary(plan?.changes ?? []);
 
   const detailPane = (
     <aside
@@ -464,12 +397,12 @@ export function SkillsWorkbenchPage() {
             <p className="muted-copy">来源 {detail.source.displayName}</p>
           </header>
           {selectedGroup === null || selectedGroup.candidates.length < 2 ? (
-            <p className="muted-copy">在列表中选择启用或移除，再在底部确认。</p>
+            <p className="muted-copy">在列表中点击启用或移除，立即应用变更。</p>
           ) : (
             <div className="candidate-list" role="list">
               <p className="candidate-list__heading">可用来源</p>
               <p className="muted-copy">
-                在列表中选择启用或移除，再在底部确认。
+                在列表中点击启用或移除，立即应用变更。
               </p>
               {selectedGroup.candidates.map((candidate) => (
                 <button
@@ -484,9 +417,6 @@ export function SkillsWorkbenchPage() {
                   {candidate.parseWarning === null ? null : (
                     <Badge tone="warning">解析备注</Badge>
                   )}
-                  {staged[candidate.linkName] === candidate.id ? (
-                    <Badge tone="success">已暂存</Badge>
-                  ) : null}
                 </button>
               ))}
             </div>
@@ -510,7 +440,58 @@ export function SkillsWorkbenchPage() {
   );
 
   return (
-    <section aria-label="技能工作台" className="skills-workbench">
+    <section
+      aria-label="技能工作台"
+      className="skills-workbench"
+      style={
+        {
+          "--skill-detail-content-size": `${typography.detailContent}px`,
+          "--skill-list-copy-size": `${typography.listCopy}px`,
+          "--skill-list-name-size": `${typography.listName}px`,
+        } as CSSProperties
+      }
+    >
+      <div className="skills-workbench__debug-toggle">
+        <Button
+          aria-expanded={typographyDebugOpen}
+          onClick={() => setTypographyDebugOpen((open) => !open)}
+          variant="secondary"
+        >
+          文字调试（临时）
+        </Button>
+      </div>
+      {typographyDebugOpen ? (
+        <section aria-label="文字调试" className="typography-debug ot-window">
+          <p className="typography-debug__notice">
+            临时调试：确定字号后会移除此面板。
+          </p>
+          {(
+            [
+              ["listName", "列表技能名"],
+              ["listCopy", "列表摘要与状态"],
+              ["detailContent", "详情内容"],
+            ] as const
+          ).map(([key, label]) => (
+            <label className="typography-debug__field" key={key}>
+              <span>{label}</span>
+              <input
+                aria-label={`${label} 字号`}
+                max={36}
+                min={16}
+                onChange={(event) => {
+                  const size = Number(event.target.value);
+                  if (!Number.isFinite(size)) return;
+                  setTypography((current) => ({ ...current, [key]: size }));
+                }}
+                step={1}
+                type="number"
+                value={typography[key]}
+              />
+              <output>{typography[key]}px</output>
+            </label>
+          ))}
+        </section>
+      ) : null}
       <div className="skills-columns">
         <section aria-label="技能目录" className="skill-catalog ot-window">
           <div className="skill-catalog__head">
@@ -611,7 +592,7 @@ export function SkillsWorkbenchPage() {
               title={query === "" ? "筛选无结果" : "没有匹配的技能"}
             />
           ) : (
-            <div className="skills-list" ref={listRef}>
+            <div className="skills-list" ref={setListElement}>
               <div
                 style={{
                   height: `${rowVirtualizer.getTotalSize()}px`,
@@ -623,15 +604,12 @@ export function SkillsWorkbenchPage() {
                   const active =
                     group.conflictKey === selectedGroup?.conflictKey;
                   const enabled = groupIsEnabled(group, project);
-                  const pending = Object.hasOwn(staged, group.linkName);
-                  const actionLabel = pending
-                    ? "撤销选择"
-                    : enabled
-                      ? "移除"
-                      : "启用";
+                  const changing = changingLinkName === group.linkName;
+                  const applying = changingLinkName !== null;
+                  const actionLabel = enabled ? "移除" : "启用";
                   return (
                     <div
-                      className={`skill-row${active ? " skill-row--active" : ""}${pending ? " skill-row--checked" : ""}`}
+                      className={`skill-row${active ? " skill-row--active" : ""}`}
                       key={group.conflictKey}
                       style={{
                         height: `${item.size}px`,
@@ -653,21 +631,15 @@ export function SkillsWorkbenchPage() {
                       </button>
                       <div className="skill-row__actions">
                         <span className="skill-row__meta">
-                          {pending ? "待确认" : enabled ? "已启用" : "未启用"}
+                          {enabled ? "已启用" : "未启用"}
                         </span>
                         <Button
-                          aria-pressed={pending}
                           className="skill-row__action"
-                          onClick={() => toggleStaged(group, enabled)}
-                          variant={
-                            pending
-                              ? "secondary"
-                              : enabled
-                                ? "danger"
-                                : "primary"
-                          }
+                          disabled={applying}
+                          onClick={() => applyDirectChange(group, enabled)}
+                          variant={enabled ? "danger" : "primary"}
                         >
-                          {actionLabel}
+                          {changing ? `${actionLabel}中…` : actionLabel}
                         </Button>
                       </div>
                     </div>
@@ -689,55 +661,6 @@ export function SkillsWorkbenchPage() {
           需要手动恢复检查：共 {project.recoveryDiagnostics.length} 个事务产物。
         </p>
       ) : null}
-      <footer
-        aria-label="项目变更操作"
-        className="command-bar ot-window"
-        role="status"
-      >
-        <span className="command-bar__count">
-          {pendingCount === 0 ? "已选择 0 项" : `已选择 ${pendingCount} 项技能`}
-        </span>
-        <div className="command-bar__actions">
-          <Button
-            disabled={pendingCount === 0}
-            onClick={() => {
-              setStaged({});
-              setPlan(null);
-            }}
-            variant="secondary"
-          >
-            清空选择
-          </Button>
-          <Button
-            disabled={pendingCount === 0}
-            onClick={confirmChanges}
-            variant="primary"
-          >
-            {stagedActionLabel}
-          </Button>
-        </div>
-      </footer>
-      <Dialog
-        description={`将${confirmationSummary}。确认后会立即修改当前项目。`}
-        onClose={() => setConfirmOpen(false)}
-        open={confirmOpen}
-        title={`确认${confirmationActionLabel}`}
-      >
-        <div className="dialog__actions">
-          <Button
-            disabled={applying}
-            onClick={() => setConfirmOpen(false)}
-            variant="secondary"
-          >
-            取消
-          </Button>
-          <Button disabled={applying} onClick={applyChanges}>
-            {applying
-              ? `${confirmationActionLabel}中…`
-              : confirmationActionLabel}
-          </Button>
-        </div>
-      </Dialog>
     </section>
   );
 }

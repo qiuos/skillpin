@@ -221,6 +221,7 @@ h2 {
   display: flex;
   flex-direction: column;
   flex: 1;
+  height: 100%;
   gap: 12px;
   min-height: 0;
 }
@@ -364,6 +365,7 @@ h2 {
   display: flex;
   flex-direction: column;
   flex: 1;
+  height: 100%;
   min-height: 0;
 }
 .main-content {
@@ -377,6 +379,7 @@ h2 {
   display: flex;
   flex-direction: column;
   flex: 1;
+  height: 100%;
   max-width: none;
   min-width: 0;
   min-height: 0;
@@ -688,18 +691,62 @@ h2 {
 
 /* ============ Skills workbench ============ */
 .skills-workbench {
-  display: grid;
-  grid-template-rows: 1fr auto;
-  gap: 12px;
+  display: flex;
   flex: 1;
+  flex-direction: column;
+  height: 100%;
   min-height: 0;
+  gap: 12px;
+  --skill-list-name-size: 20px;
+  --skill-list-copy-size: 18px;
+  --skill-detail-content-size: 19px;
+}
+.skills-workbench__debug-toggle {
+  display: flex;
+  justify-content: flex-end;
+  flex: 0 0 auto;
+}
+.typography-debug {
+  display: flex;
+  flex: 0 0 auto;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 14px 20px;
+  padding: 14px 18px;
+}
+.typography-debug__notice {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: var(--font-ui);
+}
+.typography-debug__field {
+  display: grid;
+  grid-template-columns: auto 72px auto;
+  align-items: center;
+  gap: 8px;
+  color: var(--ink);
+  font-size: var(--font-ui);
+  font-weight: 700;
+}
+.typography-debug__field input {
+  min-height: 36px;
+  padding: 4px 8px;
+  border: 1px solid var(--gold-deep);
+  background: var(--parchment-input);
+  color: var(--ink);
+  font: inherit;
+}
+.typography-debug__field output {
+  min-width: 42px;
+  color: var(--ink-soft);
+  font-weight: 400;
 }
 .skills-columns {
   display: grid;
   grid-template-columns: minmax(360px, 0.9fr) minmax(500px, 1.4fr);
-  gap: 16px;
+  flex: 1;
   min-height: 0;
-  height: 100%;
+  gap: 16px;
 }
 
 .skill-catalog {
@@ -900,8 +947,9 @@ h2 {
 }
 .skill-row__name {
   overflow: hidden;
-  font-size: var(--font-body);
+  font-size: var(--skill-list-name-size);
   font-weight: 700;
+  line-height: 1.3;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -909,8 +957,8 @@ h2 {
   display: -webkit-box;
   overflow: hidden;
   color: var(--ink-soft);
-  font-size: var(--font-ui);
-  line-height: 1.4;
+  font-size: var(--skill-list-copy-size);
+  line-height: 1.5;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
 }
@@ -921,21 +969,22 @@ h2 {
 }
 .skill-row__meta {
   color: var(--ink-faint);
-  font-size: var(--font-ui);
+  font-size: var(--skill-list-copy-size);
   white-space: nowrap;
 }
 .skill-row__action {
-  min-width: 84px;
-  min-height: 42px;
+  min-width: 92px;
+  min-height: 46px;
   font-size: var(--font-ui);
 }
 
 /* ============ Skill detail ============ */
 .skill-detail {
   display: grid;
-  grid-template-rows: auto auto 1fr;
+  grid-template-rows: auto auto minmax(0, 1fr);
   min-width: 0;
   min-height: 0;
+  height: 100%;
   overflow: hidden;
 }
 .skill-detail__head {
@@ -945,7 +994,7 @@ h2 {
 .skill-detail__eyebrow {
   margin: 0 0 6px;
   color: var(--gold-deep);
-  font-size: var(--font-small);
+  font-size: var(--skill-list-copy-size);
   font-weight: 700;
   letter-spacing: 0.18em;
 }
@@ -956,6 +1005,8 @@ h2 {
 }
 .skill-detail__head .muted-copy {
   margin-top: 8px;
+  font-size: var(--skill-detail-content-size);
+  line-height: 1.55;
 }
 .candidate-list {
   padding: 14px 22px;
@@ -964,7 +1015,7 @@ h2 {
 .candidate-list__heading {
   margin: 0 0 6px;
   color: var(--gold-deep);
-  font-size: var(--font-small);
+  font-size: var(--skill-list-copy-size);
   font-weight: 700;
   letter-spacing: 0.12em;
 }
@@ -977,6 +1028,8 @@ h2 {
   border: 1px solid transparent;
   background: transparent;
   color: var(--ink-soft);
+  font-size: var(--skill-detail-content-size);
+  line-height: 1.5;
   text-align: left;
 }
 .candidate-row:hover:not(:disabled) {
@@ -988,7 +1041,7 @@ h2 {
   color: var(--ink);
 }
 .candidate-row span {
-  font-size: var(--font-small);
+  font-size: inherit;
 }
 
 .markdown-detail {
@@ -998,8 +1051,8 @@ h2 {
   padding: 16px 18px;
   border: 1px solid var(--gold);
   background: rgba(251, 246, 230, 0.7);
-  font-size: var(--font-small);
-  line-height: 1.65;
+  font-size: var(--skill-detail-content-size);
+  line-height: 1.7;
 }
 .markdown-detail > :first-child {
   margin-top: 0;
@@ -1010,6 +1063,15 @@ h2 {
   color: #5a3f16;
   line-height: 1.25;
 }
+.markdown-detail h1 {
+  font-size: 1.55em;
+}
+.markdown-detail h2 {
+  font-size: 1.35em;
+}
+.markdown-detail h3 {
+  font-size: 1.18em;
+}
 .markdown-detail pre {
   overflow: auto;
   padding: 12px;
@@ -1018,6 +1080,7 @@ h2 {
 }
 .markdown-detail code {
   overflow-wrap: anywhere;
+  font-size: 1em;
 }
 .markdown-detail a {
   color: var(--gold-deep);
@@ -1032,6 +1095,7 @@ h2 {
 }
 
 /* ============ Command bar ============ */
+/* Command-bar styles remain shared for other pages; the skills workbench no longer renders it. */
 .command-bar {
   display: flex;
   align-items: center;

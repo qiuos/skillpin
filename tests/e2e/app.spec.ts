@@ -22,6 +22,7 @@ type MockApiControls = {
 
 type MockApiEvents = {
   readonly applyRequests: number;
+  readonly planRequests: number;
   readonly shutdownRequests: number;
 };
 
@@ -68,7 +69,7 @@ async function installProtectedLocalApi(
           ]
         : [];
       let sourceSequence = sources.length;
-      const events = { applyRequests: 0, shutdownRequests: 0 };
+      const events = { applyRequests: 0, planRequests: 0, shutdownRequests: 0 };
       const controls = { sourceListAvailable };
       Object.defineProperty(window, "__skillpinMockApiEvents", {
         configurable: true,
@@ -140,6 +141,7 @@ async function installProtectedLocalApi(
           });
         }
         if (url.pathname === "/api/project/plan" && method === "POST") {
+          events.planRequests += 1;
           const selection = Array.isArray(json?.selections)
             ? json.selections.find(
                 (item): item is Record<string, unknown> =>
@@ -551,8 +553,36 @@ test("browses searchable catalog candidates and safely renders an explicit skill
   await page.getByLabel("搜索技能").fill("local project");
   await expect(page.getByRole("button", { name: /review/i })).toBeVisible();
   await expect(
-    page.getByText("在列表中选择启用或移除，再在底部确认。"),
+    page.getByText("在列表中点击启用或移除，立即应用变更。"),
   ).toBeVisible();
+
+  const catalogBox = await page.getByLabel("技能目录").boundingBox();
+  const detailBox = await page.getByLabel("技能详情").boundingBox();
+  expect(catalogBox?.height).toBeGreaterThan(400);
+  expect(detailBox?.height).toBeGreaterThan(400);
+});
+
+test("temporarily exposes adjustable skills-workbench typography", async ({
+  page,
+}) => {
+  await installProtectedLocalApi(page, [
+    source("source-catalog", "Personal", "/Users/example/skills"),
+  ]);
+  await page.goto("/skills");
+
+  await page.getByRole("button", { name: "文字调试（临时）" }).click();
+  const debug = page.getByLabel("文字调试");
+  await expect(
+    debug.getByText("临时调试：确定字号后会移除此面板。"),
+  ).toBeVisible();
+  await debug.getByLabel("列表技能名 字号").fill("24");
+  await debug.getByLabel("列表摘要与状态 字号").fill("21");
+  await debug.getByLabel("详情内容 字号").fill("22");
+  await expect(debug.getByText("24px")).toBeVisible();
+  await expect(debug.getByText("21px")).toBeVisible();
+  await expect(debug.getByText("22px")).toBeVisible();
+  await expect(page.locator(".skill-row__name")).toHaveCSS("font-size", "24px");
+  await expect(page.locator(".markdown-detail")).toHaveCSS("font-size", "22px");
 });
 
 test("uses the styled status filter menu with keyboard and outside-click behavior", async ({
@@ -602,21 +632,13 @@ test("does not execute untrusted Markdown from a skill detail", async ({
   ).resolves.toBeUndefined();
 });
 
-test("confirms ending a session with staged changes without applying them", async ({
-  page,
-}) => {
+test("ends a session without pending batch changes", async ({ page }) => {
   await installProtectedLocalApi(page, [
     source("source-catalog", "Personal", "/Users/example/skills"),
   ]);
   await page.goto("/skills");
 
-  await page
-    .getByLabel("技能目录")
-    .getByRole("button", { name: "启用", exact: true })
-    .click();
-  await expect(page.getByText("已选择 1 项技能")).toBeVisible();
   await page.getByRole("button", { name: "结束 SkillPin" }).click();
-
   const dialog = page.getByRole("dialog", { name: "结束 SkillPin 会话" });
   await expect(dialog).toBeVisible();
   await dialog.getByRole("button", { name: "结束 SkillPin" }).click();
@@ -627,11 +649,12 @@ test("confirms ending a session with staged changes without applying them", asyn
     .poll(() => mockApiEvents(page))
     .toEqual({
       applyRequests: 0,
+      planRequests: 0,
       shutdownRequests: 1,
     });
 });
 
-test("enables a staged skill through one confirmation dialog", async ({
+test("enables a skill directly without batch selection or confirmation", async ({
   page,
 }) => {
   await installProtectedLocalApi(page, [
@@ -640,26 +663,24 @@ test("enables a staged skill through one confirmation dialog", async ({
   await page.goto("/skills");
 
   const catalog = page.getByLabel("技能目录");
-  const commandBar = page.getByLabel("项目变更操作");
   await catalog.getByRole("button", { name: "启用", exact: true }).click();
-  await expect(commandBar.getByText("已选择 1 项技能")).toBeVisible();
-  await commandBar.getByRole("button", { name: "启用", exact: true }).click();
 
-  const confirm = page.getByRole("dialog", { name: "确认启用" });
-  await expect(confirm).toBeVisible();
+  await expect
+    .poll(() => mockApiEvents(page))
+    .toEqual({
+      applyRequests: 1,
+      planRequests: 1,
+      shutdownRequests: 0,
+    });
+  await expect(catalog.getByText("已启用")).toBeVisible();
   await expect(
-    confirm.getByText("将启用 1 个技能。确认后会立即修改当前项目。"),
+    catalog.getByRole("button", { name: "移除", exact: true }),
   ).toBeVisible();
-  await expect(page.getByRole("dialog", { name: "审查项目变更" })).toHaveCount(
-    0,
-  );
-  await confirm.getByRole("button", { name: "启用", exact: true }).click();
-
-  await expect(confirm).toHaveCount(0);
-  await expect(commandBar.getByText("已选择 1 项技能")).toHaveCount(0);
+  await expect(page.getByLabel("项目变更操作")).toHaveCount(0);
+  await expect(page.getByRole("dialog", { name: /确认/ })).toHaveCount(0);
 });
 
-test("removes an enabled skill through one confirmation dialog", async ({
+test("removes an enabled skill directly without confirmation", async ({
   page,
 }) => {
   await installProtectedLocalApi(
@@ -670,22 +691,20 @@ test("removes an enabled skill through one confirmation dialog", async ({
   await page.goto("/skills");
 
   const catalog = page.getByLabel("技能目录");
-  const commandBar = page.getByLabel("项目变更操作");
   await expect(catalog.getByText("已启用")).toBeVisible();
   await catalog.getByRole("button", { name: "移除", exact: true }).click();
-  await expect(commandBar.getByText("已选择 1 项技能")).toBeVisible();
-  await commandBar.getByRole("button", { name: "移除", exact: true }).click();
 
-  const confirm = page.getByRole("dialog", { name: "确认移除" });
-  await expect(confirm).toBeVisible();
+  await expect
+    .poll(() => mockApiEvents(page))
+    .toEqual({
+      applyRequests: 1,
+      planRequests: 1,
+      shutdownRequests: 0,
+    });
+  await expect(catalog.getByText("未启用")).toBeVisible();
   await expect(
-    confirm.getByText("将移除 1 个技能。确认后会立即修改当前项目。"),
+    catalog.getByRole("button", { name: "启用", exact: true }),
   ).toBeVisible();
-  await expect(page.getByRole("dialog", { name: "审查项目变更" })).toHaveCount(
-    0,
-  );
-  await confirm.getByRole("button", { name: "移除", exact: true }).click();
-
-  await expect(confirm).toHaveCount(0);
-  await expect(commandBar.getByText("已选择 1 项技能")).toHaveCount(0);
+  await expect(page.getByLabel("项目变更操作")).toHaveCount(0);
+  await expect(page.getByRole("dialog", { name: /确认/ })).toHaveCount(0);
 });
