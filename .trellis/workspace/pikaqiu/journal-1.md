@@ -374,3 +374,37 @@ Fixed same-origin Chromium source GET requests that omit Origin, added source re
 ### Next Steps
 
 - None - task complete
+
+
+## Session 27: Simplify skill management actions and release 0.1.9
+
+**Date**: 2026-08-27
+**Task**: Simplify skill management actions and release 0.1.9
+**Branch**: `main`
+
+### Summary
+
+Improved skills-workbench readability, added explicit staged enable/remove actions with one confirmation, updated E2E/specs, and released GitHub asset v0.1.9.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `3398885` | (see git log) |
+| `2f5df55` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
