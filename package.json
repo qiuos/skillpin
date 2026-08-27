@@ -1,6 +1,6 @@
 {
   "name": "skillpin",
-  "version": "0.1.15",
+  "version": "0.1.16",
   "description": "Local skill source manager",
   "license": "MIT",
   "type": "module",
