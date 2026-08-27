@@ -508,3 +508,36 @@ Improved skills-workbench readability, added explicit staged enable/remove actio
 ### Next Steps
 
 - None - task complete
+
+
+## Session 31: Refine workbench typography and scrollbars
+
+**Date**: 2026-08-27
+**Task**: Refine workbench typography and scrollbars
+**Branch**: `main`
+
+### Summary
+
+Reduced skills and Sources typography to the approved 28px titles and 24px body/actions, increased navigation tab text to 24px, applied matching parchment/gold and dark-brown scrollbar styling, updated E2E coverage and frontend specs, and verified formatting, lint, types, unit tests, build, and E2E tests.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `bf87cd4` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
