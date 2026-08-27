@@ -595,12 +595,6 @@ export function SkillsWorkbenchPage() {
   return (
     <section aria-label="技能工作台" className="skills-workbench">
       <div className="skills-workbench__header">
-        <div className="page-heading">
-          <div>
-            <p className="eyebrow">安全的本地工作区</p>
-            <h1>技能</h1>
-          </div>
-        </div>
         <div className="kpi-row">
           <div className="kpi-card kpi-card--primary">
             <div className="kpi-card__header">
