@@ -1,0 +1,3 @@
+{"file": ".trellis/spec/frontend/quality-guidelines.md", "reason": "Styling tokens contract (updating to Boltshift soft blue)"}
+{"file": ".trellis/spec/frontend/local-session-app-foundation.md", "reason": "P6 App shell & navigation contract"}
+{"file": ".trellis/spec/frontend/skills-workbench-foundation.md", "reason": "P8 Workbench 3-column & UI layout contracts"}
