@@ -475,3 +475,36 @@ Improved skills-workbench readability, added explicit staged enable/remove actio
 ### Next Steps
 
 - None - task complete
+
+
+## Session 30: 发布 SkillPin 0.1.11
+
+**Date**: 2026-08-27
+**Task**: 发布 SkillPin 0.1.11
+**Branch**: `main`
+
+### Summary
+
+按默认 patch 规则将 SkillPin 由 0.1.10 发布至 0.1.11：创建并推送带注释标签 v0.1.11，完成 npm ci、格式化、lint、类型检查、单测、构建、打包、包校验与隔离安装烟雾测试；GitHub Actions Release 工作流 33052726232 成功，并已发布唯一资产 skillpin-0.1.11.tgz。未执行 npm publish。
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `437549b` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
