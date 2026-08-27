@@ -1,0 +1,7 @@
+{"_example": "Fill with {\"file\": \"<path>\", \"reason\": \"<why>\"}. Put spec/research files only — no code paths. Run `python3 .trellis/scripts/get_context.py --mode packages` to list available specs. Delete this line once real entries are added."}
+{"file": ".trellis/spec/frontend/quality-guidelines.md", "reason": "visual language + a11y quality bar"}
+{"file": ".trellis/spec/frontend/local-session-app-foundation.md", "reason": "app chrome, routes, session, theme contract"}
+{"file": ".trellis/spec/frontend/skills-workbench-foundation.md", "reason": "skills workbench structure and aria"}
+{"file": ".trellis/spec/frontend/source-management-foundation.md", "reason": "sources page contract"}
+{"file": ".trellis/spec/frontend/component-guidelines.md", "reason": "shared controls, no extra UI kit"}
+{"file": ".trellis/spec/frontend/project-change-workflow-foundation.md", "reason": "stage/plan/apply command bar"}

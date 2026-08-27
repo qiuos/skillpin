@@ -1,0 +1,366 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SkillPin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Noto+Serif+SC:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --dusk: #2a2218;
+    --dusk-2: #3a2f22;
+    --parchment: #f3ead3;
+    --parchment-2: #e9dcb8;
+    --ink: #3a2c1a;
+    --ink-soft: #6d5a3e;
+    --gold: #c6a15a;
+    --gold-deep: #8d6a2e;
+    --gold-pale: #e8d7a3;
+    --wine: #8a3b32;
+    --wine-pale: #ead3c4;
+    --moss: #5d6a4a;
+    --ok: #6b7a52;
+    --ok-pale: #dce4c8;
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    margin: 0;
+    min-width: 880px;
+    overflow: hidden;
+    color: var(--ink);
+    font: 13px/1.45 "Noto Serif SC", "Songti SC", serif;
+    background:
+      radial-gradient(1200px 700px at 50% -10%, #4a3b28 0%, transparent 55%),
+      radial-gradient(900px 600px at 110% 110%, #1b140e 0%, transparent 50%),
+      linear-gradient(180deg, #3b3023 0%, var(--dusk) 100%);
+  }
+  button, input, select { font: inherit; }
+  button { white-space: nowrap; }
+
+  .stage { height: 100%; padding: 22px 24px 20px; display: grid; grid-template-rows: auto 1fr auto; gap: 12px; }
+
+  /* Octopath window: parchment + antique gold double frame + corner bosses */
+  .window {
+    position: relative;
+    background:
+      linear-gradient(180deg, rgba(255,255,255,.18), transparent 28%),
+      repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(141,106,46,.035) 3px),
+      var(--parchment);
+    border: 2px solid var(--gold-deep);
+    box-shadow:
+      0 0 0 1px var(--gold-pale),
+      0 0 0 4px var(--gold-deep),
+      0 0 0 5px #5a4320,
+      8px 10px 0 rgba(16,12,8,.35);
+  }
+  .window::before, .window::after {
+    content: "";
+    position: absolute;
+    width: 10px; height: 10px;
+    background: var(--gold-pale);
+    box-shadow: 0 0 0 2px var(--gold-deep), inset 0 0 0 2px #5a4320;
+    z-index: 2;
+  }
+  .window::before { top: -6px; left: -6px; }
+  .window::after { top: -6px; right: -6px; }
+  .window > .corner-bl, .window > .corner-br {
+    position: absolute; width: 10px; height: 10px;
+    background: var(--gold-pale);
+    box-shadow: 0 0 0 2px var(--gold-deep), inset 0 0 0 2px #5a4320;
+    z-index: 2;
+  }
+  .corner-bl { bottom: -6px; left: -6px; }
+  .corner-br { bottom: -6px; right: -6px; }
+
+  .identity {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    min-height: 64px;
+    padding: 10px 18px 10px 20px;
+  }
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    min-width: 0;
+  }
+  .product-name {
+    margin: 0;
+    color: #5a3f16;
+    font: 700 22px/1 Cinzel, "Noto Serif SC", serif;
+    letter-spacing: .08em;
+    text-shadow: 0 1px 0 #fff6d8;
+    white-space: nowrap;
+  }
+  .tabs {
+    display: flex;
+    gap: 4px;
+    padding-left: 16px;
+    border-left: 1px solid var(--gold);
+  }
+  .tab {
+    min-height: 32px;
+    padding: 0 14px;
+    border: 1px solid transparent;
+    background: transparent;
+    color: var(--ink-soft);
+    cursor: pointer;
+    font-weight: 700;
+  }
+  .tab:hover { color: var(--ink); }
+  .tab.is-active {
+    color: #5a3f16;
+    background: var(--gold-pale);
+    border-color: var(--gold-deep);
+    box-shadow: inset 0 -2px 0 var(--gold-deep);
+  }
+  .identity-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-shrink: 0;
+  }
+  .connection {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--moss);
+    font-weight: 700;
+    white-space: nowrap;
+  }
+  .lamp {
+    width: 9px; height: 9px;
+    background: #8ea36a;
+    box-shadow: 0 0 0 2px #3d4a2c, 0 0 8px #b7c98a;
+  }
+  .button {
+    min-height: 34px;
+    padding: 0 14px;
+    border: 1px solid var(--gold-deep);
+    background: linear-gradient(#f8efd4, #e6d5a8);
+    color: var(--ink);
+    box-shadow: inset 0 1px 0 #fff6d8, 2px 2px 0 #5a4320;
+    cursor: pointer;
+    font-weight: 700;
+  }
+  .button:hover { background: linear-gradient(#fff6de, #eddcb0); }
+  .button:active { transform: translate(1px, 1px); box-shadow: inset 0 1px 0 #fff6d8; }
+  .button--end { color: var(--wine); }
+
+  .workbench { min-height: 0; display: grid; grid-template-columns: minmax(420px, 1.15fr) minmax(340px, .85fr); gap: 12px; }
+  .panel { min-width: 0; min-height: 0; display: grid; }
+  .catalog { grid-template-rows: auto 1fr; }
+  .tools { display: flex; gap: 8px; align-items: center; padding: 12px 14px 10px; border-bottom: 1px solid var(--gold); }
+  .search, .filter {
+    height: 34px;
+    border: 1px solid var(--gold-deep);
+    background: #fbf6e6;
+    color: var(--ink);
+    outline: none;
+  }
+  .search { flex: 1; min-width: 140px; padding: 0 10px; }
+  .search:focus, .filter:focus { box-shadow: 0 0 0 2px var(--gold-pale); }
+  .filter { max-width: 148px; padding: 0 8px; }
+
+  .list { min-height: 0; overflow: auto; padding: 6px 0 10px; }
+  .skill {
+    position: relative;
+    display: grid;
+    grid-template-columns: 18px 18px 1fr auto;
+    gap: 10px;
+    align-items: center;
+    min-height: 56px;
+    padding: 8px 16px 8px 14px;
+    cursor: pointer;
+  }
+  .skill:hover { background: rgba(198,161,90,.12); }
+  .skill.is-checked { background: linear-gradient(90deg, rgba(138,59,50,.10), rgba(198,161,90,.08)); }
+  .cursor {
+    width: 0; height: 0;
+    border-style: solid;
+    border-width: 7px 0 7px 10px;
+    border-color: transparent transparent transparent var(--wine);
+    opacity: 0;
+  }
+  .skill.is-checked .cursor, .skill.is-focus .cursor { opacity: 1; }
+  .check {
+    appearance: none;
+    width: 16px; height: 16px;
+    margin: 0;
+    border: 1px solid var(--gold-deep);
+    background: #fbf6e6;
+    box-shadow: inset 0 1px 0 #fff;
+    cursor: pointer;
+  }
+  .check:checked { background: var(--wine); border-color: #5e241e; }
+  .check:checked::after { content: "×"; display: block; color: #f3ead3; font: 700 13px/14px Cinzel, serif; text-align: center; }
+  .copy { min-width: 0; }
+  .name { display: flex; align-items: center; gap: 8px; font-weight: 700; }
+  .summary { overflow: hidden; color: var(--ink-soft); font-size: 12px; white-space: nowrap; text-overflow: ellipsis; margin-top: 3px; }
+  .tag {
+    flex-shrink: 0;
+    padding: 3px 7px;
+    border: 1px solid var(--gold);
+    color: var(--ink-soft);
+    background: rgba(255,255,255,.35);
+    font-size: 11px;
+    white-space: nowrap;
+  }
+  .tag--on { color: var(--moss); border-color: var(--ok); background: var(--ok-pale); }
+  .tag--wait { color: var(--wine); border-color: #c08a62; background: var(--wine-pale); }
+
+  .detail { grid-template-rows: auto 1fr; }
+  .detail-head { padding: 16px 18px 12px; border-bottom: 1px solid var(--gold); }
+  .eyebrow { margin: 0 0 6px; color: var(--gold-deep); letter-spacing: .18em; font: 700 10px/1 Cinzel, serif; }
+  .detail-title { margin: 0; font: 700 22px/1.15 "Noto Serif SC", serif; }
+  .detail-summary { margin: 8px 0 0; color: var(--ink-soft); }
+  .markdown { min-height: 0; overflow: auto; margin: 12px 14px 14px; padding: 12px 14px; border: 1px solid var(--gold); background: rgba(251,246,230,.7); white-space: pre-wrap; font-size: 12px; }
+
+  .command { display: flex; align-items: center; justify-content: space-between; gap: 16px; min-height: 64px; padding: 10px 18px; }
+  .count { display: flex; align-items: center; gap: 10px; font-weight: 700; white-space: nowrap; }
+  .count b {
+    display: grid; place-items: center;
+    min-width: 28px; height: 28px; padding: 0 6px;
+    color: #f3ead3; background: var(--wine);
+    border: 1px solid #5e241e;
+    box-shadow: 2px 2px 0 #5a4320;
+    font: 700 14px/1 Cinzel, serif;
+  }
+  .actions { display: flex; gap: 10px; flex-shrink: 0; }
+  .button--apply { color: #3a2c1a; background: linear-gradient(#f0d789, #c6a15a); }
+
+  .empty, .sources { min-height: 0; padding: 28px 32px; }
+  .empty { display: grid; place-content: center; text-align: center; gap: 10px; }
+  .empty h1 { margin: 0; font-size: 22px; }
+  .empty p { margin: 0 0 8px; color: var(--ink-soft); }
+  .source-row { display: grid; grid-template-columns: 1.2fr 1.6fr .7fr .5fr auto; gap: 12px; align-items: center; min-height: 48px; padding: 8px 4px; border-bottom: 1px solid var(--gold-pale); }
+  .source-head { color: var(--gold-deep); font: 700 11px/1 Cinzel, serif; letter-spacing: .12em; }
+  .hidden { display: none !important; }
+
+  @media (max-width: 1080px) {
+    .filter:first-of-type { display: none; }
+    .workbench { grid-template-columns: minmax(380px, 1fr) minmax(300px, .8fr); }
+  }
+</style>
+</head>
+<body>
+  <div class="stage">
+    <header class="window identity">
+      <i class="corner-bl"></i><i class="corner-br"></i>
+      <div class="brand">
+        <h1 class="product-name">SkillPin</h1>
+        <nav class="tabs" aria-label="SkillPin 功能分区">
+          <button class="tab is-active" type="button" data-view="skills">技能</button>
+          <button class="tab" type="button" data-view="sources">技能源</button>
+        </nav>
+      </div>
+      <div class="identity-right">
+        <span class="connection"><i class="lamp"></i>已连接</span>
+        <button class="button button--end" type="button">结束连接</button>
+      </div>
+    </header>
+
+    <main class="workbench" id="view-skills" aria-label="技能工作台">
+      <section class="window panel catalog" aria-label="技能目录">
+        <i class="corner-bl"></i><i class="corner-br"></i>
+        <div class="tools">
+          <input class="search" type="search" placeholder="搜索技能">
+          <select class="filter" aria-label="筛选技能源"><option>全部技能源</option><option>官方规范源</option></select>
+          <select class="filter" aria-label="筛选状态"><option>全部状态</option><option>已启用</option></select>
+        </div>
+        <div class="list" id="list"></div>
+      </section>
+
+      <aside class="window panel detail" aria-label="技能详情">
+        <i class="corner-bl"></i><i class="corner-br"></i>
+        <header class="detail-head">
+          <p class="eyebrow">SKILL</p>
+          <h2 class="detail-title" id="detailTitle">frontend-design</h2>
+          <p class="detail-summary" id="detailSummary">前端 UI / UX 设计与美化指导规范</p>
+        </header>
+        <article class="markdown" id="detailBody"></article>
+      </aside>
+    </main>
+
+    <section class="window sources hidden" id="view-sources" aria-label="技能源">
+      <i class="corner-bl"></i><i class="corner-br"></i>
+      <div class="tools" style="border:0;padding:0 0 14px">
+        <input class="search" type="search" placeholder="搜索技能源">
+        <button class="button" type="button">添加技能源</button>
+      </div>
+      <div class="source-row source-head"><span>名称</span><span>路径</span><span>健康</span><span>技能</span><span>操作</span></div>
+      <div class="source-row"><span>官方规范源</span><span>~/.claude/skills</span><span>健康</span><span>12</span><span><button class="button" type="button">编辑</button></span></div>
+      <div class="source-row"><span>团队共享源</span><span>~/work/skills</span><span>健康</span><span>4</span><span><button class="button" type="button">编辑</button></span></div>
+    </section>
+
+    <footer class="window command" id="command">
+      <i class="corner-bl"></i><i class="corner-br"></i>
+      <span class="count"><b id="count">2</b>项已选择</span>
+      <div class="actions">
+        <button class="button" type="button" id="clear">清空选择</button>
+        <button class="button button--apply" type="button">审查并应用变更</button>
+      </div>
+    </footer>
+  </div>
+
+<script>
+const SKILLS = [
+  { name: "frontend-design", summary: "前端 UI / UX 设计与美化指导规范", source: "官方源", status: "已启用", on: true, body: "# Frontend Design\n\nApproach this as the design lead at a small studio.\n\nMake deliberate choices about palette, typography, and layout. Build with real content throughout." },
+  { name: "trellis-brainstorm", summary: "需求挖掘、问答收敛与 PRD 生成", source: "团队源", status: "待变更", on: true, body: "# trellis-brainstorm\n\nInterview relentlessly until the plan is shared and testable." },
+  { name: "code-review", summary: "代码质量审查、差异分析与缺陷定位", source: "官方源", status: "未启用", on: false, body: "# code-review\n\nRead the diff. Rank defects. Verify before reporting." },
+  { name: "dataviz", summary: "图表与数据可视化设计体系", source: "扩展源", status: "未启用", on: false, body: "# dataviz\n\nTreat charts as a system, not isolated pictures." },
+  { name: "pptx", summary: "PowerPoint 幻灯片生成与编辑", source: "官方源", status: "已启用", on: false, body: "# pptx\n\nBuild slides from structure, not decoration." }
+];
+let focus = 0;
+const list = document.getElementById("list");
+const count = document.getElementById("count");
+function tagClass(status) {
+  if (status === "已启用") return "tag tag--on";
+  if (status === "待变更") return "tag tag--wait";
+  return "tag";
+}
+function render() {
+  list.innerHTML = SKILLS.map((s, i) => `
+    <label class="skill${s.on ? " is-checked" : ""}${i === focus ? " is-focus" : ""}" data-i="${i}">
+      <i class="cursor"></i>
+      <input class="check" type="checkbox"${s.on ? " checked" : ""}>
+      <span class="copy">
+        <span class="name">${s.name} <em class="${tagClass(s.status)}">${s.status}</em></span>
+        <span class="summary">${s.summary}</span>
+      </span>
+      <em class="tag">${s.source}</em>
+    </label>`).join("");
+  count.textContent = SKILLS.filter(s => s.on).length;
+  const s = SKILLS[focus];
+  document.getElementById("detailTitle").textContent = s.name;
+  document.getElementById("detailSummary").textContent = s.summary;
+  document.getElementById("detailBody").textContent = s.body;
+}
+list.addEventListener("click", (event) => {
+  const row = event.target.closest(".skill");
+  if (!row) return;
+  const i = Number(row.dataset.i);
+  focus = i;
+  if (event.target.classList.contains("check")) SKILLS[i].on = event.target.checked;
+  else SKILLS[i].on = !SKILLS[i].on;
+  render();
+});
+document.getElementById("clear").onclick = () => { SKILLS.forEach(s => s.on = false); render(); };
+document.querySelectorAll(".tab").forEach((tab) => {
+  tab.onclick = () => {
+    document.querySelectorAll(".tab").forEach(t => t.classList.toggle("is-active", t === tab));
+    const skills = tab.dataset.view === "skills";
+    document.getElementById("view-skills").classList.toggle("hidden", !skills);
+    document.getElementById("view-sources").classList.toggle("hidden", skills);
+    document.getElementById("command").classList.toggle("hidden", !skills);
+  };
+});
+render();
+</script>
+</body>
+</html>
