@@ -541,3 +541,36 @@ Reduced skills and Sources typography to the approved 28px titles and 24px body/
 ### Next Steps
 
 - None - task complete
+
+
+## Session 32: Publish SkillPin 0.1.12
+
+**Date**: 2026-08-27
+**Task**: Publish SkillPin 0.1.12
+**Branch**: `main`
+
+### Summary
+
+Released SkillPin 0.1.12 after the typography and scrollbar refresh. Created the annotated v0.1.12 tag, passed npm ci, format, lint, typecheck, unit, build, package verification, and isolated package smoke checks; pushed main and tag; and verified successful GitHub Release workflow 33054744266 with the single skillpin-0.1.12.tgz asset. No npm registry publication was performed.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `765ffe6` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
