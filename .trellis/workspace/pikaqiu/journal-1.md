@@ -677,3 +677,37 @@ Released SkillPin 0.1.12 after the typography and scrollbar refresh. Created the
 ### Next Steps
 
 - None - task complete
+
+
+## Session 36: Release skill catalog typography v0.1.15
+
+**Date**: 2026-08-27
+**Task**: Release skill catalog typography v0.1.15
+**Branch**: `main`
+
+### Summary
+
+Updated the skills catalog row name and summary typography to 22px, kept action controls at 16px, synchronized the P8 contract and Playwright assertions, completed the release verification suite, and published GitHub Release v0.1.15 with its package archive.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `42ac61d` | (see git log) |
+| `4bb4039` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete

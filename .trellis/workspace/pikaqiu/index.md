@@ -8,7 +8,7 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-1.md`
-- **Total Sessions**: 35
+- **Total Sessions**: 36
 - **Last Active**: 2026-08-27
 <!-- @@@/auto:current-status -->
 
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-1.md` | ~679 | Active |
+| `journal-1.md` | ~713 | Active |
 <!-- @@@/auto:active-documents -->
 
 ---
@@ -29,6 +29,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 36 | 2026-08-27 | Release skill catalog typography v0.1.15 | `42ac61d`, `4bb4039` | `main` |
 | 35 | 2026-08-27 | 优化技能列表并发布 SkillPin 0.1.14 | `a0f2798`, `cec1e3a`, `c4fc756`, `e724132` | `main` |
 | 34 | 2026-08-27 | 发布 SkillPin 0.1.13 | `4bb9d0e` | `main` |
 | 33 | 2026-08-27 | 优化连接状态与技能列表布局 | `42e809d`, `86b5f1e` | `main` |
