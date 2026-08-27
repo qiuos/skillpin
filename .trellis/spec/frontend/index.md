@@ -22,8 +22,8 @@ This directory records the repository's current P0 frontend conventions, grounde
 | [Type Safety](./type-safety.md) | Type patterns, validation | Baseline documented |
 | [Local Session Application Foundation](./local-session-app-foundation.md) | Browser-safe P5 session client, connection state, themes, and application chrome | P6 documented |
 | [P7 Source Management Foundation](./source-management-foundation.md) | Typed source state, onboarding, directory browser, health UI, and guarded removal | P7 documented |
-| [P8 Skills Workbench Foundation](./skills-workbench-foundation.md) | Catalog state, two-window workbench, list-checkbox staging, and safe Markdown | P8 documented |
-| [P9 Project Change Workflow Foundation](./project-change-workflow-foundation.md) | Explicit staged selections, review, confirmation, and project recovery UI | P9 documented |
+| [P8 Skills Workbench Foundation](./skills-workbench-foundation.md) | Catalog state, two-window workbench, explicit skill actions, and safe Markdown | P8 documented |
+| [P9 Project Change Workflow Foundation](./project-change-workflow-foundation.md) | Explicit staged selections, one confirmation, and project recovery UI | P9 documented |
 | [P10 Cross-Platform Acceptance Contract](../backend/p10-cross-platform-acceptance-contract.md) | Three-OS browser acceptance and safe session/Markdown regression coverage | P10 contract |
 
 ---

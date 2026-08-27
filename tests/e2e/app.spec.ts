@@ -12,6 +12,7 @@ type MockSource = {
 
 type MockApiOptions = {
   readonly markdownBody?: string;
+  readonly projectLinkManaged?: boolean;
   readonly sourceListAvailable?: boolean;
 };
 
@@ -46,15 +47,26 @@ async function installProtectedLocalApi(
   await page.addInitScript(
     ({
       markdownBody,
+      projectLinkManaged,
       sourceListAvailable,
       sources: seededSources,
     }: {
       readonly markdownBody: string;
+      readonly projectLinkManaged: boolean;
       readonly sourceListAvailable: boolean;
       readonly sources: MockSource[];
     }) => {
       type BrowserSource = MockSource;
       const sources = [...seededSources] as BrowserSource[];
+      const projectLinks = projectLinkManaged
+        ? [
+            {
+              linkName: "review",
+              sourceState: "available",
+              state: "managed",
+            },
+          ]
+        : [];
       let sourceSequence = sources.length;
       const events = { applyRequests: 0, shutdownRequests: 0 };
       const controls = { sourceListAvailable };
@@ -122,19 +134,35 @@ async function installProtectedLocalApi(
         }
         if (url.pathname === "/api/project" && method === "GET") {
           return reply({
-            links: [],
+            links: projectLinks,
             manifestRevision: 0,
             recoveryDiagnostics: [],
           });
         }
         if (url.pathname === "/api/project/plan" && method === "POST") {
+          const selection = Array.isArray(json?.selections)
+            ? json.selections.find(
+                (item): item is Record<string, unknown> =>
+                  item !== null && typeof item === "object",
+              )
+            : undefined;
+          const candidateId =
+            typeof selection?.candidateId === "string"
+              ? selection.candidateId
+              : null;
+          const kind =
+            candidateId === null
+              ? "remove"
+              : projectLinkManaged
+                ? "replace"
+                : "add";
           return reply({
             baseRevision: 0,
             blockers: [],
             changes: [
               {
-                candidateId: "catalog-candidate",
-                kind: "add",
+                candidateId,
+                kind,
                 linkName: "review",
               },
             ],
@@ -142,16 +170,27 @@ async function installProtectedLocalApi(
         }
         if (url.pathname === "/api/project/apply" && method === "POST") {
           events.applyRequests += 1;
+          const removing =
+            Array.isArray(json?.selections) &&
+            json.selections.some(
+              (item) =>
+                item !== null &&
+                typeof item === "object" &&
+                "candidateId" in item &&
+                item.candidateId === null,
+            );
           return reply({
             idempotent: false,
             snapshot: {
-              links: [
-                {
-                  linkName: "review",
-                  sourceState: "available",
-                  state: "managed",
-                },
-              ],
+              links: removing
+                ? []
+                : [
+                    {
+                      linkName: "review",
+                      sourceState: "available",
+                      state: "managed",
+                    },
+                  ],
               manifestRevision: 1,
               recoveryDiagnostics: [],
             },
@@ -338,6 +377,7 @@ async function installProtectedLocalApi(
     {
       markdownBody:
         options.markdownBody ?? "# Review\n\nSafe local Markdown content.",
+      projectLinkManaged: options.projectLinkManaged ?? false,
       sourceListAvailable: options.sourceListAvailable ?? true,
       sources: initialSources,
     },
@@ -510,7 +550,9 @@ test("browses searchable catalog candidates and safely renders an explicit skill
   await expect(page.getByText("Safe local Markdown content.")).toBeVisible();
   await page.getByLabel("搜索技能").fill("local project");
   await expect(page.getByRole("button", { name: /review/i })).toBeVisible();
-  await expect(page.getByText(/先显式暂存候选，再变更项目链接/)).toBeVisible();
+  await expect(
+    page.getByText("在列表中选择启用或移除，再在底部确认。"),
+  ).toBeVisible();
 });
 
 test("uses the styled status filter menu with keyboard and outside-click behavior", async ({
@@ -568,8 +610,11 @@ test("confirms ending a session with staged changes without applying them", asyn
   ]);
   await page.goto("/skills");
 
-  await page.getByRole("checkbox", { name: "暂存到项目" }).first().check();
-  await expect(page.getByText("已暂存 1 项项目变更")).toBeVisible();
+  await page
+    .getByLabel("技能目录")
+    .getByRole("button", { name: "启用", exact: true })
+    .click();
+  await expect(page.getByText("已选择 1 项技能")).toBeVisible();
   await page.getByRole("button", { name: "结束 SkillPin" }).click();
 
   const dialog = page.getByRole("dialog", { name: "结束 SkillPin 会话" });
@@ -586,7 +631,7 @@ test("confirms ending a session with staged changes without applying them", asyn
     });
 });
 
-test("stages a candidate, reviews the server plan, and confirms apply separately", async ({
+test("enables a staged skill through one confirmation dialog", async ({
   page,
 }) => {
   await installProtectedLocalApi(page, [
@@ -594,25 +639,53 @@ test("stages a candidate, reviews the server plan, and confirms apply separately
   ]);
   await page.goto("/skills");
 
-  await page.getByRole("checkbox", { name: "暂存到项目" }).first().check();
-  await expect(page.getByText("已暂存 1 项项目变更")).toBeVisible();
-  await page.getByRole("button", { name: "启用", exact: true }).click();
+  const catalog = page.getByLabel("技能目录");
+  const commandBar = page.getByLabel("项目变更操作");
+  await catalog.getByRole("button", { name: "启用", exact: true }).click();
+  await expect(commandBar.getByText("已选择 1 项技能")).toBeVisible();
+  await commandBar.getByRole("button", { name: "启用", exact: true }).click();
 
-  const review = page.getByRole("dialog", { name: "审查项目变更" });
-  await expect(review).toBeVisible();
-  await expect(review.getByText("add: review")).toBeVisible();
-  await expect(page.getByRole("dialog", { name: "确认项目变更" })).toHaveCount(
-    0,
-  );
-  await review.getByRole("button", { name: "启用", exact: true }).click();
-
-  const confirm = page.getByRole("dialog", { name: "确认项目变更" });
+  const confirm = page.getByRole("dialog", { name: "确认启用" });
   await expect(confirm).toBeVisible();
   await expect(
-    confirm.getByText(/将 1 项已审查变更应用到当前项目/),
+    confirm.getByText("将启用 1 个技能。确认后会立即修改当前项目。"),
   ).toBeVisible();
+  await expect(page.getByRole("dialog", { name: "审查项目变更" })).toHaveCount(
+    0,
+  );
   await confirm.getByRole("button", { name: "启用", exact: true }).click();
 
   await expect(confirm).toHaveCount(0);
-  await expect(page.getByText("已暂存 1 项项目变更")).toHaveCount(0);
+  await expect(commandBar.getByText("已选择 1 项技能")).toHaveCount(0);
+});
+
+test("removes an enabled skill through one confirmation dialog", async ({
+  page,
+}) => {
+  await installProtectedLocalApi(
+    page,
+    [source("source-catalog", "Personal", "/Users/example/skills")],
+    { projectLinkManaged: true },
+  );
+  await page.goto("/skills");
+
+  const catalog = page.getByLabel("技能目录");
+  const commandBar = page.getByLabel("项目变更操作");
+  await expect(catalog.getByText("已启用")).toBeVisible();
+  await catalog.getByRole("button", { name: "移除", exact: true }).click();
+  await expect(commandBar.getByText("已选择 1 项技能")).toBeVisible();
+  await commandBar.getByRole("button", { name: "移除", exact: true }).click();
+
+  const confirm = page.getByRole("dialog", { name: "确认移除" });
+  await expect(confirm).toBeVisible();
+  await expect(
+    confirm.getByText("将移除 1 个技能。确认后会立即修改当前项目。"),
+  ).toBeVisible();
+  await expect(page.getByRole("dialog", { name: "审查项目变更" })).toHaveCount(
+    0,
+  );
+  await confirm.getByRole("button", { name: "移除", exact: true }).click();
+
+  await expect(confirm).toHaveCount(0);
+  await expect(commandBar.getByText("已选择 1 项技能")).toHaveCount(0);
 });

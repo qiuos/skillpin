@@ -120,6 +120,34 @@ function groupIsAbnormal(group: LocalCatalogGroup): boolean {
   );
 }
 
+function changeSummary(changes: LocalProjectPlanResponse["changes"]): string {
+  const added = changes.filter((change) => change.kind === "add").length;
+  const removed = changes.filter((change) => change.kind === "remove").length;
+  const replaced = changes.filter((change) => change.kind === "replace").length;
+  const parts = [
+    added === 0 ? null : `启用 ${added} 个技能`,
+    removed === 0 ? null : `移除 ${removed} 个技能`,
+    replaced === 0 ? null : `更新 ${replaced} 个技能`,
+  ];
+
+  return parts.filter((part): part is string => part !== null).join("，");
+}
+
+function changeActionLabel(
+  changes: LocalProjectPlanResponse["changes"],
+): string {
+  if (
+    changes.length > 0 &&
+    changes.every((change) => change.kind === "remove")
+  ) {
+    return "移除";
+  }
+  if (changes.length > 0 && changes.every((change) => change.kind === "add")) {
+    return "启用";
+  }
+  return "确认变更";
+}
+
 export function SkillsWorkbenchPage() {
   const client = useLocalApiClient();
   const { sources } = useSources();
@@ -141,7 +169,6 @@ export function SkillsWorkbenchPage() {
   const [staged, setStaged] = useState<Record<string, string | null>>({});
   const [plan, setPlan] = useState<LocalProjectPlanResponse | null>(null);
   const [projectError, setProjectError] = useState<string | null>(null);
-  const [reviewOpen, setReviewOpen] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [applying, setApplying] = useState(false);
   const listRef = useRef<HTMLDivElement>(null);
@@ -224,7 +251,7 @@ export function SkillsWorkbenchPage() {
 
   const rowVirtualizer = useVirtualizer({
     count: filteredGroups.length,
-    estimateSize: () => 64,
+    estimateSize: () => 92,
     getScrollElement: () => listRef.current,
     overscan: 8,
     useFlushSync: false,
@@ -306,13 +333,25 @@ export function SkillsWorkbenchPage() {
     setPlan(null);
   };
 
-  const reviewChanges = () => {
+  const confirmChanges = () => {
     setProjectError(null);
     void client
       .projectPlan(selections())
       .then((next) => {
+        if (next.blockers.length > 0) {
+          setPlan(null);
+          setProjectError(
+            next.blockers.map((blocker) => blocker.message).join(" "),
+          );
+          return;
+        }
+        if (next.changes.length === 0) {
+          setPlan(null);
+          setProjectError("没有需要应用的变更。");
+          return;
+        }
         setPlan(next);
-        setReviewOpen(true);
+        setConfirmOpen(true);
       })
       .catch((reason: unknown) =>
         setProjectError(projectErrorMessage(reason, "无法生成变更计划。")),
@@ -334,7 +373,6 @@ export function SkillsWorkbenchPage() {
         setStaged({});
         setPlan(null);
         setConfirmOpen(false);
-        setReviewOpen(false);
       })
       .catch((reason: unknown) => {
         setProjectError(projectErrorMessage(reason, "无法应用变更。"));
@@ -363,11 +401,7 @@ export function SkillsWorkbenchPage() {
     setSelectedCandidateId(group.candidates[0]?.id ?? null);
   };
 
-  const toggleStaged = (
-    group: LocalCatalogGroup,
-    enabled: boolean,
-    checked: boolean,
-  ) => {
+  const toggleStaged = (group: LocalCatalogGroup, enabled: boolean) => {
     if (Object.hasOwn(staged, group.linkName)) {
       unstage(group.linkName);
       return;
@@ -377,7 +411,7 @@ export function SkillsWorkbenchPage() {
       return;
     }
     const candidate = group.candidates[0];
-    if (checked && candidate !== undefined) stageCandidate(candidate);
+    if (candidate !== undefined) stageCandidate(candidate);
   };
 
   if (isLoading && groups.length === 0) {
@@ -396,6 +430,17 @@ export function SkillsWorkbenchPage() {
   }
 
   const pendingCount = Object.keys(staged).length;
+  const stagedCandidateIds = Object.values(staged);
+  const stagedActionLabel =
+    pendingCount === 0
+      ? "启用"
+      : stagedCandidateIds.every((candidateId) => candidateId === null)
+        ? "移除"
+        : stagedCandidateIds.every((candidateId) => candidateId !== null)
+          ? "启用"
+          : "确认变更";
+  const confirmationActionLabel = changeActionLabel(plan?.changes ?? []);
+  const confirmationSummary = changeSummary(plan?.changes ?? []);
 
   const detailPane = (
     <aside
@@ -419,11 +464,13 @@ export function SkillsWorkbenchPage() {
             <p className="muted-copy">来源 {detail.source.displayName}</p>
           </header>
           {selectedGroup === null || selectedGroup.candidates.length < 2 ? (
-            <p className="muted-copy">先显式暂存候选，再变更项目链接。</p>
+            <p className="muted-copy">在列表中选择启用或移除，再在底部确认。</p>
           ) : (
             <div className="candidate-list" role="list">
               <p className="candidate-list__heading">可用来源</p>
-              <p className="muted-copy">先显式暂存候选，再变更项目链接。</p>
+              <p className="muted-copy">
+                在列表中选择启用或移除，再在底部确认。
+              </p>
               {selectedGroup.candidates.map((candidate) => (
                 <button
                   className={`candidate-row${candidate.id === selectedCandidate?.id ? " candidate-row--active" : ""}`}
@@ -577,12 +624,14 @@ export function SkillsWorkbenchPage() {
                     group.conflictKey === selectedGroup?.conflictKey;
                   const enabled = groupIsEnabled(group, project);
                   const pending = Object.hasOwn(staged, group.linkName);
-                  const checked = pending
-                    ? staged[group.linkName] !== null
-                    : enabled && group.candidates[0] !== undefined;
+                  const actionLabel = pending
+                    ? "撤销选择"
+                    : enabled
+                      ? "移除"
+                      : "启用";
                   return (
                     <div
-                      className={`skill-row${active ? " skill-row--active" : ""}${checked ? " skill-row--checked" : ""}`}
+                      className={`skill-row${active ? " skill-row--active" : ""}${pending ? " skill-row--checked" : ""}`}
                       key={group.conflictKey}
                       style={{
                         height: `${item.size}px`,
@@ -590,15 +639,6 @@ export function SkillsWorkbenchPage() {
                       }}
                     >
                       <span aria-hidden="true" className="skill-row__cursor" />
-                      <input
-                        aria-label="暂存到项目"
-                        checked={checked}
-                        className="skill-row__check"
-                        onChange={(event) =>
-                          toggleStaged(group, enabled, event.target.checked)
-                        }
-                        type="checkbox"
-                      />
                       <button
                         className="skill-row__select"
                         onClick={() => selectGroup(group)}
@@ -611,10 +651,25 @@ export function SkillsWorkbenchPage() {
                           {group.candidates[0]?.summary}
                         </span>
                       </button>
-                      <span className="skill-row__meta">
-                        {enabled ? "已启用" : "未启用"}
-                        {pending ? " · 待应用" : ""}
-                      </span>
+                      <div className="skill-row__actions">
+                        <span className="skill-row__meta">
+                          {pending ? "待确认" : enabled ? "已启用" : "未启用"}
+                        </span>
+                        <Button
+                          aria-pressed={pending}
+                          className="skill-row__action"
+                          onClick={() => toggleStaged(group, enabled)}
+                          variant={
+                            pending
+                              ? "secondary"
+                              : enabled
+                                ? "danger"
+                                : "primary"
+                          }
+                        >
+                          {actionLabel}
+                        </Button>
+                      </div>
                     </div>
                   );
                 })}
@@ -634,11 +689,13 @@ export function SkillsWorkbenchPage() {
           需要手动恢复检查：共 {project.recoveryDiagnostics.length} 个事务产物。
         </p>
       ) : null}
-      <footer className="command-bar ot-window" role="status">
+      <footer
+        aria-label="项目变更操作"
+        className="command-bar ot-window"
+        role="status"
+      >
         <span className="command-bar__count">
-          {pendingCount === 0
-            ? "已选择 0 项"
-            : `已暂存 ${pendingCount} 项项目变更`}
+          {pendingCount === 0 ? "已选择 0 项" : `已选择 ${pendingCount} 项技能`}
         </span>
         <div className="command-bar__actions">
           <Button
@@ -653,52 +710,18 @@ export function SkillsWorkbenchPage() {
           </Button>
           <Button
             disabled={pendingCount === 0}
-            onClick={reviewChanges}
+            onClick={confirmChanges}
             variant="primary"
           >
-            启用
+            {stagedActionLabel}
           </Button>
         </div>
       </footer>
       <Dialog
-        description="在对文件系统做任何改动前，先审查服务端计算的项目计划。"
-        onClose={() => setReviewOpen(false)}
-        open={reviewOpen}
-        title="审查项目变更"
-      >
-        <div className="project-review">
-          {plan?.blockers.length ? (
-            <p className="form-message form-message--error">
-              {plan.blockers.map((blocker) => blocker.message).join(" ")}
-            </p>
-          ) : (
-            <p>将对本项目应用 {plan?.changes.length ?? 0} 项变更。</p>
-          )}
-          <ul>
-            {plan?.changes.map((change) => (
-              <li key={change.linkName}>
-                {change.kind}: {change.linkName}
-              </li>
-            ))}
-          </ul>
-          <div className="dialog__actions">
-            <Button onClick={() => setReviewOpen(false)} variant="secondary">
-              继续编辑
-            </Button>
-            <Button
-              disabled={plan === null || plan.blockers.length > 0}
-              onClick={() => setConfirmOpen(true)}
-            >
-              启用
-            </Button>
-          </div>
-        </div>
-      </Dialog>
-      <Dialog
-        description={`将 ${plan?.changes.length ?? 0} 项已审查变更应用到当前项目。此过程使用 SkillPin 的事务链接流程。`}
+        description={`将${confirmationSummary}。确认后会立即修改当前项目。`}
         onClose={() => setConfirmOpen(false)}
         open={confirmOpen}
-        title="确认项目变更"
+        title={`确认${confirmationActionLabel}`}
       >
         <div className="dialog__actions">
           <Button
@@ -709,7 +732,9 @@ export function SkillsWorkbenchPage() {
             取消
           </Button>
           <Button disabled={applying} onClick={applyChanges}>
-            {applying ? "启用中…" : "启用"}
+            {applying
+              ? `${confirmationActionLabel}中…`
+              : confirmationActionLabel}
           </Button>
         </div>
       </Dialog>
