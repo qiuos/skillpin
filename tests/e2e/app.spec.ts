@@ -503,6 +503,24 @@ test("manages existing sources with search, enablement, rescan, and guarded remo
   await page.goto("/sources");
 
   await expect(page.getByRole("heading", { name: "技能源" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "技能源" })).toHaveCSS(
+    "font-size",
+    "28px",
+  );
+  await expect(page.getByRole("heading", { name: "Shared skills" })).toHaveCSS(
+    "font-size",
+    "24px",
+  );
+  await expect(page.getByLabel("搜索技能源")).toHaveCSS("font-size", "24px");
+  await expect(page.getByLabel("搜索技能源")).toHaveCSS("min-height", "56px");
+  await expect(page.getByRole("button", { name: "禁用" })).toHaveCSS(
+    "font-size",
+    "24px",
+  );
+  await expect(page.getByRole("button", { name: "禁用" })).toHaveCSS(
+    "min-height",
+    "56px",
+  );
   await page.getByLabel("搜索技能源").fill("shared");
   await expect(
     page.getByRole("heading", { name: "Shared skills" }),
@@ -578,7 +596,7 @@ test("browses searchable catalog candidates and safely renders an explicit skill
   expect(detailBox?.height).toBeGreaterThan(400);
 });
 
-test("uses fixed large skills-workbench typography and safely wraps wide rows", async ({
+test("uses the approved skills-workbench typography and safely wraps wide rows", async ({
   page,
 }) => {
   await installProtectedLocalApi(
@@ -596,19 +614,29 @@ test("uses fixed large skills-workbench typography and safely wraps wide rows", 
   await expect(
     page.getByRole("button", { name: "文字调试（临时）" }),
   ).toHaveCount(0);
-  await expect(page.locator(".skill-row__name")).toHaveCSS("font-size", "32px");
+  await expect(page.locator(".skill-row__name")).toHaveCSS("font-size", "28px");
   await expect(page.locator(".skill-row__summary")).toHaveCSS(
     "font-size",
     "24px",
   );
   await expect(page.getByRole("heading", { name: "Review skill" })).toHaveCSS(
     "font-size",
-    "32px",
+    "28px",
   );
+  await expect(
+    page.getByRole("button", { name: "技能", exact: true }),
+  ).toHaveCSS("font-size", "24px");
+  await expect(
+    page.getByRole("button", { name: "技能", exact: true }),
+  ).toHaveCSS("min-height", "52px");
   await expect(page.locator(".markdown-detail")).toHaveCSS("font-size", "24px");
   await expect(page.locator(".skill-row__action")).toHaveCSS(
     "font-size",
     "24px",
+  );
+  await expect(page.locator(".skill-row__action")).toHaveCSS(
+    "min-height",
+    "56px",
   );
   await expect(page.getByLabel("搜索技能")).toHaveCSS("font-size", "24px");
 

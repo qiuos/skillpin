@@ -42,7 +42,7 @@ useSources(): {
 - With a successfully loaded empty source list, render the onboarding work surface and hide workspace navigation. With an unresolved or failed list, keep the current route and render a stable source error with a retry action instead. The first successful add navigates to `/sources`.
 - The add/edit dialog trims a nonblank display name and validates its path through the server. Use the returned canonical path for save; server errors show their stable message rather than browser-side filesystem guesses.
 - The directory browser may show only entrypoint labels and directory metadata. It preserves Unicode paths and sends pasted paths back through the typed API.
-- Source rows always show path and enabled state, mark duplicate display names, show health/count/warnings/failure, and keep edit/rescan available for a failed source.
+- Source rows always show path and enabled state, mark duplicate display names, show health/count/warnings/failure, and keep edit/rescan available for a failed source. The source page title is `28px`; source names, paths, status, toolbar text, and row actions are `24px` with `56px` action/input controls. The source table must flex and scroll independently so these readable rows remain accessible in the fixed-height window.
 - All source mutations obey P6 `isReadOnly`: controls are disabled and provider methods reject stable `SESSION_READ_ONLY` while the protected session is not online. Preserve existing rows during reconnect.
 - A removal first asks the server for impact. Show the managed-link count and require a second `confirmProjectImpact: true` request; UI copy must state that source directories, project links, and manifest are retained.
 
@@ -90,7 +90,7 @@ The local service is the source of truth. Keep feature state in memory and refre
 ## 6. Tests Required
 
 - `local-api.test.ts` must cover authenticated source/directory request paths, percent-encoded source ids and directory paths, typed source summaries, removal impact decoding, and malformed source payload rejection.
-- Playwright must mock only API endpoint requests (never broad `/api/**` module globs), then cover first-run onboarding, directory selection with Unicode path, source creation scan outcome, search/enable/rescan/remove actions, and guarded removal confirmation.
+- Playwright must mock only API endpoint requests (never broad `/api/**` module globs), then cover first-run onboarding, directory selection with Unicode path, source creation scan outcome, search/enable/rescan/remove actions, guarded removal confirmation, and the approved 28px/24px source-page typography.
 - Retain P6 theme, dialog-focus, connection, and credential tests; P7 must not weaken their accessibility or private-credential guarantees.
 
 - Playwright must cover an unavailable initial `GET /api/sources`: `/skills` or `/sources` stays on its route, onboarding is absent, a retry can recover source navigation, and the “技能 / 技能源” tabs then appear.

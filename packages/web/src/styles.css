@@ -63,6 +63,10 @@
   --shadow-md: 6px 7px 0 rgba(16, 12, 8, 0.35);
   --shadow-shell: 8px 10px 0 rgba(16, 12, 8, 0.35);
   --focus-ring: 0 0 0 2px var(--gold-pale), 0 0 0 4px var(--gold-deep);
+  --scrollbar-track: var(--parchment-2);
+  --scrollbar-thumb: var(--gold-deep);
+  --scrollbar-thumb-hover: var(--gold-dark);
+  --scrollbar-page-track: var(--dusk-2);
   --transition: 160ms ease;
 }
 
@@ -141,6 +145,77 @@ h2 {
   font-size: 22px;
   font-weight: 700;
   letter-spacing: 0.02em;
+}
+
+/* ============ Scrollbars ============ */
+:where(
+  .skills-list,
+  .candidate-list,
+  .markdown-detail,
+  .markdown-detail pre,
+  .dialog,
+  .drawer,
+  .directory-browser__entries
+) {
+  scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+  scrollbar-width: thin;
+}
+:where(
+  .skills-list,
+  .candidate-list,
+  .markdown-detail,
+  .markdown-detail pre,
+  .dialog,
+  .drawer,
+  .directory-browser__entries
+)::-webkit-scrollbar {
+  width: 14px;
+  height: 14px;
+}
+:where(
+  .skills-list,
+  .candidate-list,
+  .markdown-detail,
+  .markdown-detail pre,
+  .dialog,
+  .drawer,
+  .directory-browser__entries
+)::-webkit-scrollbar-track,
+:where(
+  .skills-list,
+  .candidate-list,
+  .markdown-detail,
+  .markdown-detail pre,
+  .dialog,
+  .drawer,
+  .directory-browser__entries
+)::-webkit-scrollbar-corner {
+  background: var(--scrollbar-track);
+}
+:where(
+  .skills-list,
+  .candidate-list,
+  .markdown-detail,
+  .markdown-detail pre,
+  .dialog,
+  .drawer,
+  .directory-browser__entries
+)::-webkit-scrollbar-thumb {
+  border: 3px solid var(--scrollbar-track);
+  background: var(--scrollbar-thumb);
+  background-clip: padding-box;
+  box-shadow: inset 0 0 0 1px var(--gold-pale);
+}
+:where(
+    .skills-list,
+    .candidate-list,
+    .markdown-detail,
+    .markdown-detail pre,
+    .dialog,
+    .drawer,
+    .directory-browser__entries
+  )::-webkit-scrollbar-thumb:hover {
+  background-color: var(--scrollbar-thumb-hover);
 }
 
 /* ============ Octopath window frame ============ */
@@ -257,11 +332,12 @@ h2 {
   border-left: 1px solid var(--gold);
 }
 .identity-nav__item {
-  min-height: 40px;
-  padding: 0 14px;
+  min-height: 52px;
+  padding: 0 16px;
   border: 1px solid transparent;
   background: transparent;
   color: var(--ink-soft);
+  font-size: 24px;
   font-weight: 700;
 }
 .identity-nav__item:hover {
@@ -577,10 +653,14 @@ h2 {
 
 /* ============ Source page ============ */
 .source-list-page {
+  --source-title-size: 28px;
+  --source-copy-size: 24px;
+  --source-control-height: 56px;
   display: flex;
   flex: 1;
   flex-direction: column;
   min-height: 0;
+  font-size: var(--source-copy-size);
 }
 .main-content--sources .source-list-page {
   height: 100%;
@@ -590,7 +670,9 @@ h2 {
 }
 .main-content--sources .source-table {
   flex: 1;
+  min-height: 0;
   align-content: start;
+  overflow: auto;
 }
 .source-panel__head {
   display: flex;
@@ -601,11 +683,11 @@ h2 {
   border-bottom: 1px solid var(--gold);
 }
 .source-panel__head h1 {
-  font-size: 22px;
+  font-size: var(--source-title-size);
 }
 .source-panel__count {
   color: var(--ink-soft);
-  font-size: var(--font-small);
+  font-size: var(--source-copy-size);
   font-weight: 700;
   white-space: nowrap;
 }
@@ -624,6 +706,14 @@ h2 {
   flex: 1;
   max-width: 520px;
 }
+.source-list-page .field__label,
+.source-list-page .text-input {
+  font-size: var(--source-copy-size);
+}
+.source-list-page .text-input,
+.source-list-page .button {
+  min-height: var(--source-control-height);
+}
 .source-table {
   display: grid;
   gap: 0;
@@ -632,20 +722,20 @@ h2 {
   display: grid;
   grid-template-columns: 1fr auto;
   gap: 12px;
-  padding: 0 4px 8px;
+  padding: 0 4px 12px;
   border-bottom: 1px solid var(--gold-pale);
   color: var(--gold-deep);
-  font-size: var(--font-small);
+  font-size: var(--source-copy-size);
   font-weight: 700;
   letter-spacing: 0.12em;
 }
 .source-row {
   display: grid;
   grid-template-columns: 1fr auto;
-  gap: 12px;
+  gap: 16px;
   align-items: center;
-  min-height: 58px;
-  padding: 10px 4px;
+  min-height: 144px;
+  padding: 16px 8px;
   border-bottom: 1px solid var(--gold-pale);
 }
 .source-row:last-child {
@@ -667,7 +757,7 @@ h2 {
 }
 .source-row h2 {
   margin: 0;
-  font-size: var(--font-ui);
+  font-size: var(--source-copy-size);
 }
 .source-row code {
   display: block;
@@ -675,7 +765,14 @@ h2 {
   text-overflow: ellipsis;
   white-space: nowrap;
   color: var(--ink-soft);
-  font-size: var(--font-small);
+  font-size: var(--source-copy-size);
+}
+.source-list-page .scan-progress,
+.source-list-page .badge {
+  font-size: var(--source-copy-size);
+}
+.source-list-page .badge {
+  padding: 5px 9px;
 }
 .source-row__actions {
   display: flex;
@@ -684,16 +781,22 @@ h2 {
   gap: 7px;
 }
 .source-row__actions .button {
-  min-height: 40px;
-  padding: 0 10px;
-  font-size: var(--font-small);
+  min-height: var(--source-control-height);
+  padding: 0 14px;
+  font-size: var(--source-copy-size);
+}
+.source-list-page .empty-state h2 {
+  font-size: var(--source-title-size);
+}
+.source-list-page .empty-state p {
+  font-size: var(--source-copy-size);
 }
 
 /* ============ Skills workbench ============ */
 .skills-workbench {
-  --skill-title-size: 32px;
+  --skill-title-size: 28px;
   --skill-workbench-copy-size: 24px;
-  --skill-workbench-control-height: 64px;
+  --skill-workbench-control-height: 56px;
   display: flex;
   flex: 1;
   flex-direction: column;
@@ -922,8 +1025,8 @@ h2 {
   align-items: stretch;
   gap: 16px;
   width: 100%;
-  min-height: 224px;
-  padding: 20px 24px 20px 16px;
+  min-height: 200px;
+  padding: 16px 20px 16px 14px;
 }
 .skill-row:hover {
   background: rgba(198, 161, 90, 0.12);
@@ -955,7 +1058,7 @@ h2 {
 .skill-row__select {
   display: grid;
   align-content: center;
-  gap: 10px;
+  gap: 8px;
   min-width: 0;
   padding: 0;
   border: 0;
@@ -1359,9 +1462,38 @@ h2 {
   .identity-bar {
     flex-wrap: wrap;
   }
+  .identity-bar__brand {
+    flex-wrap: wrap;
+  }
+  .identity-nav {
+    width: 100%;
+    padding-left: 0;
+    border-left: 0;
+  }
   .identity-bar__actions {
     width: 100%;
     justify-content: space-between;
+  }
+  :where(html, body, .application) {
+    scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-page-track);
+    scrollbar-width: thin;
+  }
+  :where(html, body, .application)::-webkit-scrollbar {
+    width: 14px;
+    height: 14px;
+  }
+  :where(html, body, .application)::-webkit-scrollbar-track,
+  :where(html, body, .application)::-webkit-scrollbar-corner {
+    background: var(--scrollbar-page-track);
+  }
+  :where(html, body, .application)::-webkit-scrollbar-thumb {
+    border: 3px solid var(--scrollbar-page-track);
+    background: var(--scrollbar-thumb);
+    background-clip: padding-box;
+    box-shadow: inset 0 0 0 1px var(--gold-pale);
+  }
+  :where(html, body, .application)::-webkit-scrollbar-thumb:hover {
+    background-color: var(--scrollbar-thumb-hover);
   }
   .source-table__head {
     display: none;
