@@ -341,3 +341,36 @@ Fixed same-origin Chromium source GET requests that omit Origin, added source re
 ### Next Steps
 
 - None - task complete
+
+
+## Session 26: 发布 SkillPin 0.1.8
+
+**Date**: 2026-08-27
+**Task**: 发布 SkillPin 0.1.8
+**Branch**: `main`
+
+### Summary
+
+将界面可读性与工作台布局优化作为 SkillPin 0.1.8 发布：完成完整本地发布校验，推送 main 与 v0.1.8，并确认 GitHub Release 工作流成功且已上传 skillpin-0.1.8.tgz；未执行 npm publish。
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `6620d34` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
