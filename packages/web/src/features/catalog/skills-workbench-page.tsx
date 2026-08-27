@@ -28,6 +28,24 @@ import { useCatalog } from "./catalog-context.js";
 
 type StatusFilter = "all" | "enabled" | "disabled" | "pending" | "abnormal";
 
+const statusFilterOptions: readonly {
+  readonly label: string;
+  readonly value: StatusFilter;
+}[] = [
+  { label: "全部状态", value: "all" },
+  { label: "已启用", value: "enabled" },
+  { label: "未启用", value: "disabled" },
+  { label: "待变更", value: "pending" },
+  { label: "异常", value: "abnormal" },
+];
+
+function statusFilterLabel(value: StatusFilter): string {
+  return (
+    statusFilterOptions.find((option) => option.value === value)?.label ??
+    "全部状态"
+  );
+}
+
 function safeHref(href: string | undefined): string | undefined {
   if (href === undefined) return undefined;
   if (
@@ -110,6 +128,7 @@ export function SkillsWorkbenchPage() {
   const [selectedSourceIds, setSelectedSourceIds] =
     useState<ReadonlySet<string> | null>(null);
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
+  const [statusFilterOpen, setStatusFilterOpen] = useState(false);
   const [selectedGroupKey, setSelectedGroupKey] = useState<string | null>(null);
   const [selectedCandidateId, setSelectedCandidateId] = useState<string | null>(
     null,
@@ -126,11 +145,34 @@ export function SkillsWorkbenchPage() {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [applying, setApplying] = useState(false);
   const listRef = useRef<HTMLDivElement>(null);
+  const statusFilterRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const timer = window.setTimeout(() => void search(query), 160);
     return () => window.clearTimeout(timer);
   }, [query, search]);
+
+  useEffect(() => {
+    if (!statusFilterOpen) {
+      return;
+    }
+    const closeWhenOutside = (event: PointerEvent) => {
+      if (!statusFilterRef.current?.contains(event.target as Node)) {
+        setStatusFilterOpen(false);
+      }
+    };
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setStatusFilterOpen(false);
+      }
+    };
+    document.addEventListener("pointerdown", closeWhenOutside);
+    document.addEventListener("keydown", closeOnEscape);
+    return () => {
+      document.removeEventListener("pointerdown", closeWhenOutside);
+      document.removeEventListener("keydown", closeOnEscape);
+    };
+  }, [statusFilterOpen]);
 
   useEffect(() => {
     let cancelled = false;
@@ -438,20 +480,49 @@ export function SkillsWorkbenchPage() {
               type="search"
               value={query}
             />
-            <select
-              aria-label="筛选状态"
-              className="catalog-tools__status"
-              onChange={(event) =>
-                setStatusFilter(event.target.value as StatusFilter)
-              }
-              value={statusFilter}
-            >
-              <option value="all">全部状态</option>
-              <option value="enabled">已启用</option>
-              <option value="disabled">未启用</option>
-              <option value="pending">待变更</option>
-              <option value="abnormal">异常</option>
-            </select>
+            <div className="status-filter" ref={statusFilterRef}>
+              <button
+                aria-expanded={statusFilterOpen}
+                aria-haspopup="listbox"
+                aria-label={`筛选状态：${statusFilterLabel(statusFilter)}`}
+                className="status-filter__trigger"
+                onClick={() => setStatusFilterOpen((open) => !open)}
+                type="button"
+              >
+                <span className="status-filter__label">状态</span>
+                <strong>{statusFilterLabel(statusFilter)}</strong>
+                <span aria-hidden="true" className="status-filter__chevron">
+                  ▾
+                </span>
+              </button>
+              {statusFilterOpen ? (
+                <div
+                  aria-label="筛选状态"
+                  className="status-filter__menu ot-window"
+                  role="listbox"
+                >
+                  {statusFilterOptions.map((option) => (
+                    <button
+                      aria-selected={statusFilter === option.value}
+                      className={`status-filter__option${
+                        statusFilter === option.value
+                          ? " status-filter__option--selected"
+                          : ""
+                      }`}
+                      key={option.value}
+                      onClick={() => {
+                        setStatusFilter(option.value);
+                        setStatusFilterOpen(false);
+                      }}
+                      role="option"
+                      type="button"
+                    >
+                      {option.label}
+                    </button>
+                  ))}
+                </div>
+              ) : null}
+            </div>
             <div className="catalog-tools__sources">
               <button
                 className={`source-chip${activeSourceIds === null ? " source-chip--active" : ""}`}
@@ -585,7 +656,7 @@ export function SkillsWorkbenchPage() {
             onClick={reviewChanges}
             variant="primary"
           >
-            审查并应用变更
+            启用
           </Button>
         </div>
       </footer>
@@ -618,7 +689,7 @@ export function SkillsWorkbenchPage() {
               disabled={plan === null || plan.blockers.length > 0}
               onClick={() => setConfirmOpen(true)}
             >
-              应用变更
+              启用
             </Button>
           </div>
         </div>
@@ -638,7 +709,7 @@ export function SkillsWorkbenchPage() {
             取消
           </Button>
           <Button disabled={applying} onClick={applyChanges}>
-            {applying ? "应用中…" : "应用"}
+            {applying ? "启用中…" : "启用"}
           </Button>
         </div>
       </Dialog>

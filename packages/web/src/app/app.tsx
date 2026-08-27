@@ -209,7 +209,9 @@ function AppShell() {
             className={
               hasSources && route === "/skills"
                 ? "main-content main-content--workbench"
-                : "main-content"
+                : hasSources && route === "/sources"
+                  ? "main-content main-content--sources"
+                  : "main-content"
             }
             id="main-content"
             tabIndex={-1}

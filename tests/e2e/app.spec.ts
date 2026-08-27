@@ -513,6 +513,33 @@ test("browses searchable catalog candidates and safely renders an explicit skill
   await expect(page.getByText(/先显式暂存候选，再变更项目链接/)).toBeVisible();
 });
 
+test("uses the styled status filter menu with keyboard and outside-click behavior", async ({
+  page,
+}) => {
+  await installProtectedLocalApi(page, [
+    source("source-catalog", "Personal", "/Users/example/skills"),
+  ]);
+  await page.goto("/skills");
+
+  const filter = page.getByRole("button", {
+    name: "筛选状态：全部状态",
+  });
+  await filter.focus();
+  await filter.press("Enter");
+  const menu = page.getByRole("listbox", { name: "筛选状态" });
+  await expect(menu).toBeVisible();
+  await page.getByRole("option", { name: "未启用" }).press("Enter");
+  await expect(menu).toHaveCount(0);
+  await expect(
+    page.getByRole("button", { name: "筛选状态：未启用" }),
+  ).toBeVisible();
+
+  await page.getByRole("button", { name: "筛选状态：未启用" }).click();
+  await expect(menu).toBeVisible();
+  await page.getByLabel("搜索技能").click();
+  await expect(menu).toHaveCount(0);
+});
+
 test("does not execute untrusted Markdown from a skill detail", async ({
   page,
 }) => {
@@ -569,7 +596,7 @@ test("stages a candidate, reviews the server plan, and confirms apply separately
 
   await page.getByRole("checkbox", { name: "暂存到项目" }).first().check();
   await expect(page.getByText("已暂存 1 项项目变更")).toBeVisible();
-  await page.getByRole("button", { name: "审查并应用变更" }).click();
+  await page.getByRole("button", { name: "启用", exact: true }).click();
 
   const review = page.getByRole("dialog", { name: "审查项目变更" });
   await expect(review).toBeVisible();
@@ -577,14 +604,14 @@ test("stages a candidate, reviews the server plan, and confirms apply separately
   await expect(page.getByRole("dialog", { name: "确认项目变更" })).toHaveCount(
     0,
   );
-  await review.getByRole("button", { name: "应用变更" }).click();
+  await review.getByRole("button", { name: "启用", exact: true }).click();
 
   const confirm = page.getByRole("dialog", { name: "确认项目变更" });
   await expect(confirm).toBeVisible();
   await expect(
     confirm.getByText(/将 1 项已审查变更应用到当前项目/),
   ).toBeVisible();
-  await confirm.getByRole("button", { name: "应用", exact: true }).click();
+  await confirm.getByRole("button", { name: "启用", exact: true }).click();
 
   await expect(confirm).toHaveCount(0);
   await expect(page.getByText("已暂存 1 项项目变更")).toHaveCount(0);
