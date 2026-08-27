@@ -8,7 +8,7 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-1.md`
-- **Total Sessions**: 23
+- **Total Sessions**: 24
 - **Last Active**: 2026-08-27
 <!-- @@@/auto:current-status -->
 
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-1.md` | ~277 | Active |
+| `journal-1.md` | ~310 | Active |
 <!-- @@@/auto:active-documents -->
 
 ---
@@ -29,6 +29,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 24 | 2026-08-27 | 发布 SkillPin v0.1.7 | `d4e1958` | `main` |
 | 23 | 2026-08-27 | Fix skill source reload and typography | `014ef23` | `main` |
 | 22 | 2026-08-27 | 发布 SkillPin v0.1.6 | `ded6fca`, `9dd5aa1` | `main` |
 | 21 | 2026-08-27 | 修复技能源配置与顶部导航 | `7c7aa72492ff73a041fdb56616c7a862771cf807` | `main` |
