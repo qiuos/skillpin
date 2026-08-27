@@ -158,6 +158,25 @@ function AppShell() {
           </span>
           <span>SkillPin</span>
         </div>
+        {hasSources ? (
+          <nav aria-label="SkillPin 功能分区" className="top-nav">
+            {workspaceRoutes.map((item) => (
+              <button
+                aria-current={route === item ? "page" : undefined}
+                className={
+                  route === item
+                    ? "top-nav__item top-nav__item--active"
+                    : "top-nav__item"
+                }
+                key={item}
+                onClick={() => navigate(item)}
+                type="button"
+              >
+                {routeTitleMap[item]}
+              </button>
+            ))}
+          </nav>
+        ) : null}
         <div className="project-identity">
           <span className="project-identity__name">本地项目</span>
           <code title={projectPath}>{projectPath}</code>
@@ -174,11 +193,9 @@ function AppShell() {
               </Badge>
             </span>
           </Tooltip>
-          {!hasSources ? (
-            <Button onClick={() => setShowDetails(true)} variant="tertiary">
-              会话详情
-            </Button>
-          ) : null}
+          <Button onClick={() => setShowDetails(true)} variant="tertiary">
+            会话详情
+          </Button>
           <Button
             disabled={connection === "exiting"}
             onClick={() => setShowEndDialog(true)}
@@ -191,33 +208,6 @@ function AppShell() {
       <div
         className={hasSources ? "workspace" : "workspace workspace--onboarding"}
       >
-        {hasSources ? (
-          <nav aria-label="SkillPin 功能分区" className="side-nav">
-            <p className="side-nav__label">工作区</p>
-            {workspaceRoutes.map((item) => (
-              <button
-                aria-current={route === item ? "page" : undefined}
-                className={
-                  route === item
-                    ? "side-nav__item side-nav__item--active"
-                    : "side-nav__item"
-                }
-                key={item}
-                onClick={() => navigate(item)}
-                type="button"
-              >
-                {routeTitleMap[item]}
-              </button>
-            ))}
-            <Button
-              className="side-nav__details"
-              onClick={() => setShowDetails(true)}
-              variant="tertiary"
-            >
-              会话详情
-            </Button>
-          </nav>
-        ) : null}
         <main
           className={
             hasSources && route === "/skills"

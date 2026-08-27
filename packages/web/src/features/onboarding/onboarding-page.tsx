@@ -9,7 +9,6 @@ export function OnboardingPage({
 }) {
   return (
     <section className="onboarding-page">
-      <p className="eyebrow">配置本地技能源</p>
       <EmptyState
         action={
           <Button disabled={disabled} onClick={onAddSource} variant="primary">

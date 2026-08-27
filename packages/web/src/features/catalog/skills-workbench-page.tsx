@@ -584,8 +584,58 @@ export function SkillsWorkbenchPage() {
     </section>
   );
 
+  const totalCandidatesCount = groups.reduce(
+    (sum, group) => sum + group.candidates.length,
+    0,
+  );
+  const totalEnabledCount = groups.filter((group) =>
+    groupIsEnabled(group, project),
+  ).length;
+
   return (
     <section aria-label="技能工作台" className="skills-workbench">
+      <div className="skills-workbench__header">
+        <div className="page-heading">
+          <div>
+            <p className="eyebrow">安全的本地工作区</p>
+            <h1>技能</h1>
+          </div>
+        </div>
+        <div className="kpi-row">
+          <div className="kpi-card kpi-card--primary">
+            <div className="kpi-card__header">
+              <span className="kpi-card__label">技能</span>
+              <span aria-hidden="true" className="kpi-card__icon">
+                S
+              </span>
+            </div>
+            <div className="kpi-card__value">{totalCandidatesCount}</div>
+            <div className="kpi-card__subtext">
+              来自 {sources.length} 个本地技能源
+            </div>
+          </div>
+          <div className="kpi-card">
+            <div className="kpi-card__header">
+              <span className="kpi-card__label">技能源</span>
+              <span aria-hidden="true" className="kpi-card__icon">
+                D
+              </span>
+            </div>
+            <div className="kpi-card__value">{sources.length}</div>
+            <div className="kpi-card__subtext">已接入的受信任目录</div>
+          </div>
+          <div className="kpi-card">
+            <div className="kpi-card__header">
+              <span className="kpi-card__label">已链接</span>
+              <span aria-hidden="true" className="kpi-card__icon">
+                L
+              </span>
+            </div>
+            <div className="kpi-card__value">{totalEnabledCount}</div>
+            <div className="kpi-card__subtext">当前项目生效中的技能</div>
+          </div>
+        </div>
+      </div>
       <div className="skills-workbench__mobile-bar">
         <Button onClick={() => setFiltersOpen(true)} variant="secondary">
           筛选{filtersActive ? " · 已启用" : ""}
@@ -611,7 +661,7 @@ export function SkillsWorkbenchPage() {
           <div className="skills-workbench__toolbar">
             <div>
               <p className="eyebrow">会话技能目录</p>
-              <h1>技能目录</h1>
+              <h2>技能目录</h2>
             </div>
             <TextInput
               label="搜索技能"
