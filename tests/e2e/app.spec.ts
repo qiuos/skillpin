@@ -622,10 +622,10 @@ test("uses compact single-line catalog rows without crowding actions", async ({
   await expect(
     page.getByRole("button", { name: "文字调试（临时）" }),
   ).toHaveCount(0);
-  await expect(page.locator(".skill-row__name")).toHaveCSS("font-size", "18px");
+  await expect(page.locator(".skill-row__name")).toHaveCSS("font-size", "22px");
   await expect(page.locator(".skill-row__summary")).toHaveCSS(
     "font-size",
-    "16px",
+    "22px",
   );
   await expect(page.getByRole("heading", { name: "Review skill" })).toHaveCSS(
     "font-size",

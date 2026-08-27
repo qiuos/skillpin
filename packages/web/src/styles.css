@@ -854,6 +854,7 @@ h2 {
   --catalog-control-height: 44px;
   --catalog-name-size: 18px;
   --catalog-copy-size: 16px;
+  --catalog-row-text-size: 22px;
   display: flex;
   flex: 1;
   flex-direction: column;
@@ -1077,13 +1078,13 @@ h2 {
   white-space: nowrap;
 }
 .skill-row__name {
-  font-size: var(--catalog-name-size);
+  font-size: var(--catalog-row-text-size);
   font-weight: 700;
   line-height: 1.25;
 }
 .skill-row__summary {
   color: var(--ink-soft);
-  font-size: var(--catalog-copy-size);
+  font-size: var(--catalog-row-text-size);
   line-height: 1.3;
 }
 .skill-row__warning {
