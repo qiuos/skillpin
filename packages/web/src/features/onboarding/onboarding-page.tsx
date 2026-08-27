@@ -8,7 +8,7 @@ export function OnboardingPage({
   readonly onAddSource: () => void;
 }) {
   return (
-    <section className="onboarding-page">
+    <section className="onboarding-page ot-window">
       <EmptyState
         action={
           <Button disabled={disabled} onClick={onAddSource} variant="primary">

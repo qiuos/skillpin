@@ -71,10 +71,6 @@ function candidateLabel(candidate: LocalCatalogCandidate): string {
   return `${candidate.source.displayName} · ${candidate.relativePath}`;
 }
 
-async function copyText(value: string): Promise<void> {
-  await navigator.clipboard.writeText(value);
-}
-
 function projectErrorMessage(reason: unknown, fallback: string): string {
   if (!(reason instanceof LocalApiClientError)) {
     return reason instanceof Error ? reason.message : fallback;
@@ -114,8 +110,6 @@ export function SkillsWorkbenchPage() {
   const [selectedSourceIds, setSelectedSourceIds] =
     useState<ReadonlySet<string> | null>(null);
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
-  const [filtersOpen, setFiltersOpen] = useState(false);
-  const [detailOpen, setDetailOpen] = useState(false);
   const [selectedGroupKey, setSelectedGroupKey] = useState<string | null>(null);
   const [selectedCandidateId, setSelectedCandidateId] = useState<string | null>(
     null,
@@ -124,7 +118,6 @@ export function SkillsWorkbenchPage() {
     null,
   );
   const [detailError, setDetailError] = useState<string | null>(null);
-  const [copied, setCopied] = useState<string | null>(null);
   const [project, setProject] = useState<LocalProjectSnapshot | null>(null);
   const [staged, setStaged] = useState<Record<string, string | null>>({});
   const [plan, setPlan] = useState<LocalProjectPlanResponse | null>(null);
@@ -189,7 +182,7 @@ export function SkillsWorkbenchPage() {
 
   const rowVirtualizer = useVirtualizer({
     count: filteredGroups.length,
-    estimateSize: () => 96,
+    estimateSize: () => 64,
     getScrollElement: () => listRef.current,
     overscan: 8,
     useFlushSync: false,
@@ -242,15 +235,6 @@ export function SkillsWorkbenchPage() {
       cancelled = true;
     };
   }, [loadCandidate, selectedCandidate]);
-
-  const copy = (label: string, value: string) => {
-    void copyText(value)
-      .then(() => {
-        setCopied(label);
-        window.setTimeout(() => setCopied(null), 1600);
-      })
-      .catch(() => setCopied("无法复制"));
-  };
 
   const selections = (): readonly LocalProjectSelectionInput[] =>
     Object.entries(staged).map(([linkName, candidateId]) => ({
@@ -335,16 +319,24 @@ export function SkillsWorkbenchPage() {
   const selectGroup = (group: LocalCatalogGroup) => {
     setSelectedGroupKey(group.conflictKey);
     setSelectedCandidateId(group.candidates[0]?.id ?? null);
-    setDetailOpen(true);
   };
 
-  const enabledCount = filteredGroups.filter((group) =>
-    groupIsEnabled(group, project),
-  ).length;
-  const pendingCount = Object.keys(staged).length;
-  const filtersActive =
-    statusFilter !== "all" ||
-    (activeSourceIds !== null && activeSourceIds.size < sources.length);
+  const toggleStaged = (
+    group: LocalCatalogGroup,
+    enabled: boolean,
+    checked: boolean,
+  ) => {
+    if (Object.hasOwn(staged, group.linkName)) {
+      unstage(group.linkName);
+      return;
+    }
+    if (enabled) {
+      stageRemoval(group.linkName);
+      return;
+    }
+    const candidate = group.candidates[0];
+    if (checked && candidate !== undefined) stageCandidate(candidate);
+  };
 
   if (isLoading && groups.length === 0) {
     return <EmptyState body="正在读取会话本地技能目录…" title="正在加载技能" />;
@@ -361,108 +353,14 @@ export function SkillsWorkbenchPage() {
     );
   }
 
-  const filtersPane = (
-    <section
-      aria-label="技能源与筛选"
-      className="skills-pane skills-pane--filters"
-    >
-      <div className="skills-pane__heading">
-        <span>技能源与筛选</span>
-        <button
-          className="skills-drawer__close"
-          onClick={() => setFiltersOpen(false)}
-          type="button"
-        >
-          关闭
-        </button>
-      </div>
-      <button
-        className={`filter-chip${activeSourceIds === null ? " filter-chip--active" : ""}`}
-        onClick={selectAllSources}
-        type="button"
-      >
-        全部来源{" "}
-        {groups.reduce((sum, group) => sum + group.candidates.length, 0)}
-      </button>
-      <div className="filter-block">
-        <p className="skills-pane__heading">技能源</p>
-        <label className="filter-option">
-          <input
-            checked={activeSourceIds === null}
-            onChange={selectAllSources}
-            type="checkbox"
-          />
-          全部
-        </label>
-        {sources.map((item) => {
-          const checked =
-            activeSourceIds === null || activeSourceIds.has(item.source.id);
-          return (
-            <label className="filter-option" key={item.source.id}>
-              <input
-                checked={checked}
-                onChange={() => toggleSource(item.source.id)}
-                type="checkbox"
-              />
-              <span>
-                {item.source.displayName}
-                <small> {item.scan?.skillCount ?? 0}</small>
-              </span>
-            </label>
-          );
-        })}
-      </div>
-      <div className="filter-block">
-        <p className="skills-pane__heading">状态</p>
-        {(
-          [
-            ["all", "全部"],
-            ["enabled", "已启用"],
-            ["disabled", "未启用"],
-            ["pending", "待变更"],
-            ["abnormal", "异常"],
-          ] as const
-        ).map(([value, label]) => (
-          <label className="filter-option" key={value}>
-            <input
-              checked={statusFilter === value}
-              name="skill-status-filter"
-              onChange={() => setStatusFilter(value)}
-              type="radio"
-            />
-            {label}
-          </label>
-        ))}
-      </div>
-      <Button
-        onClick={() => {
-          window.history.pushState(null, "", "/sources");
-          window.dispatchEvent(new PopStateEvent("popstate"));
-        }}
-        variant="secondary"
-      >
-        管理技能源
-      </Button>
-    </section>
-  );
+  const pendingCount = Object.keys(staged).length;
 
   const detailPane = (
-    <section
+    <aside
       aria-live="polite"
       aria-label="技能详情"
-      className="skills-pane skills-pane--detail"
+      className="skill-detail ot-window"
     >
-      <div className="skills-pane__heading">
-        <span>技能详情</span>
-        <button
-          className="skills-drawer__close"
-          onClick={() => setDetailOpen(false)}
-          type="button"
-        >
-          关闭
-        </button>
-        {copied === null ? null : <span role="status">{copied}</span>}
-      </div>
       {detailError !== null ? (
         <EmptyState body={detailError} title="无法读取技能" />
       ) : detail === null ? (
@@ -472,36 +370,17 @@ export function SkillsWorkbenchPage() {
         />
       ) : (
         <>
-          <h2>{detail.displayName}</h2>
-          <p className="muted-copy">{detail.summary}</p>
-          <p className="muted-copy">
-            来源 {detail.source.displayName} · 路径 {detail.relativePath}
-          </p>
-          <div className="path-actions">
-            <Button
-              onClick={() => copy("已复制源路径", detail.source.path)}
-              variant="tertiary"
-            >
-              复制源路径
-            </Button>
-            <Button
-              onClick={() => copy("已复制技能路径", detail.skillDirectory)}
-              variant="tertiary"
-            >
-              复制技能路径
-            </Button>
-            <Button
-              onClick={() => copy("已复制 SKILL.md 路径", detail.skillFilePath)}
-              variant="tertiary"
-            >
-              复制 SKILL.md 路径
-            </Button>
-          </div>
+          <header className="skill-detail__head">
+            <p className="skill-detail__eyebrow">SKILL</p>
+            <h2>{detail.displayName}</h2>
+            <p className="muted-copy">{detail.summary}</p>
+            <p className="muted-copy">来源 {detail.source.displayName}</p>
+          </header>
           {selectedGroup === null || selectedGroup.candidates.length < 2 ? (
             <p className="muted-copy">先显式暂存候选，再变更项目链接。</p>
           ) : (
             <div className="candidate-list" role="list">
-              <p className="skills-pane__heading">可用来源</p>
+              <p className="candidate-list__heading">可用来源</p>
               <p className="muted-copy">先显式暂存候选，再变更项目链接。</p>
               {selectedGroup.candidates.map((candidate) => (
                 <button
@@ -523,49 +402,6 @@ export function SkillsWorkbenchPage() {
               ))}
             </div>
           )}
-          {selectedCandidate === null ? null : (
-            <div className="candidate-actions">
-              <Button
-                onClick={() =>
-                  staged[selectedCandidate.linkName] === selectedCandidate.id
-                    ? unstage(selectedCandidate.linkName)
-                    : stageCandidate(selectedCandidate)
-                }
-                variant="secondary"
-              >
-                {staged[selectedCandidate.linkName] === selectedCandidate.id
-                  ? "取消暂存"
-                  : "暂存到项目"}
-              </Button>
-            </div>
-          )}
-          {project?.links.some((link) => link.state === "managed") ? (
-            <div className="project-links">
-              <p className="skills-pane__heading">当前项目链接</p>
-              {project.links
-                .filter((link) => link.state === "managed")
-                .map((link) => (
-                  <div className="project-link-row" key={link.linkName}>
-                    <span>{link.linkName}</span>
-                    {Object.hasOwn(staged, link.linkName) ? (
-                      <Button
-                        onClick={() => unstage(link.linkName)}
-                        variant="tertiary"
-                      >
-                        取消暂存
-                      </Button>
-                    ) : (
-                      <Button
-                        onClick={() => stageRemoval(link.linkName)}
-                        variant="tertiary"
-                      >
-                        暂存移除
-                      </Button>
-                    )}
-                  </div>
-                ))}
-            </div>
-          ) : null}
           {detail.parseWarning === null ? null : (
             <p className="form-message form-message--error">
               {detail.parseWarning.message}
@@ -581,82 +417,20 @@ export function SkillsWorkbenchPage() {
           </article>
         </>
       )}
-    </section>
+    </aside>
   );
-
-  const totalCandidatesCount = groups.reduce(
-    (sum, group) => sum + group.candidates.length,
-    0,
-  );
-  const totalEnabledCount = groups.filter((group) =>
-    groupIsEnabled(group, project),
-  ).length;
 
   return (
     <section aria-label="技能工作台" className="skills-workbench">
-      <div className="skills-workbench__header">
-        <div className="kpi-row">
-          <div className="kpi-card kpi-card--primary">
-            <div className="kpi-card__header">
-              <span className="kpi-card__label">技能</span>
-              <span aria-hidden="true" className="kpi-card__icon">
-                S
-              </span>
-            </div>
-            <div className="kpi-card__value">{totalCandidatesCount}</div>
-            <div className="kpi-card__subtext">
-              来自 {sources.length} 个本地技能源
-            </div>
+      <div className="skills-columns">
+        <section aria-label="技能目录" className="skill-catalog ot-window">
+          <div className="skill-catalog__head">
+            <h2>技能目录</h2>
+            <span className="skill-catalog__count">
+              {filteredGroups.length} 项{isLoading ? " · 更新中…" : ""}
+            </span>
           </div>
-          <div className="kpi-card">
-            <div className="kpi-card__header">
-              <span className="kpi-card__label">技能源</span>
-              <span aria-hidden="true" className="kpi-card__icon">
-                D
-              </span>
-            </div>
-            <div className="kpi-card__value">{sources.length}</div>
-            <div className="kpi-card__subtext">已接入的受信任目录</div>
-          </div>
-          <div className="kpi-card">
-            <div className="kpi-card__header">
-              <span className="kpi-card__label">已链接</span>
-              <span aria-hidden="true" className="kpi-card__icon">
-                L
-              </span>
-            </div>
-            <div className="kpi-card__value">{totalEnabledCount}</div>
-            <div className="kpi-card__subtext">当前项目生效中的技能</div>
-          </div>
-        </div>
-      </div>
-      <div className="skills-workbench__mobile-bar">
-        <Button onClick={() => setFiltersOpen(true)} variant="secondary">
-          筛选{filtersActive ? " · 已启用" : ""}
-        </Button>
-        <Button
-          disabled={selectedGroup === null}
-          onClick={() => setDetailOpen(true)}
-          variant="secondary"
-        >
-          详情
-        </Button>
-      </div>
-      <div className="skills-workbench__grid">
-        <div
-          className={`skills-drawer skills-drawer--filters${filtersOpen ? " skills-drawer--open" : ""}`}
-        >
-          {filtersPane}
-        </div>
-        <section
-          className="skills-pane skills-pane--list"
-          aria-label="技能目录"
-        >
-          <div className="skills-workbench__toolbar">
-            <div>
-              <p className="eyebrow">会话技能目录</p>
-              <h2>技能目录</h2>
-            </div>
+          <section aria-label="技能源与筛选" className="catalog-tools">
             <TextInput
               label="搜索技能"
               onChange={(event) => setQuery(event.target.value)}
@@ -664,14 +438,50 @@ export function SkillsWorkbenchPage() {
               type="search"
               value={query}
             />
-          </div>
-          <div className="skills-pane__heading">
-            <span>
-              已选择 {filteredGroups.length} · 已启用 {enabledCount} · 待应用{" "}
-              {pendingCount}
-            </span>
-            <span>{isLoading ? "更新中…" : ""}</span>
-          </div>
+            <select
+              aria-label="筛选状态"
+              className="catalog-tools__status"
+              onChange={(event) =>
+                setStatusFilter(event.target.value as StatusFilter)
+              }
+              value={statusFilter}
+            >
+              <option value="all">全部状态</option>
+              <option value="enabled">已启用</option>
+              <option value="disabled">未启用</option>
+              <option value="pending">待变更</option>
+              <option value="abnormal">异常</option>
+            </select>
+            <div className="catalog-tools__sources">
+              <button
+                className={`source-chip${activeSourceIds === null ? " source-chip--active" : ""}`}
+                onClick={selectAllSources}
+                type="button"
+              >
+                全部来源{" "}
+                {groups.reduce(
+                  (sum, group) => sum + group.candidates.length,
+                  0,
+                )}
+              </button>
+              {sources.map((item) => {
+                const checked =
+                  activeSourceIds === null ||
+                  activeSourceIds.has(item.source.id);
+                return (
+                  <button
+                    className={`source-chip${checked ? " source-chip--active" : ""}`}
+                    key={item.source.id}
+                    onClick={() => toggleSource(item.source.id)}
+                    type="button"
+                  >
+                    {item.source.displayName}
+                    <small> {item.scan?.skillCount ?? 0}</small>
+                  </button>
+                );
+              })}
+            </div>
+          </section>
           {error === null ? null : (
             <p className="form-message form-message--error" role="alert">
               {error.message}
@@ -695,41 +505,53 @@ export function SkillsWorkbenchPage() {
                   const active =
                     group.conflictKey === selectedGroup?.conflictKey;
                   const enabled = groupIsEnabled(group, project);
+                  const pending = Object.hasOwn(staged, group.linkName);
+                  const checked = pending
+                    ? staged[group.linkName] !== null
+                    : enabled && group.candidates[0] !== undefined;
                   return (
-                    <button
-                      className={`skill-list-row${active ? " skill-list-row--active" : ""}`}
+                    <div
+                      className={`skill-row${active ? " skill-row--active" : ""}${checked ? " skill-row--checked" : ""}`}
                       key={group.conflictKey}
-                      onClick={() => selectGroup(group)}
                       style={{
                         height: `${item.size}px`,
                         transform: `translateY(${item.start}px)`,
                       }}
-                      type="button"
                     >
-                      <strong>{group.linkName}</strong>
-                      <span>{group.candidates[0]?.summary}</span>
-                      <small>
-                        {group.candidates[0]
-                          ? candidateLabel(group.candidates[0])
-                          : `${group.candidates.length} 个候选`}
-                        {" · "}
+                      <span aria-hidden="true" className="skill-row__cursor" />
+                      <input
+                        aria-label="暂存到项目"
+                        checked={checked}
+                        className="skill-row__check"
+                        onChange={(event) =>
+                          toggleStaged(group, enabled, event.target.checked)
+                        }
+                        type="checkbox"
+                      />
+                      <button
+                        className="skill-row__select"
+                        onClick={() => selectGroup(group)}
+                        type="button"
+                      >
+                        <span className="skill-row__name">
+                          {group.linkName}
+                        </span>
+                        <span className="skill-row__summary">
+                          {group.candidates[0]?.summary}
+                        </span>
+                      </button>
+                      <span className="skill-row__meta">
                         {enabled ? "已启用" : "未启用"}
-                        {Object.hasOwn(staged, group.linkName)
-                          ? " · 待应用"
-                          : ""}
-                      </small>
-                    </button>
+                        {pending ? " · 待应用" : ""}
+                      </span>
+                    </div>
                   );
                 })}
               </div>
             </div>
           )}
         </section>
-        <div
-          className={`skills-drawer skills-drawer--detail${detailOpen ? " skills-drawer--open" : ""}`}
-        >
-          {detailPane}
-        </div>
+        {detailPane}
       </div>
       {projectError === null ? null : (
         <p className="form-message form-message--error" role="alert">
@@ -741,12 +563,32 @@ export function SkillsWorkbenchPage() {
           需要手动恢复检查：共 {project.recoveryDiagnostics.length} 个事务产物。
         </p>
       ) : null}
-      {Object.keys(staged).length === 0 ? null : (
-        <div className="change-bar" role="status">
-          <span>已暂存 {Object.keys(staged).length} 项项目变更</span>
-          <Button onClick={reviewChanges}>审查变更</Button>
+      <footer className="command-bar ot-window" role="status">
+        <span className="command-bar__count">
+          {pendingCount === 0
+            ? "已选择 0 项"
+            : `已暂存 ${pendingCount} 项项目变更`}
+        </span>
+        <div className="command-bar__actions">
+          <Button
+            disabled={pendingCount === 0}
+            onClick={() => {
+              setStaged({});
+              setPlan(null);
+            }}
+            variant="secondary"
+          >
+            清空选择
+          </Button>
+          <Button
+            disabled={pendingCount === 0}
+            onClick={reviewChanges}
+            variant="primary"
+          >
+            审查并应用变更
+          </Button>
         </div>
-      )}
+      </footer>
       <Dialog
         description="在对文件系统做任何改动前，先审查服务端计算的项目计划。"
         onClose={() => setReviewOpen(false)}

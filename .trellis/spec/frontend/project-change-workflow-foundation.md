@@ -31,7 +31,7 @@ type StagedProjectSelections = Record<string, string | null>;
 - Obtain the client through `useLocalApiClient()`. Feature code must not use direct `fetch`, browser storage, or bearer credentials.
 - Stage a candidate only through an explicit `Stage for project` action. Candidate comparison and the P8 selected/default candidate do not stage anything automatically.
 - Allow a `Stage removal` action only for project links whose snapshot state is `managed`. Keep removal intent as `null`; unstage removes the map key.
-- Show a persistent change bar only when staged selections exist. Its review action sends the current candidate IDs/link names to `projectPlan()`.
+- Show an always-visible bottom command bar. It reports zero selections and disables clear/review when staging is empty; once staged, it reports the count and its review action sends current candidate IDs/link names to `projectPlan()`.
 - Review always renders the server-computed changes and blockers. Blocked plans may be closed for editing but must not advance to apply.
 - Apply is a two-step interaction: review dialog first, then a separate confirmation dialog. The confirmation's one explicit `Apply` action creates a fresh `crypto.randomUUID()` request ID and sends the reviewed base revision with current staged intents.
 - On successful apply, use the returned snapshot, clear staging/plan state, and close both dialogs. On failure, retain staging, surface the local API message/recovery action, and refresh project inspection so any recovery diagnostics are visible.
@@ -42,7 +42,7 @@ type StagedProjectSelections = Record<string, string | null>;
 | State | Required UI behavior |
 |---|---|
 | Initial project inspection unavailable | Show a project error without disabling catalog comparison |
-| No staged intents | Do not show the change bar or an apply path |
+| No staged intents | Keep the command bar visible with a zero count and disabled review/clear actions |
 | Server plan has blockers | Render blocker messages and disable `Apply changes` in review |
 | `REVISION_CONFLICT` / `PROJECT_APPLY_IN_PROGRESS` | Retain stages, show actionable retry/review wording; do not repeat mutation automatically |
 | `CATALOG_CANDIDATE_NOT_FOUND` | Retain stages, return the user to selection/review |

@@ -2,13 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 
 import type { LocalSourceInput, LocalSourceSummary } from "@skillpin/core";
 
-import {
-  Badge,
-  Button,
-  Dialog,
-  Drawer,
-  Tooltip,
-} from "../components/controls.js";
+import { Button, Dialog, Drawer } from "../components/controls.js";
 import { SkillsWorkbenchPage } from "../features/catalog/skills-workbench-page.js";
 import { CatalogProvider } from "../features/catalog/catalog-context.js";
 import { OnboardingPage } from "../features/onboarding/onboarding-page.js";
@@ -33,12 +27,6 @@ const routeTitleMap: Record<AppRoute, string> = {
   "/sources": "技能源",
 };
 
-const routeHintMap: Record<AppRoute, string> = {
-  "/onboarding": "开始配置本地技能目录",
-  "/skills": "浏览、筛选并链接本地技能",
-  "/sources": "管理受信任的技能源目录",
-};
-
 function routeFor(pathname: string): AppRoute {
   return pathname === "/skills" || pathname === "/sources"
     ? pathname
@@ -61,20 +49,20 @@ function useRoute(): readonly [AppRoute, (route: AppRoute) => void] {
 
 function connectionCopy(
   connection: ReturnType<typeof useSession>["connection"],
-): { label: string; tone: "accent" | "neutral" | "success" | "warning" } {
+): string {
   switch (connection) {
     case "online":
-      return { label: "已连接", tone: "success" };
+      return "已连接";
     case "connecting":
-      return { label: "连接中", tone: "accent" };
+      return "连接中";
     case "reconnecting":
-      return { label: "重新连接中", tone: "warning" };
+      return "重新连接中";
     case "exiting":
-      return { label: "正在结束会话", tone: "warning" };
+      return "正在结束会话";
     case "disconnected":
-      return { label: "已断开", tone: "neutral" };
+      return "已断开";
     case "error":
-      return { label: "连接不可用", tone: "warning" };
+      return "连接不可用";
   }
 }
 
@@ -83,24 +71,22 @@ function AppShell() {
   const { connection, error, isReadOnly, session, shutdown } = useSession();
   const { add, isLoading: sourcesLoading, sources, update } = useSources();
   const [showEndDialog, setShowEndDialog] = useState(false);
-  const [showDetails, setShowDetails] = useState(false);
+  const [showAppearance, setShowAppearance] = useState(false);
   const [editingSource, setEditingSource] = useState<
     LocalSourceSummary | null | undefined
   >(undefined);
   const [themePreference, setThemePreference] = useThemePreference();
   const closeEndDialog = useCallback(() => setShowEndDialog(false), []);
-  const closeDetails = useCallback(() => setShowDetails(false), []);
+  const closeAppearance = useCallback(() => setShowAppearance(false), []);
   const closeSourceDialog = useCallback(() => setEditingSource(undefined), []);
   const endSession = useCallback(() => {
     closeEndDialog();
     void shutdown();
   }, [closeEndDialog, shutdown]);
-  const status = connectionCopy(connection);
+  const statusLabel = connectionCopy(connection);
   const projectPath = session?.projectDirectory ?? "正在连接安全的本地项目…";
   const hasSources = sources.length > 0;
   const sourceDialogOpen = editingSource !== undefined;
-  const hour = new Date().getHours();
-  const greeting = hour < 12 ? "早上好" : hour < 18 ? "下午好" : "晚上好";
 
   useEffect(() => {
     if (!sourcesLoading && !hasSources && route !== "/onboarding") {
@@ -160,145 +146,87 @@ function AppShell() {
         跳至主要内容
       </a>
       <div className="app-shell">
-        <aside className="side-nav" aria-label="SkillPin 侧栏">
-          <div className="side-nav__brand">
-            <span aria-hidden="true" className="brand-mark">
-              S
-            </span>
-            <div className="side-nav__brand-copy">
-              <strong>SkillPin</strong>
-              <span>本地技能管理</span>
-            </div>
-          </div>
-          {hasSources ? (
-            <nav aria-label="SkillPin 功能分区" className="side-nav__menu">
-              {workspaceRoutes.map((item) => (
-                <button
-                  aria-current={route === item ? "page" : undefined}
-                  className={
-                    route === item
-                      ? "side-nav__item side-nav__item--active"
-                      : "side-nav__item"
-                  }
-                  key={item}
-                  onClick={() => navigate(item)}
-                  type="button"
-                >
-                  <span aria-hidden="true" className="side-nav__item-icon">
-                    {item === "/skills" ? "◇" : "▣"}
-                  </span>
-                  <span className="side-nav__item-label">
+        <header className="identity-bar ot-window" role="banner">
+          <div className="identity-bar__brand">
+            <h1 className="product-name">SkillPin</h1>
+            {hasSources ? (
+              <nav aria-label="SkillPin 功能分区" className="identity-nav">
+                {workspaceRoutes.map((item) => (
+                  <button
+                    aria-current={route === item ? "page" : undefined}
+                    className={
+                      route === item
+                        ? "identity-nav__item identity-nav__item--active"
+                        : "identity-nav__item"
+                    }
+                    key={item}
+                    onClick={() => navigate(item)}
+                    type="button"
+                  >
                     {routeTitleMap[item]}
-                  </span>
-                  {item === "/sources" ? (
-                    <span className="side-nav__badge">{sources.length}</span>
-                  ) : null}
-                </button>
-              ))}
-            </nav>
-          ) : (
-            <div className="side-nav__hint">
-              <p>添加技能源后，可在此切换技能与技能源工作区。</p>
-            </div>
-          )}
-          <div className="side-nav__footer">
-            <div className="side-nav__session">
+                  </button>
+                ))}
+              </nav>
+            ) : null}
+          </div>
+          <div className="identity-bar__actions">
+            <span className="connection">
               <span
                 aria-hidden="true"
                 className={`status-dot status-dot--${connection}`}
               />
-              <div>
-                <strong>{status.label}</strong>
-                <span>安全本地会话</span>
-              </div>
-            </div>
-          </div>
-        </aside>
-        <div className="app-main">
-          <header className="app-topbar">
-            <div className="app-topbar__intro">
-              <p className="eyebrow">{greeting} · SkillPin</p>
-              <h1 className="app-topbar__title">
-                {hasSources ? routeTitleMap[route] : "欢迎使用 SkillPin"}
-              </h1>
-              <p className="app-topbar__hint">
-                {hasSources ? routeHintMap[route] : routeHintMap["/onboarding"]}
-              </p>
-            </div>
-            <div className="app-topbar__meta">
-              <div className="project-identity">
-                <span className="project-identity__name">本地项目</span>
-                <code title={projectPath}>{projectPath}</code>
-              </div>
-              <div className="app-topbar__actions">
-                <Tooltip content="当前安全的本地会话连接状态">
-                  <span>
-                    <Badge tone={status.tone}>
-                      <span
-                        aria-hidden="true"
-                        className={`status-dot status-dot--${connection}`}
-                      />
-                      {status.label}
-                    </Badge>
-                  </span>
-                </Tooltip>
-                <Button onClick={() => setShowDetails(true)} variant="tertiary">
-                  会话详情
-                </Button>
-                <Button
-                  disabled={connection === "exiting"}
-                  onClick={() => setShowEndDialog(true)}
-                  variant="secondary"
-                >
-                  结束 SkillPin
-                </Button>
-              </div>
-            </div>
-          </header>
-          <div
-            className={
-              hasSources ? "workspace" : "workspace workspace--onboarding"
-            }
-          >
-            <main
-              className={
-                hasSources && route === "/skills"
-                  ? "main-content main-content--workbench"
-                  : "main-content"
-              }
-              id="main-content"
-              tabIndex={-1}
+              {statusLabel}
+            </span>
+            <Button onClick={() => setShowAppearance(true)} variant="tertiary">
+              外观
+            </Button>
+            <Button
+              disabled={connection === "exiting"}
+              onClick={() => setShowEndDialog(true)}
+              variant="secondary"
             >
-              {hasSources && route !== "/skills" && isReadOnly ? (
-                <p className="connection-notice" role="status">
-                  本地会话重新连接中，暂无法修改设置。
-                </p>
-              ) : null}
-              {hasSources && route === "/skills" && isReadOnly ? (
-                <p className="connection-notice" role="status">
-                  本地会话重新连接中，暂无法修改设置。
-                </p>
-              ) : null}
-              {session?.status === "waiting-to-exit" ? (
-                <p className="connection-notice" role="status">
-                  该本地会话处于 60 秒退出缓冲期。重新连接以保持开启。
-                </p>
-              ) : null}
-              {error === null ? null : (
-                <section className="error-notice" role="alert">
-                  <h2>无法连接至 SkillPin</h2>
-                  <p>{error.message}</p>
-                </section>
-              )}
-              {sourcesLoading && session !== null ? (
-                <p className="source-loading" role="status">
-                  正在加载已配置的技能源…
-                </p>
-              ) : (
-                workSurface
-              )}
-            </main>
+              结束 SkillPin
+            </Button>
           </div>
+        </header>
+        <div
+          className={
+            hasSources ? "workspace" : "workspace workspace--onboarding"
+          }
+        >
+          <main
+            className={
+              hasSources && route === "/skills"
+                ? "main-content main-content--workbench"
+                : "main-content"
+            }
+            id="main-content"
+            tabIndex={-1}
+          >
+            {hasSources && isReadOnly ? (
+              <p className="connection-notice" role="status">
+                本地会话重新连接中，暂无法修改设置。
+              </p>
+            ) : null}
+            {session?.status === "waiting-to-exit" ? (
+              <p className="connection-notice" role="status">
+                该本地会话处于 60 秒退出缓冲期。重新连接以保持开启。
+              </p>
+            ) : null}
+            {error === null ? null : (
+              <section className="error-notice" role="alert">
+                <h2>无法连接至 SkillPin</h2>
+                <p>{error.message}</p>
+              </section>
+            )}
+            {sourcesLoading && session !== null ? (
+              <p className="source-loading" role="status">
+                正在加载已配置的技能源…
+              </p>
+            ) : (
+              workSurface
+            )}
+          </main>
         </div>
       </div>
       <SourceDialog
@@ -324,10 +252,10 @@ function AppShell() {
         </div>
       </Dialog>
       <Drawer
-        description="此处仅展示会话元数据。凭据绝不会在浏览器中显示或存储。"
-        onClose={closeDetails}
-        open={showDetails}
-        title="本地会话"
+        description="此处仅展示主题与会话元数据。凭据绝不会在浏览器中显示或存储。"
+        onClose={closeAppearance}
+        open={showAppearance}
+        title="外观"
       >
         <ThemePicker
           preference={themePreference}

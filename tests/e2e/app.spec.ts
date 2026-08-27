@@ -402,12 +402,12 @@ test("persists theme choice and returns focus after closing session panels", asy
   await installProtectedLocalApi(page);
   await page.goto("/");
 
-  const details = page.getByRole("button", { name: "会话详情" });
-  await details.click();
+  const appearance = page.getByRole("button", { name: "外观" });
+  await appearance.click();
   await page.getByRole("radio", { name: "浅色模式" }).check();
   await expect(page.locator("html")).toHaveAttribute("data-theme", "light");
   await page.getByRole("button", { name: "关闭面板" }).click();
-  await expect(details).toBeFocused();
+  await expect(appearance).toBeFocused();
 
   const end = page.getByRole("button", { name: "结束 SkillPin" });
   await end.click();
@@ -472,7 +472,7 @@ test("confirms ending a session with staged changes without applying them", asyn
   ]);
   await page.goto("/skills");
 
-  await page.getByRole("button", { name: "暂存到项目" }).click();
+  await page.getByRole("checkbox", { name: "暂存到项目" }).first().check();
   await expect(page.getByText("已暂存 1 项项目变更")).toBeVisible();
   await page.getByRole("button", { name: "结束 SkillPin" }).click();
 
@@ -498,9 +498,9 @@ test("stages a candidate, reviews the server plan, and confirms apply separately
   ]);
   await page.goto("/skills");
 
-  await page.getByRole("button", { name: "暂存到项目" }).click();
+  await page.getByRole("checkbox", { name: "暂存到项目" }).first().check();
   await expect(page.getByText("已暂存 1 项项目变更")).toBeVisible();
-  await page.getByRole("button", { name: "审查变更" }).click();
+  await page.getByRole("button", { name: "审查并应用变更" }).click();
 
   const review = page.getByRole("dialog", { name: "审查项目变更" });
   await expect(review).toBeVisible();

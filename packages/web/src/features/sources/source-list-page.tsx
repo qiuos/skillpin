@@ -89,15 +89,6 @@ export function SourceListPage({
     });
   };
 
-  const enabledCount = sources.filter((item) => item.source.enabled).length;
-  const skillCount = sources.reduce(
-    (sum, item) => sum + (item.scan?.skillCount ?? 0),
-    0,
-  );
-  const healthyCount = sources.filter(
-    (item) => item.health === "healthy",
-  ).length;
-
   if (sources.length === 0) {
     return (
       <EmptyState
@@ -113,38 +104,10 @@ export function SourceListPage({
   }
 
   return (
-    <section className="source-list-page">
-      <div className="kpi-row">
-        <div className="kpi-card kpi-card--primary">
-          <div className="kpi-card__header">
-            <span className="kpi-card__label">技能源</span>
-            <span aria-hidden="true" className="kpi-card__icon">
-              D
-            </span>
-          </div>
-          <div className="kpi-card__value">{sources.length}</div>
-          <div className="kpi-card__subtext">已接入的受信任目录</div>
-        </div>
-        <div className="kpi-card">
-          <div className="kpi-card__header">
-            <span className="kpi-card__label">已启用</span>
-            <span aria-hidden="true" className="kpi-card__icon">
-              E
-            </span>
-          </div>
-          <div className="kpi-card__value">{enabledCount}</div>
-          <div className="kpi-card__subtext">参与当前目录扫描</div>
-        </div>
-        <div className="kpi-card">
-          <div className="kpi-card__header">
-            <span className="kpi-card__label">发现技能</span>
-            <span aria-hidden="true" className="kpi-card__icon">
-              S
-            </span>
-          </div>
-          <div className="kpi-card__value">{skillCount}</div>
-          <div className="kpi-card__subtext">健康源 {healthyCount} 个</div>
-        </div>
+    <section className="source-list-page ot-window">
+      <div className="source-panel__head">
+        <h1>技能源</h1>
+        <span className="source-panel__count">{sources.length} 个目录</span>
       </div>
       <div className="source-panel">
         <div className="source-list-page__toolbar">
@@ -165,9 +128,7 @@ export function SourceListPage({
         )}
         <div className="source-table" role="list">
           <div aria-hidden="true" className="source-table__head">
-            <span>名称</span>
-            <span>路径</span>
-            <span>状态</span>
+            <span>名称 / 路径 / 状态</span>
             <span>操作</span>
           </div>
           {visibleSources.length === 0 ? (

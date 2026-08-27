@@ -33,7 +33,7 @@ useSession(): {
 - Decode both HTTP responses and WebSocket messages against `LOCAL_API_VERSION`. Unknown/malformed events are ignored; malformed responses become the stable `LOCAL_API_INVALID_RESPONSE` client error.
 - Keep bootstrap promise ownership module-local so React StrictMode cannot consume P5's one-time bootstrap cookie twice.
 - If WebSocket transport is unavailable, retain feature-local selections and set `isReadOnly` rather than clearing UI state. Retry with capped exponential backoff (currently 500ms to 10s). Render an explicit waiting-to-exit/grace-period state when `LocalSessionInfo.status` requires it.
-- Theme preference may use localStorage under `skillpin.theme`; it stores only `"system" | "light" | "dark"`. When set to `system`, subscribe to `matchMedia("(prefers-color-scheme: dark)")` changes. Resolved theme is applied as `document.documentElement.dataset.theme` (`light` | `dark`) so CSS tokens in `styles.css` switch. Visual tokens follow the Invoicer-style soft-blue floating shell language (deep outer canvas, white/raised app shell, left sidebar nav — see frontend quality-guidelines Styling); no session data belongs in localStorage.
+- Theme preference may use localStorage under `skillpin.theme`; it stores only `"system" | "light" | "dark"`. When set to `system`, subscribe to `matchMedia("(prefers-color-scheme: dark)")` changes. Resolved theme is applied as `document.documentElement.dataset.theme` (`light` | `dark`) so CSS tokens in `styles.css` switch. Visual tokens follow the Octopath HD-2D workbench language: dusk canvas, parchment/gold windows, and a top identity bar without sidebar or KPI chrome (see frontend quality-guidelines Styling); no session data belongs in localStorage.
 
 ## 4. Validation & Error Matrix
 

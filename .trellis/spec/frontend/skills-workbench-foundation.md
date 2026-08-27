@@ -16,8 +16,8 @@ LocalApiClient.catalogCandidate(id): Promise<LocalCatalogCandidateDetail>
 ## 3. Contracts
 
 - `CatalogProvider` owns in-memory catalog results and uses the private P6 `LocalApiClient`; components never fetch directly or store credentials/catalog data in browser storage.
-- `/skills` is a read-only, desktop three-column workbench matching Product Tech Scheme §6.4 (Source & Status Filters | Skill Catalog | Skill Detail). Above the grid, the page may show one outer heading plus KPI summary cards derived from catalog/sources/project state; the three columns still fill the workspace without a 1040px width clamp. Narrow layouts collapse into filter and detail drawers while keeping list navigation accessible.
-- The first stable candidate is opened by default only for inspection. Copy must say it copies a path; it must not imply project selection, installation, planning, or apply.
+- `/skills` is a desktop two-window workbench: compact filters inside the catalog toolbar, selectable skill list, and persistent read-only Skill Detail. The workbench fills available space without a 1040px width clamp. List checkboxes are the explicit P9 staging action; selecting a row only opens inspection. Narrow layouts stack the windows while keeping list navigation accessible.
+- The first stable candidate is opened by default only for inspection. Detail displays source identity, candidate comparison when needed, and constrained Markdown; it has no path copy or project-mutation control.
 - Render `markdownBody` with `react-markdown` + GFM. Do not enable raw HTML. Omit images. Allow only `http(s)` or relative anchors, using `target="_blank" rel="noreferrer"` for external links.
 - Explicit loading, error, no-source/no-skills, query-empty, and stale-detail states are required. Source changes refresh the current catalog without wiping session credentials.
 
@@ -36,7 +36,7 @@ LocalApiClient.catalogCandidate(id): Promise<LocalCatalogCandidateDetail>
 
 **Good:** select a metadata row, then load exactly one candidate body and render it with the constrained Markdown component map.
 
-**Base:** a group with one candidate still shows comparison context and no P9 selection affordance.
+**Base:** a group with one candidate still shows source/comparison context; staging stays on the catalog checkbox, not in the detail pane.
 
 **Bad:** use `dangerouslySetInnerHTML`, source content as a direct browser route, or an "Apply" button in P8.
 
