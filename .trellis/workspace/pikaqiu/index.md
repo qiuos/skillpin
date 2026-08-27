@@ -8,7 +8,7 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-1.md`
-- **Total Sessions**: 27
+- **Total Sessions**: 28
 - **Last Active**: 2026-08-27
 <!-- @@@/auto:current-status -->
 
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-1.md` | ~410 | Active |
+| `journal-1.md` | ~444 | Active |
 <!-- @@@/auto:active-documents -->
 
 ---
@@ -29,6 +29,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 28 | 2026-08-27 | 优化技能工作台可读性并准备 0.1.10 发布 | `b5aefcb`, `f035277` | `main` |
 | 27 | 2026-08-27 | Simplify skill management actions and release 0.1.9 | `3398885`, `2f5df55` | `main` |
 | 26 | 2026-08-27 | 发布 SkillPin 0.1.8 | `6620d34` | `main` |
 | 25 | 2026-08-27 | 优化界面可读性与工作台布局 | `1347865` | `main` |

@@ -408,3 +408,37 @@ Improved skills-workbench readability, added explicit staged enable/remove actio
 ### Next Steps
 
 - None - task complete
+
+
+## Session 28: 优化技能工作台可读性并准备 0.1.10 发布
+
+**Date**: 2026-08-27
+**Task**: 优化技能工作台可读性并准备 0.1.10 发布
+**Branch**: `main`
+
+### Summary
+
+提高技能列表与详情文字的默认字号，加入临时文字调试控制，修复首次进入技能页的布局尺寸测量，并改为直接启用/移除操作；已完成 0.1.10 打包与发布前校验。
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `b5aefcb` | (see git log) |
+| `f035277` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
