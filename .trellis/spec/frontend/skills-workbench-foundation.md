@@ -20,9 +20,9 @@ type LocalCatalogItem =
 ## 3. Contracts
 
 - `CatalogProvider` owns in-memory `LocalCatalogItem[]` results and uses the private P6 `LocalApiClient`; components never fetch directly or store credentials/catalog data in browser storage.
-- `/skills` is a desktop two-window workbench: a compact one-row catalog toolbar, selectable skill list, and persistent read-only Skill Detail. The toolbar keeps search visible and places status/source filters in an anchored popover triggered by a visible filter button; the trigger exposes an active-filter count, and Escape or pointer-down outside closes the popover without resetting applied filters. The workbench fills available space without a 1040px width clamp. Its nested application/workspace/main/workbench layout must retain explicit height/min-height propagation so both windows are full-size on first render; the virtual list remeasures when its scroll element changes size and uses a compact fixed-row estimate. Narrow layouts stack the windows while keeping list navigation accessible.
-- A `skill` item renders as the existing one-line single-skill row with `◇` and an explicit P9 enable/remove action. A `skill-group` remains one line but uses `▣`, a "技能组 · 包含 N 个技能 · X / N 已启用" description, group-level action copy, plus a light background and left border. The distinction must not rely on color alone.
-- Clicking a group-row trigger opens an accessible `Dialog`; it lists every member with its readable display name, summary, and individual enable/remove action. It also has a group-level action. The existing Dialog focus trap, Escape close, and trigger-focus return must be retained.
+- `/skills` is a desktop two-window workbench: a compact one-row catalog toolbar, selectable skill list, and persistent read-only Skill Detail. The toolbar keeps search visible and places status/source filters in an anchored popover triggered by a visible filter button; the trigger exposes an active-filter count, and Escape or pointer-down outside closes the popover without resetting applied filters. The workbench fills available space without a 1040px width clamp. Its nested application/workspace/main/workbench layout must retain explicit height/min-height propagation so both windows are full-size on first render; the virtual list remeasures when its scroll element changes size and when a group expands or collapses, using a compact fixed-row estimate. Narrow layouts stack the windows while keeping list navigation accessible.
+- A `skill` item renders as the existing one-line single-skill row with `◇` and an explicit P9 enable/remove action. A `skill-group` remains one line but uses `▣`, a "技能组 · 包含 N 个技能 · X / N 已启用" description, fixed `全部启用` and `移除` controls, plus a light background and left border. The distinction must not rely on color alone.
+- Clicking a group-row trigger expands/collapses its member rows inline; at most one group is expanded at a time. Expanded members reuse the single-skill row's display, inspection, and enable/remove actions, so selecting a member updates the persistent Skill Detail. No group-management dialog is used.
 - Selecting a single-skill row remains inspection-only. The first stable candidate opens by default only for inspection. Detail displays source identity, candidate comparison when needed, and constrained Markdown; it has no path copy or project-mutation control.
 - Render `markdownBody` with `react-markdown` + GFM. Do not enable raw HTML. Omit images. Allow only `http(s)` or relative anchors, using `target="_blank" rel="noreferrer"` for external links.
 - Explicit loading, error, no-source/no-skills, query-empty, and stale-detail states are required. Source changes refresh the current catalog without wiping session credentials.
@@ -34,7 +34,7 @@ type LocalCatalogItem =
 | Initial catalog pending | Render a loading state, retain route |
 | Search has no matches | Show a searchable no-match state, not a broken detail pane |
 | Catalog item is `skill-group` | Keep a single compact group row and show its total/enabled count in the description |
-| Group-row trigger clicked | Open the member-management dialog; Escape/close returns focus to the trigger |
+| Group-row trigger clicked | Expand/collapse that group inline, collapse any previously expanded group, and remeasure the virtual list |
 | Candidate request fails/stale | Keep selection context and show a bounded detail error |
 | Source Markdown contains HTML/image/unsafe scheme | Do not render it as executable HTML, remote image, or clickable unsafe link |
 | First populated workbench render | Catalog and detail panels fill the available work area without a page refresh; remeasure virtual rows after size changes |
@@ -42,16 +42,16 @@ type LocalCatalogItem =
 
 ## 5. Good / Base / Bad Cases
 
-**Good:** a directory group remains one row, opens a dialog containing readable member names, and supports a group or per-member P9 action without exposing Markdown bodies in the catalog response.
+**Good:** a directory group remains one compact row until expanded inline; its readable member rows support inspection in the persistent detail pane plus group or per-member P9 actions without exposing Markdown bodies in the catalog response.
 
 **Base:** a `skill` item whose same-name group has one candidate still shows source/comparison context; inspection stays separate from mutation.
 
-**Bad:** represent a directory group only by color, flatten every group member into the main list, or use a dialog row click as an implicit project mutation.
+**Bad:** represent a directory group only by color, expand more than one group at once, or use a group/member row click as an implicit project mutation.
 
 ## 6. Tests Required
 
 - Local API client tests must validate the `items` discriminated-union decoder, percent-encoded detail paths, and bearer authentication.
-- Playwright must cover populated directory-group rows, non-color group affordances, group dialog member display, batch and individual actions, Escape focus return, searchable catalog/detail rendering, compact filter-popover keyboard/outside-click behavior, and long-row action separation.
+- Playwright must cover populated directory-group rows, non-color group affordances, inline member display, one-expanded-group behavior, virtual-list remeasurement, batch and individual actions, persistent detail selection, searchable catalog/detail rendering, compact filter-popover keyboard/outside-click behavior, and long-row action separation.
 - Retain P6/P7 theme, focus, source-routing, credential-private, and Markdown safety tests.
 
 ## 7. Wrong vs Correct
@@ -60,8 +60,8 @@ type LocalCatalogItem =
 // Wrong: a group is indistinguishable from a skill and cannot be inspected.
 <button>{item.name}</button>
 
-// Correct: group semantics are visible before opening an accessible dialog.
-<button aria-label={`打开技能组 ${item.name}`} className="skill-row--group">
-  ▣ {item.name} · 技能组 · 包含 {item.skills.length} 个技能
+// Correct: group semantics are visible before inline expansion.
+<button aria-expanded={expanded} aria-label={`展开技能组 ${item.name}`} className="skill-row--group">
+  ▸ ▣ {item.name} · 技能组 · 包含 {item.skills.length} 个技能
 </button>
 ```

@@ -44,7 +44,7 @@ function searchCatalog(
 ): readonly CatalogSearchResult[];
 ```
 
-`SourceScan` contains the configured source, parsed candidates, and non-fatal directory warnings. `ScannedSkillCandidate` extends the browser-safe candidate shape with `markdownBody`, `skillDirectory`, and `skillFilePath`; retain those filesystem-bearing fields behind the catalog subpath.
+`SourceScan` contains the configured source, parsed candidates, and non-fatal directory warnings. An `UNREADABLE_DIRECTORY` warning carries an optional stable reason category: `PERMISSION_DENIED`, `PATH_NOT_FOUND`, `SYMLINK_LOOP`, or `UNKNOWN`; raw diagnostic text remains available to server consumers but is not a browser presentation contract. `ScannedSkillCandidate` extends the browser-safe candidate shape with `markdownBody`, `skillDirectory`, and `skillFilePath`; retain those filesystem-bearing fields behind the catalog subpath.
 
 ## 3. Contracts
 
@@ -63,7 +63,7 @@ function searchCatalog(
 ### Recognition, parsing, and cataloging
 
 - A skill is a directory whose `SKILL.md` is a **regular** file. A discovered skill root stops recursive descent; descendants are not candidates.
-- Every directory traversal resolves a real path and uses a visited-real-path set, preventing directory-symlink cycles.
+- Every directory traversal resolves a real path and uses a visited-real-path set, preventing directory-symlink cycles. When child-directory or `SKILL.md` inspection fails, continue scanning siblings and classify recognized filesystem codes as `PERMISSION_DENIED` (`EACCES`/`EPERM`), `PATH_NOT_FOUND` (`ENOENT`), or `SYMLINK_LOOP` (`ELOOP`), with `UNKNOWN` as the safe fallback.
 - `SKILL.md` bytes receive a raw lower-case SHA-256 content fingerprint. Candidate IDs hash `sourceId` + NUL + source-relative path; relative paths use `/` separators.
 - `linkName` is the skill directory basename. It must be one portable path segment: not empty/`.`/`..`, no separators, NUL, controls, or Windows-illegal characters. Invalid link names are scan warnings and not project-link candidates.
 - `name` front matter sets display name with directory-name fallback. `description` sets summary, then the first readable Markdown paragraph, then `未提供说明`.
@@ -78,7 +78,7 @@ function searchCatalog(
 | Source canonical path duplicates another source | `SOURCE_DUPLICATE` with source ID/path | Do not persist the duplicate. |
 | Source ID missing during edit/enable/remove | `SOURCE_NOT_FOUND` | Reload sources before retrying a stale UI operation. |
 | Directory picker target unreadable/not a directory | `DIRECTORY_UNREADABLE` | Do not expose file content; prompt user to choose a valid directory. |
-| Child directory or SKILL inspection fails | `SourceScanWarning` | Continue scanning all other children. |
+| Child directory or SKILL inspection fails | `UNREADABLE_DIRECTORY` `SourceScanWarning` with a stable reason category when known | Continue scanning all other children; browser clients translate the category rather than displaying raw errors. |
 | Source root cannot be scanned | `SOURCE_UNREADABLE` | Record failure in `CatalogIndex`; preserve other/latest successful scans. |
 | YAML/UTF-8/description failure | candidate `parseWarning` | Keep candidate with fallbacks; do not abort source scan. |
 | Unsafe directory basename | `INVALID_LINK_NAME` scan warning | Exclude only that candidate from conflict/project-link catalog. |
@@ -101,7 +101,7 @@ Add/maintain Vitest coverage for:
 - add/update/enable/disable/remove, input trimming, canonical duplicate rejection, and non-deletion of source directories;
 - directory-only listing and home/root/recent browser entry points;
 - scanner root errors isolated from successful sources and `CatalogIndex.rescan()` failure retention;
-- regular-file-only recognition, stop-descending behavior, and directory-symlink-loop termination;
+- regular-file-only recognition, stop-descending behavior, directory-symlink-loop termination, and unreadable-directory reason classification;
 - valid front matter, invalid YAML, invalid UTF-8, description fallbacks, safe link names, stable candidate fingerprints/IDs, grouping, disabled-source exclusion, and each search field;
 - root-package browser safety plus the `@skillpin/core/catalog` package export.
 
