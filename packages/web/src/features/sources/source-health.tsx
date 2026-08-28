@@ -1,5 +1,6 @@
-import { Badge } from "../../components/controls.js";
 import type { LocalSourceSummary } from "@skillpin/core";
+
+import { Badge } from "../../components/controls.js";
 
 const healthCopy = {
   disabled: { label: "已禁用", tone: "neutral" },
@@ -11,10 +12,24 @@ const healthCopy = {
 } as const;
 
 export function SourceHealth({
+  onWarningClick,
   source,
 }: {
+  readonly onWarningClick?: () => void;
   readonly source: LocalSourceSummary;
 }) {
   const copy = healthCopy[source.health];
+  if (source.health === "warnings" && onWarningClick !== undefined) {
+    return (
+      <button
+        aria-haspopup="dialog"
+        className={`badge badge--${copy.tone} source-health__warning`}
+        onClick={onWarningClick}
+        type="button"
+      >
+        {copy.label}
+      </button>
+    );
+  }
   return <Badge tone={copy.tone}>{copy.label}</Badge>;
 }

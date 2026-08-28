@@ -43,6 +43,8 @@ useSources(): {
 - The add/edit dialog trims a nonblank display name and validates its path through the server. Use the returned canonical path for save; server errors show their stable message rather than browser-side filesystem guesses.
 - The directory browser may show only entrypoint labels and directory metadata. It preserves Unicode paths and sends pasted paths back through the typed API.
 - Source rows always show path and enabled state, mark duplicate display names, show health/count/warnings/failure, and keep edit/rescan available for a failed source. The source page title is `28px`; source names, paths, status, toolbar text, and row actions are `24px` with `56px` action/input controls. The source table must flex and scroll independently so these readable rows remain accessible in the fixed-height window.
+- A source with `health: "warnings"` exposes its “存在警告” marker as a real button. Activating it opens an accessible dialog that lists every `scan.warnings` message and path and explicitly says the warnings do not affect normal use. Do not copy the warnings into separate client state: after `rescan(id)` resolves, render the returned `LocalSourceSummary`; an empty `scan.warnings` array removes the trigger, while a non-empty array shows the latest reasons.
+- Source add/edit dialogs use the same readable `28px` title and `24px` field/feedback/control text scale as the source page; inputs and action controls have a `56px` minimum height.
 - All source mutations obey P6 `isReadOnly`: controls are disabled and provider methods reject stable `SESSION_READ_ONLY` while the protected session is not online. Preserve existing rows during reconnect.
 - A removal first asks the server for impact. Show the managed-link count and require a second `confirmProjectImpact: true` request; UI copy must state that source directories, project links, and manifest are retained.
 
@@ -55,6 +57,8 @@ useSources(): {
 | Malformed/version-mismatched source payload | `LocalApiClient` throws `LOCAL_API_INVALID_RESPONSE` | Stable source error, no raw payload |
 | Server path validation failure | Keep form values and surface stable server error | User can correct/paste/browse another path |
 | Source scan failure | Preserve row with `health: "failed"` and failure message | Edit or retry through Rescan |
+| Source scan warnings | Render an accessible warning trigger from `scan.warnings`; dialog reads current messages and paths | Explain warnings do not affect normal use |
+| Clean rescan after warnings | Replace the row with the returned source summary | Warning trigger disappears when `scan.warnings` is empty |
 | Zero scan candidates | Preserve row with `health: "no-skills"` | Visible valid zero-skill outcome |
 | Reconnecting/read-only session | Disable mutations without clearing source state | Explicit reconnect notice |
 | Removal impact result | Open confirmation dialog; do not delete row | Show count and source-only removal promise |
@@ -79,6 +83,15 @@ return hasSources ? <Workspace /> : <OnboardingPage />;
 
 The initial array is empty before the protected request succeeds. Gate onboarding and route redirects on `hasLoaded` as well as `sources.length`.
 
+**Bad — preserve old warnings after a rescan:**
+
+```tsx
+await rescan(sourceId);
+setWarningMessages(previousWarnings);
+```
+
+The rescan response is authoritative. Render the current `source.scan.warnings` so resolved warnings disappear and new warnings are not hidden.
+
 **Bad — cache protected source/session data in browser storage:**
 
 ```ts
@@ -90,7 +103,8 @@ The local service is the source of truth. Keep feature state in memory and refre
 ## 6. Tests Required
 
 - `local-api.test.ts` must cover authenticated source/directory request paths, percent-encoded source ids and directory paths, typed source summaries, removal impact decoding, and malformed source payload rejection.
-- Playwright must mock only API endpoint requests (never broad `/api/**` module globs), then cover first-run onboarding, directory selection with Unicode path, source creation scan outcome, search/enable/rescan/remove actions, guarded removal confirmation, and the approved 28px/24px source-page typography.
+- Playwright must mock only API endpoint requests (never broad `/api/**` module globs), then cover first-run onboarding, directory selection with Unicode path, source creation scan outcome, search/enable/rescan/remove actions, guarded removal confirmation, and the approved 28px/24px source-page and source-dialog typography.
+- Playwright must cover a warning source: the warning marker is keyboard-accessible, its dialog includes the non-blocking-use notice plus every reason/path, and a clean rescan removes the marker using the returned summary.
 - Retain P6 theme, dialog-focus, connection, and credential tests; P7 must not weaken their accessibility or private-credential guarantees.
 
 - Playwright must cover an unavailable initial `GET /api/sources`: `/skills` or `/sources` stays on its route, onboarding is absent, a retry can recover source navigation, and the “技能 / 技能源” tabs then appear.

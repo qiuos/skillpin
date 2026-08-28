@@ -30,6 +30,9 @@ export function SourceListPage({
     readonly source: LocalSourceSummary;
   } | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
+  const [warningSource, setWarningSource] = useState<LocalSourceSummary | null>(
+    null,
+  );
 
   const nameCounts = useMemo(() => {
     const counts = new Map<string, number>();
@@ -147,7 +150,10 @@ export function SourceListPage({
                   <div className="source-row__identity">
                     <div className="source-row__name">
                       <h2>{source.source.displayName}</h2>
-                      <SourceHealth source={source} />
+                      <SourceHealth
+                        onWarningClick={() => setWarningSource(source)}
+                        source={source}
+                      />
                       {duplicateName ? (
                         <Badge tone="warning">名称重复</Badge>
                       ) : null}
@@ -203,6 +209,30 @@ export function SourceListPage({
           )}
         </div>
       </div>
+      <Dialog
+        className="source-warning-dialog"
+        description="以下扫描告警不影响正常使用；如需更新结果，请重新扫描此技能源。"
+        onClose={() => setWarningSource(null)}
+        open={warningSource !== null}
+        title={`${warningSource?.source.displayName ?? "技能源"}的扫描告警`}
+      >
+        <div className="source-warning-dialog__content">
+          <p>你仍可正常使用此技能源中的技能。</p>
+          <ul>
+            {(warningSource?.scan?.warnings ?? []).map((warning) => (
+              <li key={`${warning.code}:${warning.path}:${warning.message}`}>
+                <strong>{warning.message}</strong>
+                <code>{warning.path}</code>
+              </li>
+            ))}
+          </ul>
+        </div>
+        <div className="dialog__actions">
+          <Button onClick={() => setWarningSource(null)} variant="primary">
+            我知道了
+          </Button>
+        </div>
+      </Dialog>
       <Dialog
         description="移除技能源只会从 SkillPin 配置和当前会话的扫描状态中删除它。源目录、项目链接和清单文件不会改动。"
         onClose={() => setRemovalImpact(null)}

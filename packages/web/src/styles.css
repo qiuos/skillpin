@@ -350,6 +350,7 @@ h2 {
   box-shadow: inset 0 -2px 0 var(--gold-deep);
 }
 .identity-bar__actions {
+  --identity-control-height: 56px;
   display: flex;
   align-items: center;
   flex-shrink: 0;
@@ -358,7 +359,9 @@ h2 {
 .connection {
   display: inline-flex;
   align-items: center;
-  min-height: 52px;
+  box-sizing: border-box;
+  height: var(--identity-control-height);
+  min-height: var(--identity-control-height);
   gap: 10px;
   padding: 6px 12px 6px 8px;
   border: 1px solid var(--gold-deep);
@@ -443,7 +446,9 @@ h2 {
   box-shadow: 0 0 0 2px var(--gold-dark);
 }
 .identity-bar__end-session {
-  min-height: 52px;
+  box-sizing: border-box;
+  height: var(--identity-control-height);
+  min-height: var(--identity-control-height);
   font-size: 24px;
 }
 
@@ -827,6 +832,16 @@ h2 {
 }
 .source-list-page .badge {
   padding: 5px 9px;
+}
+.source-health__warning {
+  cursor: pointer;
+}
+.source-health__warning:hover {
+  filter: brightness(0.96);
+}
+.source-health__warning:focus-visible {
+  outline: 3px solid var(--gold-deep);
+  outline-offset: 2px;
 }
 .source-row__actions {
   display: flex;
@@ -1460,6 +1475,64 @@ h2 {
 }
 .removal-impact p {
   margin: 0 0 9px;
+  color: var(--ink-soft);
+}
+
+/* ============ Source dialogs ============ */
+.source-dialog,
+.source-warning-dialog {
+  --source-dialog-copy-size: 24px;
+  --source-dialog-control-height: 56px;
+}
+.source-dialog .overlay__header h2,
+.source-warning-dialog .overlay__header h2 {
+  font-size: 28px;
+}
+.source-dialog .overlay__header p,
+.source-warning-dialog .overlay__header p,
+.source-dialog .field__label,
+.source-dialog .field__hint,
+.source-dialog .text-input,
+.source-dialog .choice,
+.source-dialog .form-message,
+.source-dialog .directory-browser h3,
+.source-dialog .directory-browser p,
+.source-warning-dialog__content,
+.source-warning-dialog__content code {
+  font-size: var(--source-dialog-copy-size);
+}
+.source-dialog .text-input,
+.source-dialog .button,
+.source-dialog .directory-entry__open,
+.source-warning-dialog .button {
+  min-height: var(--source-dialog-control-height);
+  font-size: var(--source-dialog-copy-size);
+}
+.source-dialog .directory-entry__open {
+  padding-block: 8px;
+}
+.source-warning-dialog__content {
+  display: grid;
+  gap: 14px;
+  padding: 20px 24px;
+}
+.source-warning-dialog__content p {
+  margin: 0;
+  color: var(--moss);
+  font-weight: 700;
+}
+.source-warning-dialog__content ul {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding-left: 30px;
+}
+.source-warning-dialog__content li {
+  display: grid;
+  gap: 5px;
+}
+.source-warning-dialog__content code {
+  overflow-wrap: anywhere;
   color: var(--ink-soft);
 }
 

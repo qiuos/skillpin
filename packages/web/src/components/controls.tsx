@@ -147,6 +147,7 @@ function useFocusTrap(open: boolean, onClose: () => void) {
 }
 
 interface OverlayProps extends PropsWithChildren {
+  readonly className?: string;
   readonly description?: string;
   readonly onClose: () => void;
   readonly open: boolean;
@@ -155,6 +156,7 @@ interface OverlayProps extends PropsWithChildren {
 
 export function Dialog({
   children,
+  className = "",
   description,
   onClose,
   open,
@@ -170,7 +172,7 @@ export function Dialog({
         aria-describedby={description === undefined ? undefined : descriptionId}
         aria-labelledby={titleId}
         aria-modal="true"
-        className="dialog"
+        className={`dialog ${className}`.trim()}
         onMouseDown={(event) => event.stopPropagation()}
         ref={ref}
         role="dialog"

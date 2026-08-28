@@ -114,6 +114,7 @@ export function SourceDialog({
   const editing = source !== null;
   return (
     <Dialog
+      className="source-dialog"
       description="SkillPin 会在保存前验证此本地目录，且仅扫描技能相关元数据。"
       onClose={onClose}
       open={open}

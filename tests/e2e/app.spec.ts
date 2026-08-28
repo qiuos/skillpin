@@ -348,7 +348,13 @@ async function installProtectedLocalApi(
             return reply(updated);
           }
           if (method === "POST") {
-            return reply(current);
+            const rescanned: BrowserSource = {
+              ...current,
+              health: "healthy",
+              scan: { skillCount: current.scan.skillCount, warnings: [] },
+            };
+            sources[index] = rescanned;
+            return reply(rescanned);
           }
           if (method === "DELETE") {
             if (json?.confirmProjectImpact !== true) {
@@ -443,6 +449,18 @@ test("onboards a first source without showing an empty workspace", async ({
   const add = page.getByRole("button", { name: "添加第一个技能源" });
   await expect(add).toBeEnabled();
   await add.click();
+  const sourceDialog = page.getByRole("dialog", { name: "添加技能源" });
+  await expect(
+    sourceDialog.getByRole("heading", { name: "添加技能源" }),
+  ).toHaveCSS("font-size", "28px");
+  await expect(sourceDialog.getByLabel("显示名称")).toHaveCSS(
+    "font-size",
+    "24px",
+  );
+  await expect(sourceDialog.getByLabel("显示名称")).toHaveCSS(
+    "min-height",
+    "56px",
+  );
   await page.getByLabel("显示名称").fill("Personal skills");
   await page.getByRole("button", { name: "浏览目录" }).click();
   await page.getByRole("button", { name: "Home" }).click();
@@ -540,6 +558,49 @@ test("manages existing sources with search, enablement, rescan, and guarded remo
   ).toBeVisible();
 });
 
+test("shows source scan warnings in a dialog and clears them after a clean rescan", async ({
+  page,
+}) => {
+  await installProtectedLocalApi(page, [
+    {
+      failure: null,
+      health: "warnings",
+      scan: {
+        skillCount: 1,
+        warnings: [
+          {
+            code: "INVALID_LINK_NAME",
+            message: "目录中有无效链接名称。",
+            path: "/Users/example/shared/invalid/SKILL.md",
+          },
+        ],
+      },
+      source: {
+        displayName: "Shared skills",
+        enabled: true,
+        id: "source-warning",
+        path: "/Users/example/shared",
+      },
+    },
+  ]);
+  await page.goto("/sources");
+
+  const warning = page.getByRole("button", { name: "存在警告" });
+  await warning.click();
+  const dialog = page.getByRole("dialog", { name: "Shared skills的扫描告警" });
+  await expect(dialog).toBeVisible();
+  await expect(dialog).toContainText("扫描告警不影响正常使用");
+  await expect(dialog).toContainText("你仍可正常使用此技能源中的技能。");
+  await expect(dialog).toContainText("目录中有无效链接名称。");
+  await expect(dialog).toContainText("/Users/example/shared/invalid/SKILL.md");
+  await page.keyboard.press("Escape");
+  await expect(warning).toBeFocused();
+
+  await page.getByRole("button", { name: "重新扫描" }).click();
+  await expect(page.getByRole("button", { name: "存在警告" })).toHaveCount(0);
+  await expect(page.getByText("就绪", { exact: true })).toBeVisible();
+});
+
 test("does not expose appearance controls and returns focus after closing session dialogs", async ({
   page,
 }) => {
@@ -595,6 +656,11 @@ test("browses searchable catalog candidates and safely renders an explicit skill
   await expect(page.locator(".identity-bar__end-session")).toHaveCSS(
     "font-size",
     "24px",
+  );
+  await expect(page.getByLabel("本地会话：已连接")).toHaveCSS("height", "56px");
+  await expect(page.locator(".identity-bar__end-session")).toHaveCSS(
+    "height",
+    "56px",
   );
 
   const catalogBox = await page.getByLabel("技能目录").boundingBox();
