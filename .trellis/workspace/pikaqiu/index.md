@@ -8,7 +8,7 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-1.md`
-- **Total Sessions**: 39
+- **Total Sessions**: 40
 - **Last Active**: 2026-08-28
 <!-- @@@/auto:current-status -->
 
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-1.md` | ~813 | Active |
+| `journal-1.md` | ~848 | Active |
 <!-- @@@/auto:active-documents -->
 
 ---
@@ -29,6 +29,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 40 | 2026-08-28 | Inline skill groups and actionable scan warnings | `20816f9`, `698f967`, `1770908` | `main` |
 | 39 | 2026-08-28 | Support directory skill group actions | `a505681`, `93f81b3` | `main` |
 | 38 | 2026-08-28 | 优化技能源告警与排版 | `3553394` | `main` |
 | 37 | 2026-08-27 | Enhance skills workbench atmosphere | `14587eb` | `main` |

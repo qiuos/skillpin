@@ -811,3 +811,38 @@ Implemented directory-derived skill groups in the catalog, compact group rows wi
 ### Next Steps
 
 - None - task complete
+
+
+## Session 40: Inline skill groups and actionable scan warnings
+
+**Date**: 2026-08-28
+**Task**: Inline skill groups and actionable scan warnings
+**Branch**: `main`
+
+### Summary
+
+Replaced skill-group dialog with inline expansion, simplified group controls, and added translated actionable source scan diagnostics.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `20816f9` | (see git log) |
+| `698f967` | (see git log) |
+| `1770908` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
