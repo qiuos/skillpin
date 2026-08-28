@@ -33,10 +33,14 @@ export interface LocalSkillSource {
   readonly path: string;
 }
 
+export type LocalSourceWarningReason =
+  "PATH_NOT_FOUND" | "PERMISSION_DENIED" | "SYMLINK_LOOP" | "UNKNOWN";
+
 export interface LocalSourceWarning {
   readonly code: "INVALID_LINK_NAME" | "UNREADABLE_DIRECTORY";
   readonly message: string;
   readonly path: string;
+  readonly reason?: LocalSourceWarningReason;
 }
 
 export interface LocalSourceScanSummary {

@@ -55,8 +55,18 @@ describe("LocalApiClient", () => {
   it("uses authenticated, versioned source and directory operations", async () => {
     const source = {
       failure: null,
-      health: "healthy" as const,
-      scan: { skillCount: 1, warnings: [] },
+      health: "warnings" as const,
+      scan: {
+        skillCount: 1,
+        warnings: [
+          {
+            code: "UNREADABLE_DIRECTORY",
+            message: "A child directory could not be inspected.",
+            path: "/tmp/source/archive",
+            reason: "PATH_NOT_FOUND",
+          },
+        ],
+      },
       source: {
         displayName: "Personal",
         enabled: true,
@@ -191,8 +201,18 @@ describe("LocalApiClient", () => {
               sources: [
                 {
                   failure: null,
-                  health: "healthy",
-                  scan: { skillCount: "one", warnings: [] },
+                  health: "warnings",
+                  scan: {
+                    skillCount: 1,
+                    warnings: [
+                      {
+                        code: "UNREADABLE_DIRECTORY",
+                        message: "Unreadable directory",
+                        path: "/tmp/source/missing",
+                        reason: "NOT_A_REASON",
+                      },
+                    ],
+                  },
                   source: {
                     displayName: "Invalid",
                     enabled: true,

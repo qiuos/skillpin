@@ -34,6 +34,28 @@ function sourceUnreadable(
   );
 }
 
+function unreadableDirectoryWarning(
+  path: string,
+  message: string,
+  error: unknown,
+): SourceScanWarning {
+  const systemCode = systemErrorCode(error);
+  const reason =
+    systemCode === "EACCES" || systemCode === "EPERM"
+      ? "PERMISSION_DENIED"
+      : systemCode === "ENOENT"
+        ? "PATH_NOT_FOUND"
+        : systemCode === "ELOOP"
+          ? "SYMLINK_LOOP"
+          : "UNKNOWN";
+  return {
+    code: "UNREADABLE_DIRECTORY",
+    message,
+    path,
+    reason,
+  };
+}
+
 function isWithinSource(relativePath: string): boolean {
   return (
     relativePath === "" ||
@@ -68,13 +90,14 @@ export class SkillScanner {
       let realDirectory: string;
       try {
         realDirectory = await realpath(logicalDirectory);
-      } catch {
-        warnings.push({
-          code: "UNREADABLE_DIRECTORY",
-          message:
+      } catch (error: unknown) {
+        warnings.push(
+          unreadableDirectoryWarning(
+            logicalDirectory,
             "A directory could not be resolved while scanning this source.",
-          path: logicalDirectory,
-        });
+            error,
+          ),
+        );
         return;
       }
       if (visited.has(realDirectory)) {
@@ -91,12 +114,13 @@ export class SkillScanner {
             .split(path.sep)
             .join("/");
           if (!isWithinSource(relativePath)) {
-            warnings.push({
-              code: "UNREADABLE_DIRECTORY",
-              message:
+            warnings.push(
+              unreadableDirectoryWarning(
+                logicalDirectory,
                 "A resolved skill directory escaped its configured source path.",
-              path: logicalDirectory,
-            });
+                undefined,
+              ),
+            );
             return;
           }
           const linkName = path.basename(logicalDirectory);
@@ -132,12 +156,13 @@ export class SkillScanner {
         }
       } catch (error: unknown) {
         if (systemErrorCode(error) !== "ENOENT") {
-          warnings.push({
-            code: "UNREADABLE_DIRECTORY",
-            message:
+          warnings.push(
+            unreadableDirectoryWarning(
+              logicalDirectory,
               "SKILL.md could not be inspected while scanning this source.",
-            path: logicalDirectory,
-          });
+              error,
+            ),
+          );
           return;
         }
       }
@@ -148,13 +173,14 @@ export class SkillScanner {
           encoding: "utf8",
           withFileTypes: true,
         });
-      } catch {
-        warnings.push({
-          code: "UNREADABLE_DIRECTORY",
-          message:
+      } catch (error: unknown) {
+        warnings.push(
+          unreadableDirectoryWarning(
+            logicalDirectory,
             "A child directory could not be read while scanning this source.",
-          path: logicalDirectory,
-        });
+            error,
+          ),
+        );
         return;
       }
 
@@ -168,13 +194,14 @@ export class SkillScanner {
           if ((await stat(childPath)).isDirectory()) {
             childDirectories.push(childPath);
           }
-        } catch {
-          warnings.push({
-            code: "UNREADABLE_DIRECTORY",
-            message:
+        } catch (error: unknown) {
+          warnings.push(
+            unreadableDirectoryWarning(
+              childPath,
               "A child directory could not be inspected while scanning this source.",
-            path: childPath,
-          });
+              error,
+            ),
+          );
         }
       }
 

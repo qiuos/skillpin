@@ -74,6 +74,8 @@ describe("P3 skill scanning", () => {
     );
     await writeSkill(sourceRoot, "binary", Uint8Array.from([0xff, 0xfe]));
     await symlink(sourceRoot, path.join(sourceRoot, "loop"), "dir");
+    const missingLink = path.join(sourceRoot, "missing-link");
+    await symlink(path.join(sourceRoot, "missing-target"), missingLink, "dir");
 
     const result = await new SkillScanner().scan(
       source("source-1", "Personal", sourceRoot),
@@ -116,6 +118,15 @@ describe("P3 skill scanning", () => {
     ).toBe(false);
     expect(result.value.candidates[0]?.contentFingerprint).toMatch(
       /^[a-f0-9]{64}$/u,
+    );
+    expect(result.value.warnings).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          code: "UNREADABLE_DIRECTORY",
+          path: missingLink,
+          reason: "PATH_NOT_FOUND",
+        }),
+      ]),
     );
   });
 

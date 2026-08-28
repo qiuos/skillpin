@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 
-import type { LocalSourceSummary } from "@skillpin/core";
+import type { LocalSourceSummary, LocalSourceWarning } from "@skillpin/core";
 
 import {
   Badge,
@@ -12,6 +12,51 @@ import {
 import { ScanProgress } from "./scan-progress.js";
 import { SourceHealth } from "./source-health.js";
 import { useSources } from "./source-context.js";
+
+type SourceWarningPresentation = {
+  readonly suggestion: string;
+  readonly title: string;
+  readonly why: string;
+};
+
+function sourceWarningPresentation(
+  warning: LocalSourceWarning,
+): SourceWarningPresentation {
+  if (warning.code === "INVALID_LINK_NAME") {
+    return {
+      suggestion: "请将该技能目录改为有效的名称后重新扫描。",
+      title: "技能目录名称不可用",
+      why: "该目录名称不符合项目链接的命名规则，因此不会作为可启用技能处理。",
+    };
+  }
+
+  switch (warning.reason) {
+    case "PERMISSION_DENIED":
+      return {
+        suggestion: "请授予当前账户读取该目录的权限后重新扫描。",
+        title: "无法检查目录",
+        why: "当前账户没有读取该目录的权限。",
+      };
+    case "PATH_NOT_FOUND":
+      return {
+        suggestion: "请确认目录或其链接目标仍存在后重新扫描。",
+        title: "无法检查目录",
+        why: "扫描时该目录或其链接目标已不存在。",
+      };
+    case "SYMLINK_LOOP":
+      return {
+        suggestion: "请修复形成循环的目录链接后重新扫描。",
+        title: "无法检查目录",
+        why: "目录链接形成循环，无法继续扫描。",
+      };
+    default:
+      return {
+        suggestion: "请检查该目录是否可访问，修复后重新扫描。",
+        title: "无法检查目录",
+        why: "系统暂时无法访问该目录。",
+      };
+  }
+}
 
 export function SourceListPage({
   disabled,
@@ -211,20 +256,30 @@ export function SourceListPage({
       </div>
       <Dialog
         className="source-warning-dialog"
-        description="以下扫描告警不影响正常使用；如需更新结果，请重新扫描此技能源。"
+        description={`本次扫描发现 ${warningSource?.scan?.warnings.length ?? 0} 条告警；已发现的技能仍可正常使用。`}
         onClose={() => setWarningSource(null)}
         open={warningSource !== null}
         title={`${warningSource?.source.displayName ?? "技能源"}的扫描告警`}
       >
         <div className="source-warning-dialog__content">
-          <p>你仍可正常使用此技能源中的技能。</p>
           <ul>
-            {(warningSource?.scan?.warnings ?? []).map((warning) => (
-              <li key={`${warning.code}:${warning.path}:${warning.message}`}>
-                <strong>{warning.message}</strong>
-                <code>{warning.path}</code>
-              </li>
-            ))}
+            {(warningSource?.scan?.warnings ?? []).map((warning) => {
+              const presentation = sourceWarningPresentation(warning);
+              return (
+                <li key={`${warning.code}:${warning.path}:${warning.message}`}>
+                  <strong>{presentation.title}</strong>
+                  <span>
+                    <b>原因：</b>
+                    {presentation.why}
+                  </span>
+                  <code>位置：{warning.path}</code>
+                  <span>
+                    <b>建议：</b>
+                    {presentation.suggestion}
+                  </span>
+                </li>
+              );
+            })}
           </ul>
         </div>
         <div className="dialog__actions">

@@ -39,4 +39,5 @@ export {
   type LocalSourceScanSummary,
   type LocalSourceSummary,
   type LocalSourceWarning,
+  type LocalSourceWarningReason,
 } from "./contracts.js";

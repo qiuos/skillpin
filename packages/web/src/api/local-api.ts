@@ -21,6 +21,7 @@ import {
   type LocalSourcePathValidation,
   type LocalSourceRemoveResult,
   type LocalSourceSummary,
+  type LocalSourceWarning,
 } from "@skillpin/core";
 
 export class LocalApiClientError extends Error {
@@ -104,6 +105,27 @@ function isLocalSource(value: unknown): boolean {
   );
 }
 
+function isSourceWarning(value: unknown): value is LocalSourceWarning {
+  if (typeof value !== "object" || value === null) {
+    return false;
+  }
+  const warning = value as Record<string, unknown>;
+  return (
+    ["INVALID_LINK_NAME", "UNREADABLE_DIRECTORY"].includes(
+      String(warning.code),
+    ) &&
+    typeof warning.message === "string" &&
+    typeof warning.path === "string" &&
+    (warning.reason === undefined ||
+      [
+        "PATH_NOT_FOUND",
+        "PERMISSION_DENIED",
+        "SYMLINK_LOOP",
+        "UNKNOWN",
+      ].includes(String(warning.reason)))
+  );
+}
+
 function isSourceSummary(value: unknown): value is LocalSourceSummary {
   if (typeof value !== "object" || value === null) {
     return false;
@@ -126,7 +148,8 @@ function isSourceSummary(value: unknown): value is LocalSourceSummary {
       (typeof scan === "object" &&
         scan !== null &&
         typeof (scan as Record<string, unknown>).skillCount === "number" &&
-        Array.isArray((scan as Record<string, unknown>).warnings)))
+        Array.isArray((scan as Record<string, unknown>).warnings) &&
+        (scan as { warnings: unknown[] }).warnings.every(isSourceWarning)))
   );
 }
 

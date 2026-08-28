@@ -58,6 +58,7 @@ function scanSummary(scan: SourceScan): LocalSourceScanSummary {
       code: warning.code,
       message: warning.message,
       path: warning.path,
+      ...(warning.reason === undefined ? {} : { reason: warning.reason }),
     })),
   };
 }

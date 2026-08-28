@@ -12,10 +12,14 @@ export interface ScannedSkillCandidate extends SkillCandidate {
   readonly skillFilePath: string;
 }
 
+export type SourceScanWarningReason =
+  "PATH_NOT_FOUND" | "PERMISSION_DENIED" | "SYMLINK_LOOP" | "UNKNOWN";
+
 export interface SourceScanWarning {
   readonly code: "INVALID_LINK_NAME" | "UNREADABLE_DIRECTORY";
   readonly message: string;
   readonly path: string;
+  readonly reason?: SourceScanWarningReason;
 }
 
 export interface SourceScan {
