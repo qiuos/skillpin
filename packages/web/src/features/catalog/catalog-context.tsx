@@ -10,7 +10,7 @@ import {
 
 import type {
   LocalCatalogCandidateDetail,
-  LocalCatalogGroup,
+  LocalCatalogItem,
 } from "@skillpin/core";
 
 import { LocalApiClientError } from "../../api/local-api.js";
@@ -19,7 +19,7 @@ import { useSources } from "../sources/source-context.js";
 
 interface CatalogContextValue {
   readonly error: LocalApiClientError | null;
-  readonly groups: readonly LocalCatalogGroup[];
+  readonly items: readonly LocalCatalogItem[];
   readonly isLoading: boolean;
   readonly loadCandidate: (
     candidateId: string,
@@ -44,7 +44,7 @@ export function CatalogProvider({ children }: PropsWithChildren) {
   const client = useLocalApiClient();
   const { session } = useSession();
   const { sources } = useSources();
-  const [groups, setGroups] = useState<readonly LocalCatalogGroup[]>([]);
+  const [items, setItems] = useState<readonly LocalCatalogItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<LocalApiClientError | null>(null);
 
@@ -54,7 +54,7 @@ export function CatalogProvider({ children }: PropsWithChildren) {
       setIsLoading(true);
       try {
         const response = await client.catalog(query);
-        setGroups(response.groups);
+        setItems(response.items);
         setError(null);
       } catch (reason: unknown) {
         setError(asClientError(reason));
@@ -85,8 +85,8 @@ export function CatalogProvider({ children }: PropsWithChildren) {
   );
 
   const value = useMemo<CatalogContextValue>(
-    () => ({ error, groups, isLoading, loadCandidate, search }),
-    [error, groups, isLoading, loadCandidate, search],
+    () => ({ error, isLoading, items, loadCandidate, search }),
+    [error, isLoading, items, loadCandidate, search],
   );
   return (
     <CatalogContext.Provider value={value}>{children}</CatalogContext.Provider>

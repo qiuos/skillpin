@@ -309,12 +309,16 @@ describe("P8 catalog operations", () => {
         jsonResponse({
           version: 1,
           data: {
-            groups: [
+            items: [
               {
-                candidates: [candidate],
-                conflictKey: "review",
-                linkName: "review",
-                matchingCandidateIds: [candidate.id],
+                group: {
+                  candidates: [candidate],
+                  conflictKey: "review",
+                  linkName: "review",
+                  matchingCandidateIds: [candidate.id],
+                },
+                id: "skill:review",
+                kind: "skill",
               },
             ],
             query: "local review",
@@ -336,7 +340,12 @@ describe("P8 catalog operations", () => {
 
     await client.bootstrap();
     await expect(client.catalog("local review")).resolves.toMatchObject({
-      groups: [expect.objectContaining({ linkName: "review" })],
+      items: [
+        expect.objectContaining({
+          group: expect.objectContaining({ linkName: "review" }),
+          kind: "skill",
+        }),
+      ],
     });
     await expect(client.catalogCandidate(candidate.id)).resolves.toMatchObject({
       markdownBody: "# Review",

@@ -32,6 +32,13 @@ export {
   type ParsedSkillDocument,
 } from "./skill-parser.js";
 export { searchCatalog, type CatalogSearchResult } from "./search-service.js";
+export {
+  buildCatalogBrowseItems,
+  type CatalogBrowseItem,
+  type CatalogBrowseSkill,
+  type CatalogBrowseSkillGroup,
+  type CatalogMatchedSkillGroup,
+} from "./directory-skill-groups.js";
 export { SkillScanner } from "./skill-scanner.js";
 export type {
   CatalogSkillGroup,

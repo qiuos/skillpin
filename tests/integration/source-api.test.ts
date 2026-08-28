@@ -356,8 +356,10 @@ describe("P8 catalog API", () => {
     expect(listing.status).toBe(200);
     expect(listing.body).not.toContain("Never expose this in list results.");
     const candidate = data<{
-      groups: { candidates: { id: string; source: { path: string } }[] }[];
-    }>(listing.body).groups[0]?.candidates[0];
+      items: {
+        group: { candidates: { id: string; source: { path: string } }[] };
+      }[];
+    }>(listing.body).items[0]?.group.candidates[0];
     expect(candidate).toBeDefined();
     expect(candidate?.source.path).toBe(await realpath(sourceRoot));
 

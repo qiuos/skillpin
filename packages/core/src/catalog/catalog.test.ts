@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import type { SkillSource } from "../domain/skill-source.js";
 
 import {
+  buildCatalogBrowseItems,
   CatalogIndex,
   getDirectoryBrowserEntrypoints,
   getLinkConflictKey,
@@ -156,5 +157,52 @@ describe("P3 catalog primitives", () => {
         (candidate) => candidate.sourceId,
       ),
     ).toEqual(["source-b"]);
+  });
+  it("promotes only immediate sibling skill roots into directory skill groups", () => {
+    const index = new CatalogIndex();
+    index.replaceSourceScan({
+      candidates: [
+        scan(sourceA, {
+          id: "ui",
+          linkName: "ui-design",
+          relativePath: "engineering/frontend/ui-design",
+        }).candidates[0]!,
+        scan(sourceA, {
+          id: "react",
+          linkName: "react-development",
+          relativePath: "engineering/frontend/react-development",
+        }).candidates[0]!,
+        scan(sourceA, {
+          id: "review",
+          linkName: "review",
+          relativePath: "review",
+        }).candidates[0]!,
+      ],
+      source: sourceA,
+      warnings: [],
+    });
+
+    const items = buildCatalogBrowseItems(index.snapshot([sourceA]), "");
+    expect(items).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          kind: "skill-group",
+          name: "frontend",
+          skills: [
+            expect.objectContaining({ linkName: "react-development" }),
+            expect.objectContaining({ linkName: "ui-design" }),
+          ],
+        }),
+        expect.objectContaining({
+          kind: "skill",
+          group: expect.objectContaining({ linkName: "review" }),
+        }),
+      ]),
+    );
+    expect(
+      items.some(
+        (item) => item.kind === "skill-group" && item.name === "engineering",
+      ),
+    ).toBe(false);
   });
 });

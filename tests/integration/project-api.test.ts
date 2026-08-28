@@ -135,8 +135,10 @@ describe("P9 project change API", () => {
     });
     expect(catalog.status).toBe(200);
     const candidateId = data<{
-      groups: readonly { candidates: readonly { id: string }[] }[];
-    }>(catalog.body).groups[0]?.candidates[0]?.id;
+      items: readonly {
+        group: { candidates: readonly { id: string }[] };
+      }[];
+    }>(catalog.body).items[0]?.group.candidates[0]?.id;
     expect(candidateId).toBeTypeOf("string");
     if (candidateId === undefined)
       throw new Error("Expected a scanned candidate.");

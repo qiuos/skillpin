@@ -74,6 +74,7 @@ export interface LocalCatalogCandidate {
   readonly summary: string;
 }
 
+/** Same-link-name candidates remain one source-selection unit. */
 export interface LocalCatalogGroup {
   readonly candidates: readonly LocalCatalogCandidate[];
   readonly conflictKey: string;
@@ -81,9 +82,27 @@ export interface LocalCatalogGroup {
   readonly matchingCandidateIds: readonly string[];
 }
 
+/** A single skill row in the current session-local catalog. */
+export interface LocalCatalogSkillItem {
+  readonly group: LocalCatalogGroup;
+  readonly id: string;
+  readonly kind: "skill";
+}
+
+/** A source-relative directory containing multiple immediate child skills. */
+export interface LocalCatalogSkillGroupItem {
+  readonly id: string;
+  readonly kind: "skill-group";
+  readonly name: string;
+  readonly skills: readonly LocalCatalogGroup[];
+}
+
+export type LocalCatalogItem =
+  LocalCatalogSkillItem | LocalCatalogSkillGroupItem;
+
 /** Search results from the current session-local catalog; never persisted. */
 export interface LocalCatalogResponse {
-  readonly groups: readonly LocalCatalogGroup[];
+  readonly items: readonly LocalCatalogItem[];
   readonly query: string;
 }
 

@@ -12,6 +12,7 @@ type MockSource = {
 
 type MockApiOptions = {
   readonly catalogLinkName?: string;
+  readonly catalogSkillGroup?: boolean;
   readonly catalogSummary?: string;
   readonly markdownBody?: string;
   readonly projectLinkManaged?: boolean;
@@ -50,6 +51,7 @@ async function installProtectedLocalApi(
   await page.addInitScript(
     ({
       catalogLinkName,
+      catalogSkillGroup,
       catalogSummary,
       markdownBody,
       projectLinkManaged,
@@ -57,6 +59,7 @@ async function installProtectedLocalApi(
       sources: seededSources,
     }: {
       readonly catalogLinkName: string;
+      readonly catalogSkillGroup: boolean;
       readonly catalogSummary: string;
       readonly markdownBody: string;
       readonly projectLinkManaged: boolean;
@@ -65,7 +68,7 @@ async function installProtectedLocalApi(
     }) => {
       type BrowserSource = MockSource;
       const sources = [...seededSources] as BrowserSource[];
-      const projectLinks = projectLinkManaged
+      let projectLinks = projectLinkManaged
         ? [
             {
               linkName: "review",
@@ -75,7 +78,12 @@ async function installProtectedLocalApi(
           ]
         : [];
       let sourceSequence = sources.length;
-      const events = { applyRequests: 0, planRequests: 0, shutdownRequests: 0 };
+      const events = {
+        applyRequests: 0,
+        planRequests: 0,
+        planSelectionCounts: [] as number[],
+        shutdownRequests: 0,
+      };
       const controls = { sourceListAvailable };
       Object.defineProperty(window, "__skillpinMockApiEvents", {
         configurable: true,
@@ -148,57 +156,60 @@ async function installProtectedLocalApi(
         }
         if (url.pathname === "/api/project/plan" && method === "POST") {
           events.planRequests += 1;
-          const selection = Array.isArray(json?.selections)
-            ? json.selections.find(
+          const selections = Array.isArray(json?.selections)
+            ? json.selections.filter(
                 (item): item is Record<string, unknown> =>
                   item !== null && typeof item === "object",
               )
-            : undefined;
-          const candidateId =
-            typeof selection?.candidateId === "string"
-              ? selection.candidateId
-              : null;
-          const kind =
-            candidateId === null
-              ? "remove"
-              : projectLinkManaged
-                ? "replace"
-                : "add";
+            : [];
+          events.planSelectionCounts.push(selections.length);
           return reply({
             baseRevision: 0,
             blockers: [],
-            changes: [
-              {
+            changes: selections.map((selection) => {
+              const candidateId =
+                typeof selection.candidateId === "string"
+                  ? selection.candidateId
+                  : null;
+              const linkName = String(selection.linkName ?? "review");
+              const managed = projectLinks.some(
+                (link) =>
+                  link.linkName === linkName && link.state === "managed",
+              );
+              return {
                 candidateId,
-                kind,
-                linkName: "review",
-              },
-            ],
+                kind:
+                  candidateId === null ? "remove" : managed ? "replace" : "add",
+                linkName,
+              };
+            }),
           });
         }
         if (url.pathname === "/api/project/apply" && method === "POST") {
           events.applyRequests += 1;
-          const removing =
-            Array.isArray(json?.selections) &&
-            json.selections.some(
-              (item) =>
-                item !== null &&
-                typeof item === "object" &&
-                "candidateId" in item &&
-                item.candidateId === null,
+          const selections = Array.isArray(json?.selections)
+            ? json.selections.filter(
+                (item): item is Record<string, unknown> =>
+                  item !== null && typeof item === "object",
+              )
+            : [];
+          for (const selection of selections) {
+            const linkName = String(selection.linkName ?? "review");
+            projectLinks = projectLinks.filter(
+              (link) => link.linkName !== linkName,
             );
+            if (typeof selection.candidateId === "string") {
+              projectLinks.push({
+                linkName,
+                sourceState: "available",
+                state: "managed",
+              });
+            }
+          }
           return reply({
             idempotent: false,
             snapshot: {
-              links: removing
-                ? []
-                : [
-                    {
-                      linkName: "review",
-                      sourceState: "available",
-                      state: "managed",
-                    },
-                  ],
+              links: projectLinks,
               manifestRevision: 1,
               recoveryDiagnostics: [],
             },
@@ -221,20 +232,54 @@ async function installProtectedLocalApi(
             source,
             summary: catalogSummary,
           };
+          const groupCandidates = catalogSkillGroup
+            ? [
+                {
+                  ...candidate,
+                  displayName: "React 开发",
+                  id: "react-candidate",
+                  linkName: "react-development",
+                  relativePath: "前端开发/react-development",
+                  summary: "开发 React 用户界面。",
+                },
+                {
+                  ...candidate,
+                  displayName: "UI 设计",
+                  id: "ui-candidate",
+                  linkName: "ui-design",
+                  relativePath: "前端开发/ui-design",
+                  summary: "设计界面与交互细节。",
+                },
+              ]
+            : [candidate];
+          const toSkill = (entry: (typeof groupCandidates)[number]) => ({
+            candidates: [entry],
+            conflictKey: entry.linkName,
+            linkName: entry.linkName,
+            matchingCandidateIds: [entry.id],
+          });
           return reply({
-            groups: [
-              {
-                candidates: [candidate],
-                conflictKey: catalogLinkName,
-                linkName: catalogLinkName,
-                matchingCandidateIds: [candidate.id],
-              },
-            ],
+            items: catalogSkillGroup
+              ? [
+                  {
+                    id: "skill-group:frontend",
+                    kind: "skill-group",
+                    name: "前端开发",
+                    skills: groupCandidates.map(toSkill),
+                  },
+                ]
+              : [
+                  {
+                    group: toSkill(candidate),
+                    id: `skill:${catalogLinkName}`,
+                    kind: "skill",
+                  },
+                ],
             query: url.searchParams.get("query") ?? "",
           });
         }
         if (
-          url.pathname === "/api/catalog/candidates/catalog-candidate" &&
+          url.pathname.startsWith("/api/catalog/candidates/") &&
           method === "GET"
         ) {
           const source = sources[0]?.source ?? {
@@ -243,18 +288,39 @@ async function installProtectedLocalApi(
             id: "source-catalog",
             path: "/Users/example/skills",
           };
+          const candidateId = decodeURIComponent(
+            url.pathname.slice("/api/catalog/candidates/".length),
+          );
+          const groupedCandidate =
+            candidateId === "react-candidate"
+              ? {
+                  displayName: "React 开发",
+                  linkName: "react-development",
+                  relativePath: "前端开发/react-development",
+                  summary: "开发 React 用户界面。",
+                }
+              : candidateId === "ui-candidate"
+                ? {
+                    displayName: "UI 设计",
+                    linkName: "ui-design",
+                    relativePath: "前端开发/ui-design",
+                    summary: "设计界面与交互细节。",
+                  }
+                : {
+                    displayName: "Review skill",
+                    linkName: catalogLinkName,
+                    relativePath: "review",
+                    summary: catalogSummary,
+                  };
           return reply({
             contentFingerprint: "catalog-fingerprint",
-            displayName: "Review skill",
-            id: "catalog-candidate",
-            linkName: catalogLinkName,
+            ...groupedCandidate,
+            id: candidateId,
             markdownBody,
             parseWarning: null,
-            relativePath: "review",
-            skillDirectory: `${source.path}/review`,
-            skillFilePath: `${source.path}/review/SKILL.md`,
+            skillDirectory: `${source.path}/${groupedCandidate.relativePath}`,
+            skillFilePath: `${source.path}/${groupedCandidate.relativePath}/SKILL.md`,
             source,
-            summary: catalogSummary,
           });
         }
         if (url.pathname === "/api/sources" && method === "GET") {
@@ -390,6 +456,7 @@ async function installProtectedLocalApi(
     },
     {
       catalogLinkName: options.catalogLinkName ?? "review",
+      catalogSkillGroup: options.catalogSkillGroup ?? false,
       catalogSummary: options.catalogSummary ?? "Review a local project.",
       markdownBody:
         options.markdownBody ?? "# Review\n\nSafe local Markdown content.",
@@ -410,7 +477,11 @@ async function mockApiEvents(page: Page): Promise<MockApiEvents> {
     if (events === undefined) {
       throw new Error("Missing mock API event recorder.");
     }
-    return events;
+    return {
+      applyRequests: events.applyRequests,
+      planRequests: events.planRequests,
+      shutdownRequests: events.shutdownRequests,
+    };
   });
 }
 
@@ -847,4 +918,61 @@ test("removes an enabled skill directly without confirmation", async ({
   ).toBeVisible();
   await expect(page.getByLabel("项目变更操作")).toHaveCount(0);
   await expect(page.getByRole("dialog", { name: /确认/ })).toHaveCount(0);
+});
+
+test("manages a directory skill group in one row and supports batch and individual actions", async ({
+  page,
+}) => {
+  await installProtectedLocalApi(
+    page,
+    [source("source-catalog", "Personal", "/Users/example/skills")],
+    { catalogSkillGroup: true },
+  );
+  await page.goto("/skills");
+
+  const catalog = page.getByLabel("技能目录");
+  const groupTrigger = catalog.getByRole("button", {
+    name: "打开技能组 前端开发",
+  });
+  await expect(groupTrigger).toBeVisible();
+  await expect(catalog.locator(".skill-row--group")).toHaveCount(1);
+  await expect(
+    catalog.getByText("技能组 · 包含 2 个技能 · 0 / 2 已启用"),
+  ).toBeVisible();
+
+  await groupTrigger.click();
+  const dialog = page.getByRole("dialog", { name: "技能组：前端开发" });
+  await expect(dialog).toBeVisible();
+  await expect(dialog.getByText("React 开发")).toBeVisible();
+  await expect(dialog.getByText("UI 设计")).toBeVisible();
+  await dialog.getByRole("button", { name: "启用剩余 2 项" }).click();
+
+  await expect
+    .poll(() => mockApiEvents(page))
+    .toEqual({
+      applyRequests: 1,
+      planRequests: 1,
+      shutdownRequests: 0,
+    });
+  await expect(catalog.getByText("2 / 2 已启用")).toBeVisible();
+  await expect(
+    page.evaluate(() => {
+      const events = (
+        window as typeof window & {
+          __skillpinMockApiEvents?: { planSelectionCounts: number[] };
+        }
+      ).__skillpinMockApiEvents;
+      return events?.planSelectionCounts;
+    }),
+  ).resolves.toEqual([2]);
+
+  await dialog
+    .getByRole("button", { name: "移除", exact: true })
+    .first()
+    .click();
+  await expect(catalog.getByText("1 / 2 已启用")).toBeVisible();
+
+  await page.keyboard.press("Escape");
+  await expect(dialog).toHaveCount(0);
+  await expect(groupTrigger).toBeFocused();
 });

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { useVirtualizer } from "@tanstack/react-virtual";
 import type { Components } from "react-markdown";
@@ -9,11 +9,17 @@ import type {
   LocalCatalogCandidate,
   LocalCatalogCandidateDetail,
   LocalCatalogGroup,
+  LocalCatalogItem,
   LocalProjectSelectionInput,
   LocalProjectSnapshot,
 } from "@skillpin/core";
 
-import { Badge, Button, EmptyState } from "../../components/controls.js";
+import {
+  Badge,
+  Button,
+  Dialog,
+  EmptyState,
+} from "../../components/controls.js";
 import { LocalApiClientError } from "../../api/local-api.js";
 import { useLocalApiClient } from "../session/session-context.js";
 import { useSources } from "../sources/source-context.js";
@@ -87,6 +93,24 @@ function projectErrorMessage(reason: unknown, fallback: string): string {
   return reason.message;
 }
 
+function skillKey(group: LocalCatalogGroup): string {
+  return `${group.conflictKey}:${group.candidates
+    .map((candidate) => candidate.id)
+    .join(",")}`;
+}
+
+function itemCandidates(
+  item: LocalCatalogItem,
+): readonly LocalCatalogCandidate[] {
+  return item.kind === "skill"
+    ? item.group.candidates
+    : item.skills.flatMap((skill) => skill.candidates);
+}
+
+function itemSkills(item: LocalCatalogItem): readonly LocalCatalogGroup[] {
+  return item.kind === "skill" ? [item.group] : item.skills;
+}
+
 function groupIsEnabled(
   group: LocalCatalogGroup,
   project: LocalProjectSnapshot | null,
@@ -105,16 +129,28 @@ function groupIsAbnormal(group: LocalCatalogGroup): boolean {
   );
 }
 
+function itemIsAbnormal(item: LocalCatalogItem): boolean {
+  return itemSkills(item).some(groupIsAbnormal);
+}
+
+function enabledSkillCount(
+  item: Extract<LocalCatalogItem, { readonly kind: "skill-group" }>,
+  project: LocalProjectSnapshot | null,
+): number {
+  return item.skills.filter((skill) => groupIsEnabled(skill, project)).length;
+}
+
 export function SkillsWorkbenchPage() {
   const client = useLocalApiClient();
   const { sources } = useSources();
-  const { error, groups, isLoading, loadCandidate, search } = useCatalog();
+  const { error, isLoading, items, loadCandidate, search } = useCatalog();
   const [query, setQuery] = useState("");
   const [selectedSourceIds, setSelectedSourceIds] =
     useState<ReadonlySet<string> | null>(null);
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const [filtersOpen, setFiltersOpen] = useState(false);
-  const [selectedGroupKey, setSelectedGroupKey] = useState<string | null>(null);
+  const [selectedSkillKey, setSelectedSkillKey] = useState<string | null>(null);
+  const [openSkillGroupId, setOpenSkillGroupId] = useState<string | null>(null);
   const [selectedCandidateId, setSelectedCandidateId] = useState<string | null>(
     null,
   );
@@ -124,7 +160,9 @@ export function SkillsWorkbenchPage() {
   const [detailError, setDetailError] = useState<string | null>(null);
   const [project, setProject] = useState<LocalProjectSnapshot | null>(null);
   const [projectError, setProjectError] = useState<string | null>(null);
-  const [changingLinkName, setChangingLinkName] = useState<string | null>(null);
+  const [changingOperation, setChangingOperation] = useState<string | null>(
+    null,
+  );
   const [listElement, setListElement] = useState<HTMLDivElement | null>(null);
   const filtersRef = useRef<HTMLDivElement>(null);
 
@@ -183,16 +221,17 @@ export function SkillsWorkbenchPage() {
     activeFilterCount === 0
       ? "筛选"
       : `筛选，已应用 ${activeFilterCount} 个条件`;
-  const filteredGroups = useMemo(() => {
-    return groups.filter((group) => {
+  const filteredItems = useMemo(() => {
+    return items.filter((item) => {
+      const skills = itemSkills(item);
       if (activeSourceIds !== null) {
-        const matchesSource = group.candidates.some((candidate) =>
+        const matchesSource = itemCandidates(item).some((candidate) =>
           activeSourceIds.has(candidate.source.id),
         );
         if (!matchesSource) return false;
       }
-      const enabled = groupIsEnabled(group, project);
-      const abnormal = groupIsAbnormal(group);
+      const enabled = skills.some((skill) => groupIsEnabled(skill, project));
+      const abnormal = itemIsAbnormal(item);
       switch (statusFilter) {
         case "enabled":
           return enabled;
@@ -204,10 +243,15 @@ export function SkillsWorkbenchPage() {
           return true;
       }
     });
-  }, [activeSourceIds, groups, project, statusFilter]);
+  }, [activeSourceIds, items, project, statusFilter]);
+
+  const allSkills = useMemo(
+    () => filteredItems.flatMap(itemSkills),
+    [filteredItems],
+  );
 
   const rowVirtualizer = useVirtualizer({
-    count: filteredGroups.length,
+    count: filteredItems.length,
     estimateSize: () => 56,
     getScrollElement: () => listElement,
     overscan: 8,
@@ -216,10 +260,10 @@ export function SkillsWorkbenchPage() {
 
   const selectedGroup = useMemo(
     () =>
-      filteredGroups.find((group) => group.conflictKey === selectedGroupKey) ??
-      filteredGroups[0] ??
+      allSkills.find((group) => skillKey(group) === selectedSkillKey) ??
+      allSkills[0] ??
       null,
-    [filteredGroups, selectedGroupKey],
+    [allSkills, selectedSkillKey],
   );
   const selectedCandidate = useMemo(
     () =>
@@ -230,15 +274,23 @@ export function SkillsWorkbenchPage() {
       null,
     [selectedCandidateId, selectedGroup],
   );
+  const openSkillGroup = useMemo(
+    () =>
+      items.find(
+        (item): item is Extract<LocalCatalogItem, { kind: "skill-group" }> =>
+          item.kind === "skill-group" && item.id === openSkillGroupId,
+      ) ?? null,
+    [items, openSkillGroupId],
+  );
 
   useEffect(() => {
     if (
       selectedGroup !== null &&
-      selectedGroupKey !== selectedGroup.conflictKey
+      selectedSkillKey !== skillKey(selectedGroup)
     ) {
-      setSelectedGroupKey(selectedGroup.conflictKey);
+      setSelectedSkillKey(skillKey(selectedGroup));
     }
-  }, [selectedGroup, selectedGroupKey]);
+  }, [selectedGroup, selectedSkillKey]);
 
   useEffect(() => {
     if (selectedCandidate === null) {
@@ -262,50 +314,84 @@ export function SkillsWorkbenchPage() {
     };
   }, [loadCandidate, selectedCandidate]);
 
-  const applyDirectChange = (group: LocalCatalogGroup, enabled: boolean) => {
-    const candidate =
-      group.conflictKey === selectedGroup?.conflictKey
-        ? (selectedCandidate ?? group.candidates[0])
-        : group.candidates[0];
-    if (!enabled && candidate === undefined) {
-      setProjectError("无法启用：没有可用的技能来源。");
-      return;
-    }
+  const candidateForGroup = (group: LocalCatalogGroup) =>
+    group.candidates.find(
+      (candidate) => candidate.id === selectedCandidate?.id,
+    ) ?? group.candidates[0];
 
-    const selections: readonly LocalProjectSelectionInput[] = [
-      {
-        candidateId: enabled ? null : candidate!.id,
-        linkName: group.linkName,
-      },
-    ];
-    setChangingLinkName(group.linkName);
+  const applySelections = (
+    selections: readonly LocalProjectSelectionInput[],
+    operationId: string,
+  ) => {
+    if (selections.length === 0) return;
+    setChangingOperation(operationId);
     setProjectError(null);
-    void client
-      .projectPlan(selections)
-      .then((next) => {
+    void (async () => {
+      try {
+        const next = await client.projectPlan(selections);
         if (next.blockers.length > 0) {
           throw new Error(
             next.blockers.map((blocker) => blocker.message).join(" "),
           );
         }
         if (next.changes.length === 0) {
-          throw new Error("没有需要应用的变更。");
+          setProject(await client.project());
+          return;
         }
-        return client.applyProjectChanges({
+        const result = await client.applyProjectChanges({
           baseRevision: next.baseRevision,
           requestId: crypto.randomUUID(),
           selections,
         });
-      })
-      .then((result) => setProject(result.snapshot))
-      .catch((reason: unknown) => {
+        setProject(result.snapshot);
+      } catch (reason: unknown) {
         setProjectError(projectErrorMessage(reason, "无法应用变更。"));
         void client
           .project()
           .then((snapshot) => setProject(snapshot))
           .catch(() => undefined);
-      })
-      .finally(() => setChangingLinkName(null));
+      } finally {
+        setChangingOperation(null);
+      }
+    })();
+  };
+
+  const applyDirectChange = (group: LocalCatalogGroup, enabled: boolean) => {
+    const candidate = candidateForGroup(group);
+    if (!enabled && candidate === undefined) {
+      setProjectError("无法启用：没有可用的技能来源。");
+      return;
+    }
+    applySelections(
+      [
+        {
+          candidateId: enabled ? null : candidate!.id,
+          linkName: group.linkName,
+        },
+      ],
+      `skill:${skillKey(group)}`,
+    );
+  };
+
+  const applySkillGroupChange = (
+    skillGroup: Extract<LocalCatalogItem, { readonly kind: "skill-group" }>,
+  ) => {
+    const allEnabled = skillGroup.skills.every((skill) =>
+      groupIsEnabled(skill, project),
+    );
+    const selections = skillGroup.skills.flatMap((skill) => {
+      const enabled = groupIsEnabled(skill, project);
+      if (!allEnabled && enabled) return [];
+      const candidate = candidateForGroup(skill);
+      if (!allEnabled && candidate === undefined) return [];
+      return [
+        {
+          candidateId: allEnabled ? null : candidate!.id,
+          linkName: skill.linkName,
+        },
+      ];
+    });
+    applySelections(selections, `skill-group:${skillGroup.id}`);
   };
 
   useEffect(() => {
@@ -329,18 +415,29 @@ export function SkillsWorkbenchPage() {
 
   const selectAllSources = () => setSelectedSourceIds(null);
 
-  const selectGroup = (group: LocalCatalogGroup) => {
-    setSelectedGroupKey(group.conflictKey);
+  const selectSkill = (group: LocalCatalogGroup) => {
+    setSelectedSkillKey(skillKey(group));
     setSelectedCandidateId(group.candidates[0]?.id ?? null);
   };
+  const closeSkillGroupDialog = useCallback(
+    () => setOpenSkillGroupId(null),
+    [],
+  );
+  const openGroupDialog = (
+    skillGroup: Extract<LocalCatalogItem, { readonly kind: "skill-group" }>,
+  ) => {
+    setOpenSkillGroupId(skillGroup.id);
+    const firstSkill = skillGroup.skills[0];
+    if (firstSkill !== undefined) selectSkill(firstSkill);
+  };
 
-  if (isLoading && groups.length === 0) {
+  if (isLoading && items.length === 0) {
     return <EmptyState body="正在读取会话本地技能目录…" title="正在加载技能" />;
   }
-  if (error !== null && groups.length === 0) {
+  if (error !== null && items.length === 0) {
     return <EmptyState body={error.message} title="无法加载技能" />;
   }
-  if (!isLoading && groups.length === 0) {
+  if (!isLoading && items.length === 0) {
     return (
       <EmptyState
         body="重新扫描技能源，或调整搜索条件以发现本地技能。"
@@ -422,7 +519,7 @@ export function SkillsWorkbenchPage() {
           <div className="skill-catalog__head">
             <h2>技能目录</h2>
             <span className="skill-catalog__count">
-              {filteredGroups.length} 项{isLoading ? " · 更新中…" : ""}
+              {filteredItems.length} 项{isLoading ? " · 更新中…" : ""}
             </span>
           </div>
           <section aria-label="技能源与筛选" className="catalog-tools">
@@ -544,7 +641,7 @@ export function SkillsWorkbenchPage() {
               {error.message}
             </p>
           )}
-          {filteredGroups.length === 0 ? (
+          {filteredItems.length === 0 ? (
             <EmptyState
               body="清除筛选条件，或管理技能源后重试。"
               title={query === "" ? "筛选无结果" : "没有匹配的技能"}
@@ -557,54 +654,125 @@ export function SkillsWorkbenchPage() {
                   position: "relative",
                 }}
               >
-                {rowVirtualizer.getVirtualItems().map((item) => {
-                  const group = filteredGroups[item.index]!;
+                {rowVirtualizer.getVirtualItems().map((virtualItem) => {
+                  const catalogItem = filteredItems[virtualItem.index]!;
+                  const skillGroup =
+                    catalogItem.kind === "skill-group" ? catalogItem : null;
+                  const skill =
+                    catalogItem.kind === "skill" ? catalogItem.group : null;
                   const active =
-                    group.conflictKey === selectedGroup?.conflictKey;
-                  const enabled = groupIsEnabled(group, project);
-                  const changing = changingLinkName === group.linkName;
-                  const applying = changingLinkName !== null;
-                  const actionLabel = enabled ? "移除" : "启用";
+                    skill !== null
+                      ? skillKey(skill) === selectedSkillKey
+                      : (skillGroup?.skills.some(
+                          (entry) => skillKey(entry) === selectedSkillKey,
+                        ) ?? false);
+                  const applying = changingOperation !== null;
+                  const enabled =
+                    skill === null ? false : groupIsEnabled(skill, project);
+                  const enabledCount =
+                    skillGroup === null
+                      ? 0
+                      : enabledSkillCount(skillGroup, project);
+                  const remainingCount =
+                    skillGroup === null
+                      ? 0
+                      : skillGroup.skills.length - enabledCount;
+                  const groupActionLabel =
+                    skillGroup === null
+                      ? ""
+                      : remainingCount === 0
+                        ? "全部移除"
+                        : `启用剩余 ${remainingCount} 项`;
+                  const changing =
+                    changingOperation ===
+                    (skillGroup === null
+                      ? `skill:${skillKey(skill!)}`
+                      : `skill-group:${skillGroup.id}`);
                   return (
                     <div
-                      className={`skill-row${active ? " skill-row--active" : ""}`}
-                      key={group.conflictKey}
-                      data-index={item.index}
+                      className={`skill-row${active ? " skill-row--active" : ""}${skillGroup === null ? "" : " skill-row--group"}`}
+                      data-index={virtualItem.index}
+                      key={catalogItem.id}
                       ref={rowVirtualizer.measureElement}
                       style={{
-                        transform: `translateY(${item.start}px)`,
+                        transform: `translateY(${virtualItem.start}px)`,
                       }}
                     >
                       <span aria-hidden="true" className="skill-row__cursor" />
-                      <button
-                        className="skill-row__select"
-                        onClick={() => selectGroup(group)}
-                        type="button"
-                      >
-                        <span className="skill-row__name">
-                          {group.linkName}
-                        </span>
-                        <span className="skill-row__summary">
-                          {group.candidates[0]?.summary}
-                        </span>
-                        {groupIsAbnormal(group) ? (
-                          <span
-                            aria-label="存在解析备注"
-                            className="skill-row__warning"
-                            title="解析备注"
-                          >
-                            ⚠
+                      {skill === null ? null : (
+                        <button
+                          className="skill-row__select"
+                          onClick={() => selectSkill(skill)}
+                          type="button"
+                        >
+                          <span className="skill-row__name">
+                            ◇ {skill.linkName}
                           </span>
-                        ) : null}
-                      </button>
+                          <span className="skill-row__summary">
+                            {skill.candidates[0]?.summary}
+                          </span>
+                          {groupIsAbnormal(skill) ? (
+                            <span
+                              aria-label="存在解析备注"
+                              className="skill-row__warning"
+                              title="解析备注"
+                            >
+                              ⚠
+                            </span>
+                          ) : null}
+                        </button>
+                      )}
+                      {skillGroup === null ? null : (
+                        <button
+                          aria-label={`打开技能组 ${skillGroup.name}`}
+                          className="skill-row__select"
+                          onClick={() => openGroupDialog(skillGroup)}
+                          type="button"
+                        >
+                          <span className="skill-row__name">
+                            ▣ {skillGroup.name}
+                          </span>
+                          <span className="skill-row__summary">
+                            技能组 · 包含 {skillGroup.skills.length} 个技能 ·{" "}
+                            {enabledCount} / {skillGroup.skills.length} 已启用
+                          </span>
+                          {itemIsAbnormal(skillGroup) ? (
+                            <span
+                              aria-label="存在解析备注"
+                              className="skill-row__warning"
+                              title="解析备注"
+                            >
+                              ⚠
+                            </span>
+                          ) : null}
+                        </button>
+                      )}
                       <div className="skill-row__actions">
                         <Button
                           className="skill-row__action"
                           disabled={applying}
-                          onClick={() => applyDirectChange(group, enabled)}
-                          variant={enabled ? "danger" : "primary"}
+                          onClick={() =>
+                            skill === null
+                              ? applySkillGroupChange(skillGroup!)
+                              : applyDirectChange(skill, enabled)
+                          }
+                          variant={
+                            skill === null
+                              ? remainingCount === 0
+                                ? "danger"
+                                : "primary"
+                              : enabled
+                                ? "danger"
+                                : "primary"
+                          }
                         >
-                          {changing ? `${actionLabel}中…` : actionLabel}
+                          {changing
+                            ? `${skill === null ? groupActionLabel : enabled ? "移除" : "启用"}中…`
+                            : skill === null
+                              ? groupActionLabel
+                              : enabled
+                                ? "移除"
+                                : "启用"}
                         </Button>
                       </div>
                     </div>
@@ -616,6 +784,75 @@ export function SkillsWorkbenchPage() {
         </section>
         {detailPane}
       </div>
+      <Dialog
+        {...(openSkillGroup === null
+          ? {}
+          : {
+              description: `包含 ${openSkillGroup.skills.length} 个技能，可逐项管理或批量启用。`,
+            })}
+        onClose={closeSkillGroupDialog}
+        open={openSkillGroup !== null}
+        title={
+          openSkillGroup === null ? "技能组" : `技能组：${openSkillGroup.name}`
+        }
+      >
+        {openSkillGroup === null ? null : (
+          <>
+            <div className="skill-group-dialog__list" role="list">
+              {openSkillGroup.skills.map((skill) => {
+                const enabled = groupIsEnabled(skill, project);
+                const changing =
+                  changingOperation === `skill:${skillKey(skill)}`;
+                return (
+                  <div
+                    className="skill-group-dialog__row"
+                    key={skillKey(skill)}
+                    role="listitem"
+                  >
+                    <div>
+                      <strong>
+                        {skill.candidates[0]?.displayName ?? skill.linkName}
+                      </strong>
+                      <span>{skill.candidates[0]?.summary}</span>
+                    </div>
+                    <Button
+                      disabled={changingOperation !== null}
+                      onClick={() => applyDirectChange(skill, enabled)}
+                      variant={enabled ? "danger" : "primary"}
+                    >
+                      {changing
+                        ? `${enabled ? "移除" : "启用"}中…`
+                        : enabled
+                          ? "移除"
+                          : "启用"}
+                    </Button>
+                  </div>
+                );
+              })}
+            </div>
+            <div className="dialog__actions">
+              <Button
+                disabled={changingOperation !== null}
+                onClick={() => applySkillGroupChange(openSkillGroup)}
+                variant={
+                  enabledSkillCount(openSkillGroup, project) ===
+                  openSkillGroup.skills.length
+                    ? "danger"
+                    : "primary"
+                }
+              >
+                {enabledSkillCount(openSkillGroup, project) ===
+                openSkillGroup.skills.length
+                  ? "全部移除"
+                  : `启用剩余 ${openSkillGroup.skills.length - enabledSkillCount(openSkillGroup, project)} 项`}
+              </Button>
+              <Button onClick={closeSkillGroupDialog} variant="secondary">
+                关闭
+              </Button>
+            </div>
+          </>
+        )}
+      </Dialog>
       {projectError === null ? null : (
         <p className="form-message form-message--error" role="alert">
           {projectError}

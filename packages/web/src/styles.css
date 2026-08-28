@@ -1188,6 +1188,14 @@ h2 {
 .skill-row:hover {
   background: rgba(198, 161, 90, 0.12);
 }
+.skill-row--group {
+  border-left: 3px solid var(--gold-deep);
+  padding-left: 7px;
+  background: rgba(198, 161, 90, 0.08);
+}
+.skill-row--group:hover {
+  background: rgba(198, 161, 90, 0.16);
+}
 .skill-row--active {
   background: rgba(198, 161, 90, 0.2);
   box-shadow: inset 3px 0 0 var(--wine);
@@ -1476,6 +1484,30 @@ h2 {
 .removal-impact p {
   margin: 0 0 9px;
   color: var(--ink-soft);
+}
+.skill-group-dialog__list {
+  display: grid;
+  gap: 0;
+  padding: 4px 24px 12px;
+}
+.skill-group-dialog__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  min-height: 64px;
+  border-bottom: 1px solid color-mix(in srgb, var(--gold) 60%, transparent);
+}
+.skill-group-dialog__row > div {
+  display: grid;
+  min-width: 0;
+  gap: 3px;
+}
+.skill-group-dialog__row span {
+  overflow: hidden;
+  color: var(--ink-soft);
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 /* ============ Source dialogs ============ */

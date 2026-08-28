@@ -5,6 +5,7 @@ import {
   type LocalApiResponse,
   type LocalCatalogCandidate,
   type LocalCatalogCandidateDetail,
+  type LocalCatalogItem,
   type LocalCatalogResponse,
   type LocalDirectoryBrowserEntrypoint,
   type LocalDirectoryListing,
@@ -163,24 +164,39 @@ function isCatalogCandidate(value: unknown): value is LocalCatalogCandidate {
   );
 }
 
+function isCatalogGroup(value: unknown): boolean {
+  if (typeof value !== "object" || value === null) return false;
+  const record = value as Record<string, unknown>;
+  return (
+    typeof record.conflictKey === "string" &&
+    typeof record.linkName === "string" &&
+    Array.isArray(record.matchingCandidateIds) &&
+    record.matchingCandidateIds.every((id) => typeof id === "string") &&
+    Array.isArray(record.candidates) &&
+    record.candidates.every(isCatalogCandidate)
+  );
+}
+
+function isCatalogItem(value: unknown): value is LocalCatalogItem {
+  if (typeof value !== "object" || value === null) return false;
+  const item = value as Record<string, unknown>;
+  if (typeof item.id !== "string") return false;
+  if (item.kind === "skill") return isCatalogGroup(item.group);
+  return (
+    item.kind === "skill-group" &&
+    typeof item.name === "string" &&
+    Array.isArray(item.skills) &&
+    item.skills.every(isCatalogGroup)
+  );
+}
+
 function isCatalogResponse(value: unknown): value is LocalCatalogResponse {
   if (typeof value !== "object" || value === null) return false;
   const response = value as Record<string, unknown>;
   return (
     typeof response.query === "string" &&
-    Array.isArray(response.groups) &&
-    response.groups.every((group) => {
-      if (typeof group !== "object" || group === null) return false;
-      const record = group as Record<string, unknown>;
-      return (
-        typeof record.conflictKey === "string" &&
-        typeof record.linkName === "string" &&
-        Array.isArray(record.matchingCandidateIds) &&
-        record.matchingCandidateIds.every((id) => typeof id === "string") &&
-        Array.isArray(record.candidates) &&
-        record.candidates.every(isCatalogCandidate)
-      );
-    })
+    Array.isArray(response.items) &&
+    response.items.every(isCatalogItem)
   );
 }
 

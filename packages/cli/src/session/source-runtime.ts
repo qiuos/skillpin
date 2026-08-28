@@ -3,6 +3,7 @@ import {
   type LocalCatalogCandidate,
   type LocalCatalogCandidateDetail,
   type LocalCatalogGroup,
+  type LocalCatalogItem,
   type LocalCatalogResponse,
   type LocalDirectoryBrowserEntrypoint,
   type LocalDirectoryListing,
@@ -31,7 +32,8 @@ import {
   resolveReadableSourceDirectory,
   SkillScanner,
   SkillSourceService,
-  searchCatalog,
+  buildCatalogBrowseItems,
+  type CatalogBrowseItem,
   type ScannedSkillCandidate,
   type SourceScan,
 } from "@skillpin/core/catalog";
@@ -125,9 +127,8 @@ export class SourceRuntime {
     }
     const snapshot = this.#catalog.snapshot(this.#sources);
     return ok({
-      groups: searchCatalog(snapshot, query).map(
-        ({ group, matchingCandidateIds }) =>
-          this.localCatalogGroup(group, matchingCandidateIds),
+      items: buildCatalogBrowseItems(snapshot, query).map((item) =>
+        this.localCatalogItem(item),
       ),
       query,
     });
@@ -336,6 +337,27 @@ export class SourceRuntime {
 
   private async rescanSource(source: SkillSource): Promise<void> {
     await this.#catalog.rescan(source, this.#scanner);
+  }
+
+  private localCatalogItem(item: CatalogBrowseItem): LocalCatalogItem {
+    if (item.kind === "skill") {
+      return {
+        group: this.localCatalogGroup(
+          item.group,
+          item.group.matchingCandidateIds,
+        ),
+        id: item.id,
+        kind: "skill",
+      };
+    }
+    return {
+      id: item.id,
+      kind: "skill-group",
+      name: item.name,
+      skills: item.skills.map((skill) =>
+        this.localCatalogGroup(skill, skill.matchingCandidateIds),
+      ),
+    };
   }
 
   private localCatalogGroup(
