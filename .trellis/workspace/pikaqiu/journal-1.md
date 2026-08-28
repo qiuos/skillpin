@@ -777,3 +777,37 @@ Unified primary source/filter typography with 22px skill-list copy, added CSS-on
 ### Next Steps
 
 - None - task complete
+
+
+## Session 39: Support directory skill group actions
+
+**Date**: 2026-08-28
+**Task**: Support directory skill group actions
+**Branch**: `main`
+
+### Summary
+
+Implemented directory-derived skill groups in the catalog, compact group rows with dialog-based per-skill and batch actions, API item-union decoding, tests, and P8/P9 code-spec updates.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `a505681` | (see git log) |
+| `93f81b3` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
