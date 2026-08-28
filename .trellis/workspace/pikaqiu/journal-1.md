@@ -744,3 +744,36 @@ Unified primary source/filter typography with 22px skill-list copy, added CSS-on
 ### Next Steps
 
 - None - task complete
+
+
+## Session 38: 优化技能源告警与排版
+
+**Date**: 2026-08-28
+**Task**: 优化技能源告警与排版
+**Branch**: `main`
+
+### Summary
+
+统一顶部连接状态与结束按钮高度；提高技能源及添加弹窗的文字可读性；新增可访问的告警原因弹窗，并验证重新扫描会清除已解决的告警。
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `3553394` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete

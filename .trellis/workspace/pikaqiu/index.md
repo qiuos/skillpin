@@ -8,8 +8,8 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-1.md`
-- **Total Sessions**: 37
-- **Last Active**: 2026-08-27
+- **Total Sessions**: 38
+- **Last Active**: 2026-08-28
 <!-- @@@/auto:current-status -->
 
 ---
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-1.md` | ~746 | Active |
+| `journal-1.md` | ~779 | Active |
 <!-- @@@/auto:active-documents -->
 
 ---
@@ -29,6 +29,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 38 | 2026-08-28 | 优化技能源告警与排版 | `3553394` | `main` |
 | 37 | 2026-08-27 | Enhance skills workbench atmosphere | `14587eb` | `main` |
 | 36 | 2026-08-27 | Release skill catalog typography v0.1.15 | `42ac61d`, `4bb4039` | `main` |
 | 35 | 2026-08-27 | 优化技能列表并发布 SkillPin 0.1.14 | `a0f2798`, `cec1e3a`, `c4fc756`, `e724132` | `main` |
