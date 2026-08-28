@@ -846,3 +846,37 @@ Replaced skill-group dialog with inline expansion, simplified group controls, an
 ### Next Steps
 
 - None - task complete
+
+
+## Session 41: Add selectable application themes
+
+**Date**: 2026-08-28
+**Task**: Add selectable application themes
+**Branch**: `main`
+
+### Summary
+
+Added the product-name theme icon and persisted parchment, dark, and light themes; verified the release package and published v0.1.19.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `0e0215a` | (see git log) |
+| `208d43d` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
