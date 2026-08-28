@@ -712,21 +712,72 @@ test("shows source scan warnings in a dialog and clears them after a clean resca
   await expect(page.getByText("就绪", { exact: true })).toBeVisible();
 });
 
-test("does not expose appearance controls and returns focus after closing session dialogs", async ({
+test("selects and restores a theme from the product-name icon", async ({
   page,
 }) => {
   await installProtectedLocalApi(page);
   await page.goto("/");
 
-  await expect(page.getByRole("button", { name: "外观" })).toHaveCount(0);
+  const themeTrigger = page.getByRole("button", { name: "主题：羊皮卷主题" });
+  await expect(themeTrigger).toBeVisible();
+  await expect(page.locator("html")).toHaveAttribute("data-theme", "parchment");
 
-  const end = page.getByRole("button", { name: "结束 SkillPin" });
-  await end.click();
+  await themeTrigger.click();
+  const themeMenu = page.getByRole("listbox", { name: "选择主题" });
+  await expect(themeMenu).toBeVisible();
   await expect(
-    page.getByRole("dialog", { name: "结束 SkillPin 会话" }),
+    themeMenu.getByRole("option", { name: "羊皮卷主题" }),
+  ).toHaveAttribute("aria-selected", "true");
+
+  await page.keyboard.press("ArrowDown");
+  await expect(
+    themeMenu.getByRole("option", { name: "深色主题" }),
+  ).toBeFocused();
+  await page.keyboard.press("Enter");
+  await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
+  await expect(
+    page.getByRole("button", { name: "主题：深色主题" }),
+  ).toBeFocused();
+
+  await expect(page.locator("body")).toHaveCSS(
+    "background-color",
+    "rgb(17, 21, 28)",
+  );
+
+  await page.reload();
+  await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
+  await expect(
+    page.getByRole("button", { name: "主题：深色主题" }),
   ).toBeVisible();
+
+  const restoredThemeTrigger = page.getByRole("button", {
+    name: "主题：深色主题",
+  });
+  await restoredThemeTrigger.click();
+  await themeMenu.getByRole("option", { name: "浅色主题" }).click();
+  await expect(page.locator("html")).toHaveAttribute("data-theme", "light");
+  await expect(page.locator("body")).toHaveCSS(
+    "background-color",
+    "rgb(232, 237, 242)",
+  );
+
+  await page.reload();
+  await expect(page.locator("html")).toHaveAttribute("data-theme", "light");
+  const lightThemeTrigger = page.getByRole("button", {
+    name: "主题：浅色主题",
+  });
+  await expect(lightThemeTrigger).toBeVisible();
+
+  await lightThemeTrigger.click();
+  await expect(themeMenu).toBeVisible();
+  await page.getByRole("heading", { name: "设置你的第一个技能源" }).click();
+  await expect(themeMenu).toBeHidden();
+
+  await lightThemeTrigger.click();
+  await expect(themeMenu).toBeVisible();
   await page.keyboard.press("Escape");
-  await expect(end).toBeFocused();
+  await expect(themeMenu).toBeHidden();
+  await expect(lightThemeTrigger).toBeFocused();
 });
 
 test("browses searchable catalog candidates and safely renders an explicit skill detail", async ({

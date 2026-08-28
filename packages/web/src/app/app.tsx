@@ -6,6 +6,8 @@ import { Button, Dialog } from "../components/controls.js";
 import { SkillsWorkbenchPage } from "../features/catalog/skills-workbench-page.js";
 import { CatalogProvider } from "../features/catalog/catalog-context.js";
 import { OnboardingPage } from "../features/onboarding/onboarding-page.js";
+import { ThemeSelector } from "../features/theme/theme-selector.js";
+import { useThemePreference } from "../features/theme/use-theme-preference.js";
 import {
   consumeReturnRoute,
   useSession,
@@ -68,6 +70,7 @@ function connectionCopy(
 }
 
 function AppShell() {
+  const [theme, setTheme] = useThemePreference();
   const [route, navigate] = useRoute();
   const {
     connection,
@@ -165,6 +168,7 @@ function AppShell() {
         <header className="identity-bar ot-window" role="banner">
           <div className="identity-bar__brand">
             <h1 className="product-name">SkillPin</h1>
+            <ThemeSelector onThemeChange={setTheme} theme={theme} />
             {hasSources ? (
               <nav aria-label="SkillPin 功能分区" className="identity-nav">
                 {workspaceRoutes.map((item) => (
