@@ -5,13 +5,19 @@ type MockSource = {
   health: "healthy" | "no-skills" | "warnings";
   scan: {
     skillCount: number;
-    warnings: { code: string; message: string; path: string }[];
+    warnings: {
+      code: string;
+      message: string;
+      path: string;
+      reason?: string;
+    }[];
   };
   source: { displayName: string; enabled: boolean; id: string; path: string };
 };
 
 type MockApiOptions = {
   readonly catalogLinkName?: string;
+  readonly catalogSecondSkillGroup?: boolean;
   readonly catalogSkillGroup?: boolean;
   readonly catalogSummary?: string;
   readonly markdownBody?: string;
@@ -51,6 +57,7 @@ async function installProtectedLocalApi(
   await page.addInitScript(
     ({
       catalogLinkName,
+      catalogSecondSkillGroup,
       catalogSkillGroup,
       catalogSummary,
       markdownBody,
@@ -59,6 +66,7 @@ async function installProtectedLocalApi(
       sources: seededSources,
     }: {
       readonly catalogLinkName: string;
+      readonly catalogSecondSkillGroup: boolean;
       readonly catalogSkillGroup: boolean;
       readonly catalogSummary: string;
       readonly markdownBody: string;
@@ -258,16 +266,36 @@ async function installProtectedLocalApi(
             linkName: entry.linkName,
             matchingCandidateIds: [entry.id],
           });
-          return reply({
-            items: catalogSkillGroup
+          const groupItems = [
+            {
+              id: "skill-group:frontend",
+              kind: "skill-group" as const,
+              name: "前端开发",
+              skills: groupCandidates.map(toSkill),
+            },
+            ...(catalogSecondSkillGroup
               ? [
                   {
-                    id: "skill-group:frontend",
-                    kind: "skill-group",
-                    name: "前端开发",
-                    skills: groupCandidates.map(toSkill),
+                    id: "skill-group:backend",
+                    kind: "skill-group" as const,
+                    name: "后端开发",
+                    skills: [
+                      toSkill({
+                        ...candidate,
+                        displayName: "Node.js 开发",
+                        id: "node-candidate",
+                        linkName: "node-development",
+                        relativePath: "后端开发/node-development",
+                        summary: "开发 Node.js 服务。",
+                      }),
+                    ],
                   },
                 ]
+              : []),
+          ];
+          return reply({
+            items: catalogSkillGroup
+              ? groupItems
               : [
                   {
                     group: toSkill(candidate),
@@ -456,6 +484,7 @@ async function installProtectedLocalApi(
     },
     {
       catalogLinkName: options.catalogLinkName ?? "review",
+      catalogSecondSkillGroup: options.catalogSecondSkillGroup ?? false,
       catalogSkillGroup: options.catalogSkillGroup ?? false,
       catalogSummary: options.catalogSummary ?? "Review a local project.",
       markdownBody:
@@ -640,9 +669,11 @@ test("shows source scan warnings in a dialog and clears them after a clean resca
         skillCount: 1,
         warnings: [
           {
-            code: "INVALID_LINK_NAME",
-            message: "目录中有无效链接名称。",
-            path: "/Users/example/shared/invalid/SKILL.md",
+            code: "UNREADABLE_DIRECTORY",
+            message:
+              "A child directory could not be inspected while scanning this source.",
+            path: "/Users/example/shared/archive",
+            reason: "PATH_NOT_FOUND",
           },
         ],
       },
@@ -660,10 +691,19 @@ test("shows source scan warnings in a dialog and clears them after a clean resca
   await warning.click();
   const dialog = page.getByRole("dialog", { name: "Shared skills的扫描告警" });
   await expect(dialog).toBeVisible();
-  await expect(dialog).toContainText("扫描告警不影响正常使用");
-  await expect(dialog).toContainText("你仍可正常使用此技能源中的技能。");
-  await expect(dialog).toContainText("目录中有无效链接名称。");
-  await expect(dialog).toContainText("/Users/example/shared/invalid/SKILL.md");
+  await expect(dialog).toContainText(
+    "本次扫描发现 1 条告警；已发现的技能仍可正常使用。",
+  );
+  await expect(dialog).toContainText("无法检查目录");
+  await expect(dialog).toContainText("扫描时该目录或其链接目标已不存在。");
+  await expect(dialog).toContainText("位置：/Users/example/shared/archive");
+  await expect(dialog).toContainText(
+    "请确认目录或其链接目标仍存在后重新扫描。",
+  );
+  await expect(dialog).not.toContainText(
+    "A child directory could not be inspected while scanning this source.",
+  );
+  await expect(dialog).not.toContainText("你仍可正常使用此技能源中的技能。");
   await page.keyboard.press("Escape");
   await expect(warning).toBeFocused();
 
@@ -920,32 +960,58 @@ test("removes an enabled skill directly without confirmation", async ({
   await expect(page.getByRole("dialog", { name: /确认/ })).toHaveCount(0);
 });
 
-test("manages a directory skill group in one row and supports batch and individual actions", async ({
+test("expands one directory skill group at a time and supports batch and individual actions", async ({
   page,
 }) => {
   await installProtectedLocalApi(
     page,
     [source("source-catalog", "Personal", "/Users/example/skills")],
-    { catalogSkillGroup: true },
+    { catalogSecondSkillGroup: true, catalogSkillGroup: true },
   );
   await page.goto("/skills");
 
   const catalog = page.getByLabel("技能目录");
   const groupTrigger = catalog.getByRole("button", {
-    name: "打开技能组 前端开发",
+    name: "展开技能组 前端开发",
+  });
+  const frontendGroupRow = catalog.locator(".skill-row--group").filter({
+    hasText: "前端开发",
   });
   await expect(groupTrigger).toBeVisible();
-  await expect(catalog.locator(".skill-row--group")).toHaveCount(1);
+  await expect(catalog.locator(".skill-row--group")).toHaveCount(2);
   await expect(
     catalog.getByText("技能组 · 包含 2 个技能 · 0 / 2 已启用"),
   ).toBeVisible();
 
   await groupTrigger.click();
-  const dialog = page.getByRole("dialog", { name: "技能组：前端开发" });
-  await expect(dialog).toBeVisible();
-  await expect(dialog.getByText("React 开发")).toBeVisible();
-  await expect(dialog.getByText("UI 设计")).toBeVisible();
-  await dialog.getByRole("button", { name: "启用剩余 2 项" }).click();
+  await expect(page.getByRole("dialog", { name: /技能组/ })).toHaveCount(0);
+  await expect(
+    catalog.getByRole("button", { name: /React 开发/ }),
+  ).toBeVisible();
+  await expect(catalog.getByRole("button", { name: /UI 设计/ })).toBeVisible();
+
+  await catalog.getByRole("button", { name: "展开技能组 后端开发" }).click();
+  await expect(catalog.getByRole("button", { name: /React 开发/ })).toHaveCount(
+    0,
+  );
+  await expect(
+    catalog.getByRole("button", { name: /Node.js 开发/ }),
+  ).toBeVisible();
+
+  await catalog.getByRole("button", { name: "展开技能组 前端开发" }).click();
+  await expect(catalog.getByRole("button", { name: /UI 设计/ })).toBeVisible();
+  await catalog.getByRole("button", { name: /React 开发/ }).click();
+  await expect(page.getByLabel("技能详情")).toContainText("React 开发");
+  await expect(
+    frontendGroupRow.getByRole("button", { name: "全部启用", exact: true }),
+  ).toBeVisible();
+  await expect(
+    frontendGroupRow.getByRole("button", { name: "移除", exact: true }),
+  ).toBeVisible();
+  await expect(catalog.getByText("启用剩余")).toHaveCount(0);
+  await frontendGroupRow
+    .getByRole("button", { name: "全部启用", exact: true })
+    .click();
 
   await expect
     .poll(() => mockApiEvents(page))
@@ -966,13 +1032,15 @@ test("manages a directory skill group in one row and supports batch and individu
     }),
   ).resolves.toEqual([2]);
 
-  await dialog
-    .getByRole("button", { name: "移除", exact: true })
-    .first()
-    .click();
+  const reactRow = catalog.locator(".skill-row--group-member").filter({
+    hasText: "React 开发",
+  });
+  await reactRow.getByRole("button", { name: "移除", exact: true }).click();
   await expect(catalog.getByText("1 / 2 已启用")).toBeVisible();
-
-  await page.keyboard.press("Escape");
-  await expect(dialog).toHaveCount(0);
-  await expect(groupTrigger).toBeFocused();
+  await expect(
+    frontendGroupRow.getByRole("button", { name: "全部启用", exact: true }),
+  ).toBeVisible();
+  await expect(
+    frontendGroupRow.getByRole("button", { name: "移除", exact: true }),
+  ).toBeVisible();
 });

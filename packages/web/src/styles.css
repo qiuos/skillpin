@@ -1196,6 +1196,13 @@ h2 {
 .skill-row--group:hover {
   background: rgba(198, 161, 90, 0.16);
 }
+.skill-row--group-member {
+  padding-left: 28px;
+  background: color-mix(in srgb, var(--gold) 5%, transparent);
+}
+.skill-row--group-member:hover {
+  background: color-mix(in srgb, var(--gold) 13%, transparent);
+}
 .skill-row--active {
   background: rgba(198, 161, 90, 0.2);
   box-shadow: inset 3px 0 0 var(--wine);
@@ -1246,8 +1253,9 @@ h2 {
   line-height: 1;
 }
 .skill-row__actions {
-  display: grid;
+  display: flex;
   align-items: center;
+  gap: 8px;
 }
 .skill-row__action {
   min-width: 64px;
@@ -1485,31 +1493,6 @@ h2 {
   margin: 0 0 9px;
   color: var(--ink-soft);
 }
-.skill-group-dialog__list {
-  display: grid;
-  gap: 0;
-  padding: 4px 24px 12px;
-}
-.skill-group-dialog__row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  min-height: 64px;
-  border-bottom: 1px solid color-mix(in srgb, var(--gold) 60%, transparent);
-}
-.skill-group-dialog__row > div {
-  display: grid;
-  min-width: 0;
-  gap: 3px;
-}
-.skill-group-dialog__row span {
-  overflow: hidden;
-  color: var(--ink-soft);
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
 /* ============ Source dialogs ============ */
 .source-dialog,
 .source-warning-dialog {
@@ -1548,11 +1531,6 @@ h2 {
   gap: 14px;
   padding: 20px 24px;
 }
-.source-warning-dialog__content p {
-  margin: 0;
-  color: var(--moss);
-  font-weight: 700;
-}
 .source-warning-dialog__content ul {
   display: grid;
   gap: 10px;
@@ -1562,6 +1540,13 @@ h2 {
 .source-warning-dialog__content li {
   display: grid;
   gap: 5px;
+}
+.source-warning-dialog__content li > span {
+  color: var(--ink-soft);
+  line-height: 1.45;
+}
+.source-warning-dialog__content li b {
+  color: var(--ink);
 }
 .source-warning-dialog__content code {
   overflow-wrap: anywhere;
