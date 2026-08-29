@@ -880,3 +880,36 @@ Added the product-name theme icon and persisted parchment, dark, and light theme
 ### Next Steps
 
 - None - task complete
+
+
+## Session 42: 修复 Windows 技能源会话认证
+
+**Date**: 2026-08-29
+**Task**: 修复 Windows 技能源会话认证
+**Branch**: `main`
+
+### Summary
+
+为本地会话 bootstrap 增加短期 HttpOnly Cookie 认证回退，覆盖路径验证、凭证拒绝、关闭清理，并完成打包与端到端回归验证。
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `65d4dff` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete

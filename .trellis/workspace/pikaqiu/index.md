@@ -8,8 +8,8 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-1.md`
-- **Total Sessions**: 41
-- **Last Active**: 2026-08-28
+- **Total Sessions**: 42
+- **Last Active**: 2026-08-29
 <!-- @@@/auto:current-status -->
 
 ---
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-1.md` | ~882 | Active |
+| `journal-1.md` | ~915 | Active |
 <!-- @@@/auto:active-documents -->
 
 ---
@@ -29,6 +29,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 42 | 2026-08-29 | 修复 Windows 技能源会话认证 | `65d4dff` | `main` |
 | 41 | 2026-08-28 | Add selectable application themes | `0e0215a`, `208d43d` | `main` |
 | 40 | 2026-08-28 | Inline skill groups and actionable scan warnings | `20816f9`, `698f967`, `1770908` | `main` |
 | 39 | 2026-08-28 | Support directory skill group actions | `a505681`, `93f81b3` | `main` |
