@@ -420,15 +420,6 @@ export function SkillsWorkbenchPage() {
   };
 
   useEffect(() => {
-    const element = listElement;
-    if (element === null) return;
-    const observer = new ResizeObserver(() => rowVirtualizer.measure());
-    observer.observe(element);
-    rowVirtualizer.measure();
-    return () => observer.disconnect();
-  }, [listElement, rowVirtualizer]);
-
-  useEffect(() => {
     rowVirtualizer.measure();
   }, [catalogRows.length, expandedSkillGroupId, rowVirtualizer]);
 
