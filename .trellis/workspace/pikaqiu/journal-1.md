@@ -913,3 +913,36 @@ Added the product-name theme icon and persisted parchment, dark, and light theme
 ### Next Steps
 
 - None - task complete
+
+
+## Session 43: Fix skill list flicker
+
+**Date**: 2026-08-29
+**Task**: Fix skill list flicker
+**Branch**: `main`
+
+### Summary
+
+Removed the redundant virtual-list ResizeObserver measurement loop that caused idle-scale flicker; verified the full test, build, lint, typecheck, and browser suites.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `d556416` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
