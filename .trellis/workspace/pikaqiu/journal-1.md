@@ -946,3 +946,36 @@ Removed the redundant virtual-list ResizeObserver measurement loop that caused i
 ### Next Steps
 
 - None - task complete
+
+
+## Session 44: Release SkillPin 0.1.21
+
+**Date**: 2026-08-29
+**Task**: Release SkillPin 0.1.21
+**Branch**: `main`
+
+### Summary
+
+Released SkillPin v0.1.21: validated the package artifact, pushed the annotated tag, and confirmed the GitHub Release workflow completed successfully.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `2f6a728` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete

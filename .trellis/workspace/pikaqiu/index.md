@@ -8,7 +8,7 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-1.md`
-- **Total Sessions**: 43
+- **Total Sessions**: 44
 - **Last Active**: 2026-08-29
 <!-- @@@/auto:current-status -->
 
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-1.md` | ~948 | Active |
+| `journal-1.md` | ~981 | Active |
 <!-- @@@/auto:active-documents -->
 
 ---
@@ -29,6 +29,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 44 | 2026-08-29 | Release SkillPin 0.1.21 | `2f6a728` | `main` |
 | 43 | 2026-08-29 | Fix skill list flicker | `d556416` | `main` |
 | 42 | 2026-08-29 | 修复 Windows 技能源会话认证 | `65d4dff` | `main` |
 | 41 | 2026-08-28 | Add selectable application themes | `0e0215a`, `208d43d` | `main` |
