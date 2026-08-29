@@ -28,8 +28,8 @@ Publish the completed skill-list flicker fix as SkillPin v0.1.21 through the rep
 
 * [x] `package.json` and `package-lock.json` identify version `0.1.21`.
 * [x] `npm run pack`, `npm run verify-package`, and `npm run test:package` pass.
-* [ ] An annotated `v0.1.21` tag is pushed to the configured remote.
-* [ ] The tag-triggered GitHub Release workflow has been started successfully.
+* [x] An annotated `v0.1.21` tag is pushed to the configured remote.
+* [x] The tag-triggered GitHub Release workflow completed successfully and created or updated the GitHub Release asset.
 
 ## Out of Scope
 
@@ -41,3 +41,4 @@ Publish the completed skill-list flicker fix as SkillPin v0.1.21 through the rep
 * Release workflow: `.github/workflows/release.yml`.
 * Release asset path: `artifacts/skillpin-0.1.21.tgz`.
 * Release preflight passed: `npm ci`, `npm run format:check`, `npm run lint`, `npm run typecheck`, `npm test`, `npm run build`, `npm run pack`, `npm run verify-package`, and `npm run test:package`.
+* GitHub Actions workflow `Release` run `33258810075` completed successfully on August 29, 2026.
