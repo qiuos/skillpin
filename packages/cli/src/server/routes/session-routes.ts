@@ -5,6 +5,11 @@ import {
   type LocalSessionInfo,
 } from "@skillpin/core";
 
+import {
+  clearSessionCookieHeader,
+  SESSION_CREDENTIAL_COOKIE,
+} from "../../security/session-cookie.js";
+
 import type { LocalApiRoute } from "./types.js";
 
 function success<T>(data: T): LocalApiSuccess<T> {
@@ -15,10 +20,12 @@ function writeJson(
   response: import("node:http").ServerResponse,
   body: unknown,
   status = 200,
+  headers: Record<string, string | readonly string[]> = {},
 ): void {
   response.writeHead(status, {
     "Cache-Control": "no-store",
     "Content-Type": "application/json; charset=utf-8",
+    ...headers,
   });
   response.end(JSON.stringify(body));
 }
@@ -43,7 +50,9 @@ export function createSessionRoutes(): readonly LocalApiRoute[] {
       method: "POST",
       path: "/api/session/shutdown",
       handle: (_request, response, session) => {
-        writeJson(response, success({ status: "closing" }), 202);
+        writeJson(response, success({ status: "closing" }), 202, {
+          "Set-Cookie": clearSessionCookieHeader(SESSION_CREDENTIAL_COOKIE),
+        });
         queueMicrotask(() => {
           void session.close("api");
         });

@@ -14,7 +14,11 @@ import {
 import { ProjectLock, ProjectSnapshotService } from "@skillpin/core/project";
 
 import { CliError } from "../command/cli-error.js";
-import { hasValidCredential } from "../security/request-guard.js";
+import {
+  hasValidCredential,
+  hasValidCredentialCookie,
+} from "../security/request-guard.js";
+import { SESSION_CREDENTIAL_COOKIE } from "../security/session-cookie.js";
 import {
   BOOTSTRAP_TOKEN_TTL_MS,
   createToken,
@@ -224,7 +228,16 @@ export class ManagedSession implements LocalSessionRuntime {
 
   public hasValidCredential(headers: IncomingHttpHeaders): boolean {
     this.cleanExpiredTokens();
-    return hasValidCredential(headers, this.#credentials, Date.now());
+    const now = Date.now();
+    return (
+      hasValidCredential(headers, this.#credentials, now) ||
+      hasValidCredentialCookie(
+        headers,
+        SESSION_CREDENTIAL_COOKIE,
+        this.#credentials,
+        now,
+      )
+    );
   }
 
   public hasValidWebSocketCredential(credential: string): boolean {

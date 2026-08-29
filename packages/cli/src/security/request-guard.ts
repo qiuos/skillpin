@@ -62,22 +62,45 @@ export function guardLocalRequest(
   return null;
 }
 
-export function hasValidCredential(
-  headers: IncomingHttpHeaders,
+function isValidCredential(
+  candidate: string | undefined,
   credentials: ReadonlyMap<string, number>,
   now: number,
 ): boolean {
-  const authorization = headerValue(headers, "authorization");
-  if (authorization === undefined || !authorization.startsWith("Bearer ")) {
+  if (candidate === undefined) {
     return false;
   }
-  const candidate = authorization.slice("Bearer ".length);
   for (const [credential, expiresAt] of credentials) {
     if (expiresAt > now && tokensEqual(candidate, credential)) {
       return true;
     }
   }
   return false;
+}
+
+export function hasValidCredential(
+  headers: IncomingHttpHeaders,
+  credentials: ReadonlyMap<string, number>,
+  now: number,
+): boolean {
+  const authorization = headerValue(headers, "authorization");
+  return isValidCredential(
+    authorization?.startsWith("Bearer ")
+      ? authorization.slice("Bearer ".length)
+      : undefined,
+    credentials,
+    now,
+  );
+}
+
+/** Validates the short-lived HttpOnly browser-session credential cookie. */
+export function hasValidCredentialCookie(
+  headers: IncomingHttpHeaders,
+  cookieName: string,
+  credentials: ReadonlyMap<string, number>,
+  now: number,
+): boolean {
+  return isValidCredential(readCookie(headers, cookieName), credentials, now);
 }
 
 export function readCookie(

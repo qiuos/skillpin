@@ -59,12 +59,27 @@ async function bundledStaticDirectory(): Promise<string> {
   return directory;
 }
 
-async function bootstrap(session: ManagedSession): Promise<string> {
+interface BootstrappedSession {
+  readonly credential: string;
+  readonly sessionCookie: string;
+  readonly setCookies: readonly string[];
+}
+
+function headerValues(
+  headers: import("node:http").IncomingHttpHeaders,
+  name: string,
+): readonly string[] {
+  const value = headers[name];
+  return value === undefined ? [] : Array.isArray(value) ? value : [value];
+}
+
+async function bootstrapSession(
+  session: ManagedSession,
+): Promise<BootstrappedSession> {
   const page = await requestLocal(session.address, "/");
   expect(page.status).toBe(200);
   expect(page.headers["access-control-allow-origin"]).toBeUndefined();
-  const cookie = page.headers["set-cookie"];
-  const header = Array.isArray(cookie) ? cookie[0] : cookie;
+  const header = headerValues(page.headers, "set-cookie")[0];
   if (header === undefined) {
     throw new Error("The static page did not set a bootstrap cookie.");
   }
@@ -80,7 +95,22 @@ async function bootstrap(session: ManagedSession): Promise<string> {
     data: { credential: string; session: { sessionId: string } };
   };
   expect(parsed.data.session.sessionId).toBe(session.sessionId);
-  return parsed.data.credential;
+  const setCookies = headerValues(result.headers, "set-cookie");
+  const sessionCookie = setCookies.find((cookie) =>
+    cookie.startsWith("skillpin_session="),
+  );
+  if (sessionCookie === undefined) {
+    throw new Error("The bootstrap response did not set a session cookie.");
+  }
+  return {
+    credential: parsed.data.credential,
+    sessionCookie: sessionCookie.split(";")[0] ?? "",
+    setCookies,
+  };
+}
+
+async function bootstrap(session: ManagedSession): Promise<string> {
+  return (await bootstrapSession(session)).credential;
 }
 
 describe("P5 loopback HTTP and WebSocket security", () => {
@@ -149,6 +179,67 @@ describe("P5 loopback HTTP and WebSocket security", () => {
     });
     expect(valid.status).toBe(200);
     expect(valid.headers["access-control-allow-origin"]).toBeUndefined();
+  });
+
+  it("authenticates path validation with the short-lived session cookie fallback", async () => {
+    const session = await startSession();
+    const bootstrap = await bootstrapSession(session);
+
+    expect(bootstrap.setCookies).toEqual(
+      expect.arrayContaining([
+        "skillpin_bootstrap=; HttpOnly; Path=/; SameSite=Strict; Max-Age=0",
+        expect.stringMatching(
+          /^skillpin_session=[A-Za-z0-9_-]+; HttpOnly; Path=\/; SameSite=Strict; Max-Age=600$/,
+        ),
+      ]),
+    );
+
+    const invalidCookie = await requestLocal(session.address, "/api/session", {
+      headers: {
+        Cookie: "skillpin_session=invalid",
+        Origin: session.address,
+      },
+    });
+    expect(invalidCookie.status).toBe(401);
+
+    const validated = await requestLocal(
+      session.address,
+      "/api/sources/validate",
+      {
+        body: JSON.stringify({ path: session.projectDirectory }),
+        headers: {
+          "Content-Type": "application/json",
+          Cookie: bootstrap.sessionCookie,
+          Origin: session.address,
+        },
+        method: "POST",
+      },
+    );
+    expect(validated.status).toBe(200);
+
+    const bearer = await requestLocal(session.address, "/api/session", {
+      headers: {
+        Authorization: `Bearer ${bootstrap.credential}`,
+        Origin: session.address,
+      },
+    });
+    expect(bearer.status).toBe(200);
+
+    const shutdown = await requestLocal(
+      session.address,
+      "/api/session/shutdown",
+      {
+        headers: {
+          Cookie: bootstrap.sessionCookie,
+          Origin: session.address,
+        },
+        method: "POST",
+      },
+    );
+    expect(shutdown.status).toBe(202);
+    expect(headerValues(shutdown.headers, "set-cookie")).toContain(
+      "skillpin_session=; HttpOnly; Path=/; SameSite=Strict; Max-Age=0",
+    );
   });
 
   it("serves package static assets without exposing filesystem paths or issuing asset cookies", async () => {

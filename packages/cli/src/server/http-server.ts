@@ -16,6 +16,13 @@ import {
   readWebSocketCredential,
 } from "../security/request-guard.js";
 import {
+  BOOTSTRAP_COOKIE,
+  SESSION_CREDENTIAL_COOKIE,
+  clearSessionCookieHeader,
+  sessionCookieHeader,
+} from "../security/session-cookie.js";
+import { SESSION_CREDENTIAL_TTL_MS } from "../security/session-token.js";
+import {
   createWebSocketAccept,
   WebSocketEventHub,
 } from "./websocket-events.js";
@@ -25,8 +32,6 @@ import {
 } from "./routes/session-routes.js";
 import type { LocalApiRoute } from "./routes/types.js";
 import type { LocalSessionRuntime } from "../session/session-manager.js";
-
-const BOOTSTRAP_COOKIE = "skillpin_bootstrap";
 
 /** Client history routes that must resolve to the bundled SPA shell. */
 const SPA_DOCUMENT_ROUTES = new Set(["/onboarding", "/skills", "/sources"]);
@@ -43,7 +48,7 @@ function writeJson(
   response: ServerResponse,
   status: number,
   body: unknown,
-  headers: Record<string, string> = {},
+  headers: Record<string, string | readonly string[]> = {},
 ): void {
   response.writeHead(status, {
     "Cache-Control": "no-store",
@@ -328,8 +333,11 @@ export class LocalHttpServer {
       };
       if (pathname === "/") {
         const bootstrap = this.#session.issueBootstrapToken();
-        headers["Set-Cookie"] =
-          `${BOOTSTRAP_COOKIE}=${bootstrap}; HttpOnly; Path=/; SameSite=Strict; Max-Age=300`;
+        headers["Set-Cookie"] = sessionCookieHeader(
+          BOOTSTRAP_COOKIE,
+          bootstrap,
+          300,
+        );
       }
       response.writeHead(200, headers);
       response.end(request.method === "HEAD" ? undefined : asset.body);
@@ -349,7 +357,7 @@ export class LocalHttpServer {
       response.writeHead(200, {
         "Cache-Control": "no-store",
         "Content-Type": "text/html; charset=utf-8",
-        "Set-Cookie": `${BOOTSTRAP_COOKIE}=${bootstrap}; HttpOnly; Path=/; SameSite=Strict; Max-Age=300`,
+        "Set-Cookie": sessionCookieHeader(BOOTSTRAP_COOKIE, bootstrap, 300),
         "X-Content-Type-Options": "nosniff",
       });
       response.end(request.method === "HEAD" ? undefined : staticPage());
@@ -391,7 +399,14 @@ export class LocalHttpServer {
         version: LOCAL_API_VERSION,
       },
       {
-        "Set-Cookie": `${BOOTSTRAP_COOKIE}=; HttpOnly; Path=/; SameSite=Strict; Max-Age=0`,
+        "Set-Cookie": [
+          clearSessionCookieHeader(BOOTSTRAP_COOKIE),
+          sessionCookieHeader(
+            SESSION_CREDENTIAL_COOKIE,
+            credential.value,
+            SESSION_CREDENTIAL_TTL_MS / 1000,
+          ),
+        ],
       },
     );
   }

@@ -21,10 +21,10 @@ session.runProjectOperation(() => projectChangeService.apply(input))
 session.close("explicit" | "signal" | "grace-period")
   // -> Promise<void>
 
-GET  /                       // static bootstrap shell + one-time cookie
-POST /api/session/bootstrap  // one-time cookie -> LocalApiResponse<BootstrapSessionResponse>
-GET  /api/session            // bearer credential -> LocalApiResponse<LocalSessionInfo>
-POST /api/session/shutdown   // bearer credential -> graceful session close
+GET  /                       // static bootstrap shell + one-time bootstrap cookie
+POST /api/session/bootstrap  // bootstrap cookie -> Bearer response + HttpOnly session cookie
+GET  /api/session            // valid Bearer or same-origin HttpOnly session cookie -> LocalApiResponse<LocalSessionInfo>
+POST /api/session/shutdown   // valid Bearer or session cookie -> graceful session close + cookie clear
 GET  /api/session/events     // WebSocket upgrade, authenticated protocol negotiation
 ```
 
@@ -36,8 +36,9 @@ The browser-safe root contract is versioned by `LOCAL_API_VERSION`. Success payl
 - The startup target is normalized to a directory realpath before registry lookup. Session identity is a SHA-256-style non-reversible fingerprint, not a path string. A repeated start for the same real directory returns the existing in-process session; separate directories may run concurrently.
 - The server listens on `127.0.0.1` only. Explicit ports are never rebound to another address, and an `EADDRINUSE` startup is a stable `CLI_PORT_UNAVAILABLE` failure. Do not introduce `0.0.0.0`, LAN binding, CORS, or remote access.
 - Every request first proves a loopback remote address and exact `Host: 127.0.0.1:<session-port>`. Browser-originated API/upgrade traffic with an `Origin` header must match the session origin exactly. Chromium omits `Origin` for same-origin `GET` fetches, so guarded API requests without it may proceed only with `Sec-Fetch-Site: same-origin`; missing or non-same-origin fetch metadata is rejected. The HTTP server must not emit permissive CORS headers.
-- `GET /` mints a high-entropy, short-lived, HttpOnly bootstrap cookie. `POST /api/session/bootstrap` consumes it once and returns a short-lived in-memory bearer credential. Never persist or log either token, and never put credentials in a URL query.
-- Authenticated JSON routes require `Authorization: Bearer <credential>`. Compare candidate tokens with the `tokensEqual()` constant-time helper and reject expired credentials.
+- `GET /` mints a high-entropy, short-lived, HttpOnly `skillpin_bootstrap` cookie. `POST /api/session/bootstrap` consumes it once, returns the same short-lived in-memory credential in the response body for the existing Bearer/WebSocket clients, clears `skillpin_bootstrap`, and sets that credential in an HttpOnly `skillpin_session` cookie (`Path=/`, `SameSite=Strict`, `Max-Age=600`). Never persist or log either token, and never put credentials in a URL query.
+- Authenticated JSON routes accept either `Authorization: Bearer <credential>` or the same-origin `skillpin_session` cookie. Both candidates must be checked against the same unexpired in-memory credential map using the `tokensEqual()` constant-time helper; a cookie surviving a server restart is therefore invalid. Keep the loopback, exact Host, Origin, and `Sec-Fetch-Site` guards ahead of either credential check.
+- `POST /api/session/shutdown` clears `skillpin_session` (`Max-Age=0`) in its response while preserving the normal graceful-close behavior.
 - WebSockets additionally require RFC 6455 `Sec-WebSocket-Version: 13`, the `skillpin.v1` subprotocol, and a `skillpin.credential.<credential>` protocol token. Negotiate only `skillpin.v1`; refuse absent/invalid version, protocol, origin, host, or credential before accepting the upgrade.
 - WebSocket runtime owns page count, heartbeat ping/pong, and a monotonic session event sequence. The last client disconnect starts the configurable 60-second grace timer; any authenticated reconnect cancels it.
 - Explicit close or `SIGINT`/`SIGTERM` first marks the session exiting and stops new work, waits for `runProjectOperation()` tasks (including P4 `ProjectChangeService.apply`) to settle, then closes sockets/server and removes its registry entry. New P6–P9 mutation routes must wrap P4 applies in that method.
@@ -53,7 +54,7 @@ The browser-safe root contract is versioned by `LOCAL_API_VERSION`. Success payl
 | Non-loopback remote address or wrong Host | reject before routing; no session payload |
 | Wrong `Origin`, or a guarded API request with neither exact `Origin` nor `Sec-Fetch-Site: same-origin` | reject with `403`; no CORS response |
 | Bootstrap cookie absent, expired, or already consumed | `SESSION_BOOTSTRAP_INVALID`; do not mint a credential |
-| Missing/wrong/expired bearer credential | `SESSION_CREDENTIAL_INVALID`; no protected response |
+| Missing/wrong/expired Bearer and session-cookie credentials | `SESSION_CREDENTIAL_INVALID`; no protected response |
 | WebSocket lacks v13, `skillpin.v1`, credential protocol, or valid credential | reject upgrade with `403` |
 | Last page disconnects | state `waiting-to-exit`; exit only after grace timeout |
 | Reconnect before timeout | return to `running`; cancel pending exit |
@@ -61,7 +62,7 @@ The browser-safe root contract is versioned by `LOCAL_API_VERSION`. Success payl
 
 ## 5. Good / Base / Bad Cases
 
-- **Good:** `skillpin --no-open /project` resolves the real directory, starts `127.0.0.1` on a free port, prints its address, and accepts a one-time bootstrap followed by a bearer-authenticated session request.
+- **Good:** `skillpin --no-open /project` resolves the real directory, starts `127.0.0.1` on a free port, prints its address, and accepts a one-time bootstrap followed by either a bearer-authenticated request or a same-origin HttpOnly `skillpin_session`-authenticated request.
 - **Base:** a symlinked alias of an already-running project resolves to the same real directory and returns the existing session address; it must not create a second server.
 - **Base:** a page refresh drops the only WebSocket and reconnects within 60 seconds; state returns from `waiting-to-exit` to `running` without closing the service.
 - **Bad:** a website sends an API request with a foreign Origin, a wrong host header, or `Sec-Fetch-Site: cross-site` while omitting Origin. Reject before route handling and do not expose response data or CORS headers.
@@ -71,7 +72,7 @@ The browser-safe root contract is versioned by `LOCAL_API_VERSION`. Success payl
 ## 6. Tests Required
 
 - CLI tests for help/version, default/positional/`--target`, invalid combinations, `--no-open`, port parsing, and port collision.
-- Real-loopback integration tests for static bootstrap, one-time cookie exchange, authenticated API routes, absent CORS, wrong Host/Origin, invalid/expired credentials, and an authenticated `GET` with no `Origin` plus `Sec-Fetch-Site: same-origin`; assert absent or `cross-site` fetch metadata remains a `403`.
+- Real-loopback integration tests for static bootstrap, one-time cookie exchange, bootstrap-issued session-cookie flags/lifetime, bearer and session-cookie authenticated API routes (including source path validation), session-cookie clearing on shutdown, absent CORS, wrong Host/Origin, invalid/expired credentials, and an authenticated `GET` with no `Origin` plus `Sec-Fetch-Site: same-origin`; assert absent or `cross-site` fetch metadata remains a `403`.
 - Raw WebSocket tests asserting v13 + `skillpin.v1` + credential negotiation, heartbeat/client counts, and strictly increasing event sequences. Include missing protocol/version/credential rejection cases.
 - Lifecycle tests for realpath session reuse, separate project sessions, 60-second (injectable short) disconnect grace/reconnect cancellation, explicit/signal shutdown, and registry cleanup.
 - Graceful close must track a real P4 `ProjectChangeService.apply()` operation through `runProjectOperation()`, not a fabricated promise only.
