@@ -282,13 +282,16 @@ try {
   await access(archivePath);
 
   const state = await writePreservedState();
-  await runNpm([
+  const install = await runNpm([
     "install",
-    "--ignore-scripts",
     "--prefix",
     prefixDirectory,
     archivePath,
   ]);
+  assert(
+    !install.stderr.includes("warn install-scripts"),
+    "Package install emitted an install-scripts warning.",
+  );
   const version = await runNpm([
     "exec",
     "--prefix",

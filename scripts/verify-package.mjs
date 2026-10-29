@@ -15,7 +15,6 @@ const requiredDocuments = [
   "package/README.en.md",
   "package/THIRD_PARTY_NOTICES.md",
   "package/docs/installation.md",
-  "package/docs/releasing.md",
   "package/docs/troubleshooting.md",
   "package/docs/usage.md",
 ];
@@ -149,6 +148,10 @@ for (const [name, entry] of entries) {
 
 const manifest = JSON.parse(text(entries, "package/package.json"));
 assert(manifest.name === "skillpin", "Package name must be skillpin.");
+assert(
+  manifest.scripts?.prepare === undefined,
+  "Package must not declare a prepare script.",
+);
 assert(
   manifest.bin?.skillpin === "./dist/main.js",
   "Package bin.skillpin must target ./dist/main.js.",

@@ -47,7 +47,6 @@ The service listens only on `http://127.0.0.1:<port>`. The CLI prints the local 
 - [Installation](docs/installation.md)
 - [Usage](docs/usage.md)
 - [Troubleshooting](docs/troubleshooting.md)
-- [Releasing](docs/releasing.md)
 - [Third-party notices and dependency inventory](THIRD_PARTY_NOTICES.md)
 
 ## Repository development

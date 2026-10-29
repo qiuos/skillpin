@@ -47,7 +47,6 @@ skillpin --no-open
 - [安装](docs/installation.md)
 - [使用](docs/usage.md)
 - [故障排除](docs/troubleshooting.md)
-- [正式发布](docs/releasing.md)
 - [第三方声明与依赖清单](THIRD_PARTY_NOTICES.md)
 
 ## 仓库开发
